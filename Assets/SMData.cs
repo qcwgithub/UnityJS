@@ -3,8 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-public class SMData
+public static class SMData
 {
+    public static IntPtr cx;
+    public static IntPtr glob;
+
+    /*
+     * 这2个是记录 C#对象和js对象的对应关系
+     */
     class JS_Native_Relation
     {
         public IntPtr jsObj;
@@ -14,13 +20,6 @@ public class SMData
             jsObj = a;
             nativeObj = b;
         }
-    }
-
-    public class GlobalType
-    {
-        public IntPtr jsClass; // JSClass*
-        public IntPtr proto;   // JSObject* returned by JS_InitClass
-        public IntPtr parentProto; // JSObject* parent
     }
 
     public static void addNativeJSRelation(IntPtr jsObj, object nativeObj)
@@ -46,6 +45,16 @@ public class SMData
     static Dictionary<int, JS_Native_Relation> mDict2 = new Dictionary<int, JS_Native_Relation>(); // key = nativeObj.hashCode()
 
 
+
+    /*
+     * 记录已注册的类型
+     */
+    public class GlobalType
+    {
+        public IntPtr jsClass; // JSClass*
+        public IntPtr proto;   // JSObject* returned by JS_InitClass
+        public IntPtr parentProto; // JSObject* parent
+    }
     public static void addGlobalType(Type type, IntPtr jsClass, IntPtr proto, IntPtr parentProto)
     {
         int hash = type.GetHashCode();
@@ -65,4 +74,7 @@ public class SMData
         return null;
     }
     static Dictionary<int, GlobalType> mGlobalType = new Dictionary<int, GlobalType>();
+
+
+
 }

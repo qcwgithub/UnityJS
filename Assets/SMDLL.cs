@@ -21,68 +21,75 @@ using System.Collections;
 using System.Text;
 using System.Security;
 
+using JSBool = System.Int32;
+
 public class SMDll
 {
+
+/***********************************************************************
+ *
+ * Part I
+ * Constants & Types & Delegates
+ *    
+************************************************************************/
+
     const string SMDLL = "mozjs";
     const string SMHelpDll = "dllParseToUnity";
+
+    enum JSConstant
+    {
+
+    }
+
     public static int JS_TRUE = 1;
     public static int JS_FALSE = 0;
 
-
-
     //     typedef struct { JSObject **_; } JSHandleObject;
-    public struct JSHandleObject
-    {
-        public IntPtr _;
-    }
+    public struct JSHandleObject { public IntPtr _; }
+
     //     typedef struct { jsval _; } JSHandleValue;
     //     typedef struct { JSString **_; } JSHandleString;
     //     typedef struct { JSObject **_; } JSMutableHandleObject;
     //     typedef struct { jsid *_; } JSHandleId;
-    public struct JSHandleId
-    {
-        public IntPtr _;
-    }
-    //     typedef struct { jsval *_; } JSMutableHandleValue;
-    public struct JSMutableHandleValue
-    {
-        public IntPtr _;
-    }
-    //     typedef JSObject *JSRawObject;
+    public struct JSHandleId { public IntPtr _; }
+    public struct JSMutableHandleValue{ public IntPtr _; }
 
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSPROPERTYOP(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 
-    // extern JS_PUBLIC_API(JSBool)JS_PropertyStub(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_PropertyStub(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 
-    // extern JS_PUBLIC_API(JSBool) JS_StrictPropertyStub(JSContext *cx, JSHandleObject obj, JSHandleId id, JSBool strict, JSMutableHandleValue vp);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_StrictPropertyStub(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_STRICTPROPERTYSTUB(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
 
-    // extern JS_PUBLIC_API(JSBool) JS_EnumerateStub(JSContext *cx, JSHandleObject obj);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_EnumerateStub(IntPtr cx, JSHandleObject obj);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_ENUMERATESTUB(IntPtr cx, JSHandleObject obj);
 
-    // extern JS_PUBLIC_API(JSBool) JS_ResolveStub(JSContext *cx, JSHandleObject obj, JSHandleId id);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ResolveStub(IntPtr cx, JSHandleObject obj, JSHandleId id);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_RESOLVESTUB(IntPtr cx, JSHandleObject obj, JSHandleId id);
 
     // extern JS_PUBLIC_API(JSBool) JS_ConvertStub(JSContext *cx, JSHandleObject obj, JSType type, JSMutableHandleValue vp);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ConvertStub(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_CONVERTSTUB(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
 
     // void sc_finalize(JSFreeOp* freeOp, JSObject* obj)
     public static void sc_finalize(IntPtr freeOp, IntPtr obj) { }
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void SC_FINALIZE(IntPtr freeOp, IntPtr obj);
 
     //     typedef JSBool
     // (* JSCheckAccessOp)(JSContext *cx, JSHandleObject obj, JSHandleId id, JSAccessMode mode,
     //                     jsval *vp);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSCheckAccessOp(IntPtr cx, JSHandleObject obj, JSHandleId id, int mode, IntPtr vp);
 
     // typedef JSBool (* JSNative)(JSContext *cx, unsigned argc, jsval *vp);
@@ -90,34 +97,12 @@ public class SMDll
     public delegate int JSNative(IntPtr cx, uint argc, IntPtr vp);
 
     // typedef JSBool (* JSHasInstanceOp)(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSHasInstanceOp(IntPtr cx, JSHandleObject obj, int v, IntPtr bp);
 
     //    typedef void(* JSTraceOp)(JSTracer *trc, JSObject *obj);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void JSTraceOp(IntPtr trc, IntPtr obj);
-
-    //     struct JSClass {
-    //         const char          *name;
-    //         uint32_t            flags;
-    // 
-    //         /* Mandatory non-null function pointer members. */
-    //         JSPropertyOp        addProperty;
-    //         JSPropertyOp        delProperty;
-    //         JSPropertyOp        getProperty;
-    //         JSStrictPropertyOp  setProperty;
-    //         JSEnumerateOp       enumerate;
-    //         JSResolveOp         resolve;
-    //         JSConvertOp         convert;
-    //         JSFinalizeOp        finalize;
-    // 
-    //         /* Optionally non-null members start here. */
-    //         JSCheckAccessOp     checkAccess;
-    //         JSNative            call;
-    //         JSHasInstanceOp     hasInstance;
-    //         JSNative            construct;
-    //         JSTraceOp           trace;
-    // 
-    //         void                *reserved[40];
-    //     };
 
     [StructLayout(LayoutKind.Sequential)]
     public class JSClass
@@ -126,45 +111,33 @@ public class SMDll
         public uint flags;
 
         /* Mandatory non-null function pointer members. */
-        //             public JSPROPERTYOP addProperty;
-        //             public JSPROPERTYOP delProperty;
-        //             public JSPROPERTYOP getProperty;
-        //             public JS_STRICTPROPERTYSTUB setProperty;
-        //             public JS_ENUMERATESTUB enumerate;
-        //             public JS_RESOLVESTUB resolve;
-        //             public JS_CONVERTSTUB convert;
-        //             public SC_FINALIZE finalize;
-
-        public IntPtr addProperty;
-        public IntPtr delProperty;
-        public IntPtr getProperty;
-        public IntPtr setProperty;
-        public IntPtr enumerate;
-        public IntPtr resolve;
-        public IntPtr convert;
-        public IntPtr finalize;
+        public JSPROPERTYOP addProperty;
+        public JSPROPERTYOP delProperty;
+        public JSPROPERTYOP getProperty;
+        public JS_STRICTPROPERTYSTUB setProperty;
+        public JS_ENUMERATESTUB enumerate;
+        public JS_RESOLVESTUB resolve;
+        public JS_CONVERTSTUB convert;
+        public SC_FINALIZE finalize;
 
         /* Optionally non-null members start here. */
-        //             public JSCheckAccessOp checkAccess;
-        //             public JSNative call;
-        //             public JSHasInstanceOp hasInstance;
-        //             public JSNative construct;
-        //             public JSTraceOp trace;
-
-        public IntPtr checkAccess;
-        public IntPtr call;
-        public IntPtr hasInstance;
-        public IntPtr construct;
-        public IntPtr trace;
-
-        //         [MarshalAs(UnmanagedType.LPArray, SizeConst = 40)]
-        //         public IntPtr[] reserved;
-        // [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
-        // public int[] reserved;
+        public JSCheckAccessOp checkAccess;
+        public JSNative call;
+        public JSHasInstanceOp hasInstance;
+        public JSNative construct;
+        public JSTraceOp trace;
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public UInt64[] reserved;
     };
+
+
+/***********************************************************************
+     
+ * Part II
+ * SpiderMonkey functions
+     
+************************************************************************/
 
 
     /* 
@@ -232,8 +205,13 @@ public class SMDll
 //    const char *name, JSNative call, uintN nargs, uintN flags);
 
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj,
-    string name, JSNative call, UInt32 nargs, UInt32 flags);
+    public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj, string name, JSNative call, UInt32 nargs, UInt32 flags);
+
+//     JSBool JS_DefineProperty(JSContext *cx, JSObject *obj,
+//         const char *name, jsval value, JSPropertyOp getter,
+//         JSStrictPropertyOp setter, unsigned attrs);
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JS_DefineProperty(IntPtr cx, IntPtr obj, string name, jsval value, JSPROPERTYOP getter, JS_STRICTPROPERTYSTUB setter, UInt32 attrs );
 
     public delegate IntPtr JS_NewGlobalObject_Del(IntPtr cx, IntPtr clasp, IntPtr principals);
 
@@ -244,19 +222,54 @@ public class SMDll
     public static extern IntPtr JShelp_NewClass(string name, UInt32 flag);    
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_ARGV(IntPtr cx, IntPtr vp);
-    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_argv0_int(IntPtr cx, IntPtr vp);
-    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_ThisObject(IntPtr cx, IntPtr vp);
+
+    /*
+     * Arguments from JavaScript
+     */
+
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalInt(IntPtr cx, IntPtr vp, int value);
+    public static extern bool JShelp_ArgvBool(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern double JShelp_ArgvDouble(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_ArgvInt(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern string JShelp_ArgvString(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JShelp_ArgvObject(IntPtr cx, IntPtr vp, int i);
+
+    /*
+     * Return values to JavaScript
+     */
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JShelp_SetRvalBool(IntPtr cx, IntPtr vp, bool value);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalObject(IntPtr cx, IntPtr vp, IntPtr value);
+    public static extern int JShelp_SetRvalDouble(IntPtr cx, IntPtr vp, double value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_SetRvalInt(IntPtr cx, IntPtr vp, int value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_SetRvalUInt(IntPtr cx, IntPtr vp, UInt32 value);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JShelp_SetRvalString(IntPtr cx, IntPtr vp, string value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_SetRvalObject(IntPtr cx, IntPtr vp, IntPtr value);
+
+    /*
+     * 生成 jsval，有些函数需要传递 jsval，或者 jsval*
+     */
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalBool(ref jsval vp, bool value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalDouble(ref jsval vp, double value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalInt(ref jsval vp, int value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalUInt(ref jsval vp, UInt32 value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalString(IntPtr cx, ref jsval vp, string value);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern  void JShelp_SetJsvalObject(ref jsval vp, IntPtr value);
 
 
     [StructLayout(LayoutKind.Explicit)]

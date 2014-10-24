@@ -23,7 +23,7 @@ public class CallJS : MonoBehaviour
     //[MonoPInvokeCallbackAttribute(typeof(SMDll.JSNative))]
     static int printInt(IntPtr cx, UInt32 argc, IntPtr vp)
     {
-        int value = SMDll.JShelp_argv0_int(cx, vp);
+        int value = SMDll.JShelp_ArgvInt(cx, vp, 0);
         Debug.Log(value);
         return 1;
     }
@@ -52,44 +52,20 @@ public class CallJS : MonoBehaviour
             global_class.name = "global";
             global_class.flags = 168704;
 
-            //                 global_class.addProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
-            //                 global_class.delProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
-            //                 global_class.getProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
-            //                 global_class.setProperty = new SMDll.JS_STRICTPROPERTYSTUB(SMDll.JS_StrictPropertyStub);
-            //                 global_class.enumerate = new SMDll.JS_ENUMERATESTUB(SMDll.JS_EnumerateStub);
-            //                 global_class.resolve = new SMDll.JS_RESOLVESTUB(SMDll.JS_ResolveStub);
-            //                 global_class.convert = new SMDll.JS_CONVERTSTUB(SMDll.JS_ConvertStub);
-            //                 global_class.finalize = new SMDll.SC_FINALIZE(SMDll.sc_finalize);
+            global_class.addProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
+            global_class.delProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
+            global_class.getProperty = new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub);
+            global_class.setProperty = new SMDll.JS_STRICTPROPERTYSTUB(SMDll.JS_StrictPropertyStub);
+            global_class.enumerate = new SMDll.JS_ENUMERATESTUB(SMDll.JS_EnumerateStub);
+            global_class.resolve = new SMDll.JS_RESOLVESTUB(SMDll.JS_ResolveStub);
+            global_class.convert = new SMDll.JS_CONVERTSTUB(SMDll.JS_ConvertStub);
+            global_class.finalize = new SMDll.SC_FINALIZE(SMDll.sc_finalize);
 
-            global_class.addProperty = Marshal.GetFunctionPointerForDelegate(new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub));
-            global_class.delProperty = Marshal.GetFunctionPointerForDelegate(new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub));
-            global_class.getProperty = Marshal.GetFunctionPointerForDelegate(new SMDll.JSPROPERTYOP(SMDll.JS_PropertyStub));
-            global_class.setProperty = Marshal.GetFunctionPointerForDelegate(new SMDll.JS_STRICTPROPERTYSTUB(SMDll.JS_StrictPropertyStub));
-            global_class.enumerate = Marshal.GetFunctionPointerForDelegate(new SMDll.JS_ENUMERATESTUB(SMDll.JS_EnumerateStub));
-            global_class.resolve = Marshal.GetFunctionPointerForDelegate(new SMDll.JS_RESOLVESTUB(SMDll.JS_ResolveStub));
-            global_class.convert = Marshal.GetFunctionPointerForDelegate(new SMDll.JS_CONVERTSTUB(SMDll.JS_ConvertStub));
-            global_class.finalize = Marshal.GetFunctionPointerForDelegate(new SMDll.SC_FINALIZE(SMDll.sc_finalize));
-
-            //                 global_class.addProperty = new IntPtr(0);
-            //                 global_class.delProperty = new IntPtr(0);
-            //                 global_class.getProperty = new IntPtr(0);
-            //                 global_class.setProperty = new IntPtr(0);
-            //                 global_class.enumerate = new IntPtr(0);
-            //                 global_class.resolve = new IntPtr(0);
-            //                 global_class.convert = new IntPtr(0);
-            //                 global_class.finalize = new IntPtr(0);
-
-            //                 global_class.checkAccess = null;
-            //                 global_class.call = null;
-            //                 global_class.hasInstance = null;
-            //                 global_class.construct = null;
-            //                 global_class.trace = null;
-
-            global_class.checkAccess = new IntPtr(0);
-            global_class.call = new IntPtr(0);
-            global_class.hasInstance = new IntPtr(0);
-            global_class.construct = new IntPtr(0);
-            global_class.trace = new IntPtr(0);
+            global_class.checkAccess = null;
+            global_class.call = null;
+            global_class.hasInstance = null;
+            global_class.construct = null;
+            global_class.trace = null;
 
             {
                 global_class.reserved = new UInt64[40];
@@ -116,7 +92,7 @@ public class CallJS : MonoBehaviour
         SMDll.JS_DefineFunction(cx, glob, "printInt", new SMDll.JSNative(printInt), 1, 0/*4164*/);
         GameObjectWrap.Register(cx, glob);
 
-        string source = "var go = new GameObject();\ngo.tag();\nprintInt(200);";
+        string source = @"var test = {};";
 
         SMDll.jsval rval = new SMDll.jsval();
         string filename = "noname";
