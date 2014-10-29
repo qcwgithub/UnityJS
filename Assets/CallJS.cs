@@ -17,14 +17,37 @@ public class MonoPInvokeCallbackAttribute : System.Attribute
 #pragma warning restore 414
 public class CallJS : MonoBehaviour 
 {
-    IntPtr rt;
-    IntPtr cx;
+    public static IntPtr rt;
+    public static IntPtr cx;
+    public static IntPtr glob;
 
     //[MonoPInvokeCallbackAttribute(typeof(SMDll.JSNative))]
     static int printInt(IntPtr cx, UInt32 argc, IntPtr vp)
     {
         int value = SMDll.JShelp_ArgvInt(cx, vp, 0);
         Debug.Log(value);
+        return 1;
+    }
+    static int printString(IntPtr cx, UInt32 argc, IntPtr vp)
+    {
+        string value = SMDll.JShelp_ArgvString(cx, vp, 0);
+        Debug.Log(value);
+        return 1;
+    }
+    static GameObject testGameObject;
+    static int getTestObject(IntPtr cx, UInt32 argc, IntPtr vp)
+    {
+        string className = SMDll.JShelp_ArgvString(cx, vp, 0);
+        IntPtr jsObj = SMDll.JShelp_NewObjectAsClass(cx, glob, className);
+        if (jsObj == IntPtr.Zero)
+            Debug.Log("jsObj == IntPtr.Zero");
+        SMData.addNativeJSRelation(jsObj, testGameObject);
+        SMDll.JShelp_SetRvalObject(cx, vp, jsObj);
+        return 1;
+    }
+    static int errorReporter(IntPtr cx, string message, IntPtr report)
+    {
+        Debug.Log(message);
         return 1;
     }
 //     static int printString(IntPtr cx, UInt32 argc, IntPtr vp)
@@ -34,6 +57,12 @@ public class CallJS : MonoBehaviour
 	// Use this for initialization
 	void Awake ()
     {
+//         MethodInfo ms = typeof(GameObject).GetMethod("Find");
+//         object[] para = new object[] { (object)"Main Camera" };
+//         GameObject go = (GameObject)ms.Invoke((object)null, para);
+//         Debug.Log(go.name);
+//         return;
+
         rt = SMDll.JS_Init(10 * 1024 * 1024);
         //Debug.Log("rt: " + rt + "\n");
         cx = SMDll.JS_NewContext(rt, 8192);
@@ -75,7 +104,7 @@ public class CallJS : MonoBehaviour
         }
 
         //IntPtr glob = SMDll.JS_NewGlobalObject(cx, global_class, new IntPtr(0));
-        IntPtr glob = SMDll.JS_CreateGlobal(cx);
+        glob = SMDll.JS_CreateGlobal(cx);
         //Debug.Log("glob: " + glob + "\n");
 
         //         var ho = new SMDll.JSHandleObject(); ho._ = new IntPtr(0);
@@ -90,16 +119,28 @@ public class CallJS : MonoBehaviour
         SMDll.JS_InitReflect(cx, glob);
 
         SMDll.JS_DefineFunction(cx, glob, "printInt", new SMDll.JSNative(printInt), 1, 0/*4164*/);
-        GameObjectWrap.Register(cx, glob);
+        SMDll.JS_DefineFunction(cx, glob, "printString", new SMDll.JSNative(printString), 1, 0/*4164*/);
+        SMDll.JS_DefineFunction(cx, glob, "getTestObject", new SMDll.JSNative(getTestObject), 1, 0/*4164*/);
+        SMDll.JS_SetErrorReporter(cx, new SMDll.JSErrorReporter(errorReporter));
+        // GameObjectWrap.Register(cx, glob);
 
-        string source = @"var test = {};";
+        JSMgr.RegisterCS(cx, glob);
+        JSMgr.AddTypeInfo(typeof(GameObject));
+        JSMgr.AddTypeInfo(typeof(Camera));
+
+        testGameObject = gameObject;// new GameObject("i love you");
+        //testGameObject.tag = "Finish";
+        
 
         SMDll.jsval rval = new SMDll.jsval();
         string filename = "noname";
         uint lineno = 0;
 
-        int executeOK = SMDll.JS_EvaluateScript(cx, glob, source, (uint)source.Length, filename, lineno, ref rval);
-        //string str = Marshal.PtrToStringAnsi(SMDll.JS_EncodeString(cx, SMDll.JS_ValueToString(cx, rval)));
+        int executeOK = SMDll.JS_EvaluateScript(cx, glob, Test.testScript, (uint)Test.testScript.Length, filename, lineno, ref rval);
+        Debug.Log("evaluate result = " + executeOK);
+        // string source = @"var test = {};";
+
+
         
         SMDll.JS_DestroyContext(cx);
         SMDll.JS_Finish(rt); 
@@ -110,6 +151,8 @@ public class CallJS : MonoBehaviour
         IntPtr jsClass = SMDll.JShelp_NewClass("GameObject", 0);
 
     }
+
+
 	
 	// Update is called once per frame
 	void Update () {

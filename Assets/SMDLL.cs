@@ -96,6 +96,10 @@ public class SMDll
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSNative(IntPtr cx, uint argc, IntPtr vp);
 
+    // typedef void(* JSErrorReporter)(JSContext *cx, const char *message, JSErrorReport *report);
+    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public delegate int JSErrorReporter(IntPtr cx, string message, IntPtr report);
+
     // typedef JSBool (* JSHasInstanceOp)(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSHasInstanceOp(IntPtr cx, JSHandleObject obj, int v, IntPtr bp);
@@ -207,6 +211,10 @@ public class SMDll
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj, string name, JSNative call, UInt32 nargs, UInt32 flags);
 
+    // extern JS_PUBLIC_API(JSErrorReporter) JS_SetErrorReporter(JSContext *cx, JSErrorReporter er);
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JS_SetErrorReporter(IntPtr cx, JSErrorReporter er);
+
 //     JSBool JS_DefineProperty(JSContext *cx, JSObject *obj,
 //         const char *name, jsval value, JSPropertyOp getter,
 //         JSStrictPropertyOp setter, unsigned attrs);
@@ -234,8 +242,12 @@ public class SMDll
     public static extern double JShelp_ArgvDouble(IntPtr cx, IntPtr vp, int i);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JShelp_ArgvInt(IntPtr cx, IntPtr vp, int i);
-    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern string JShelp_ArgvString(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, EntryPoint = "JShelp_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JShelp_ArgvString_(IntPtr cx, IntPtr vp, int i);
+    public static string JShelp_ArgvString(IntPtr cx, IntPtr vp, int i)
+    {
+        return Marshal.PtrToStringAnsi(JShelp_ArgvString_(cx, vp, i));
+    }
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_ArgvObject(IntPtr cx, IntPtr vp, int i);
 
@@ -254,7 +266,8 @@ public class SMDll
     public static extern int JShelp_SetRvalString(IntPtr cx, IntPtr vp, string value);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JShelp_SetRvalObject(IntPtr cx, IntPtr vp, IntPtr value);
-
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_SetRvalUndefined(IntPtr cx, IntPtr vp);
     /*
      * 生成 jsval，有些函数需要传递 jsval，或者 jsval*
      */
@@ -271,6 +284,9 @@ public class SMDll
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern  void JShelp_SetJsvalObject(ref jsval vp, IntPtr value);
 
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className);
+    
 
     [StructLayout(LayoutKind.Explicit)]
     public struct jsval
@@ -289,6 +305,13 @@ public class SMDll
                  string bytes, uint length,
                  string filename, uint lineno,
                  ref jsval rval);
+
+//     extern JS_PUBLIC_API(JSScript *)
+// JS_CompileScript(JSContext *cx, JSObject *obj,
+//                  const char *bytes, size_t length,
+//                  const char *filename, unsigned lineno);
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JS_CompileScript(IntPtr cx, IntPtr obj, string bytes, uint length, string filename, uint lineno);
 
     //     extern JS_PUBLIC_API(JSString *)
     //     JS_ValueToString(JSContext *cx, jsval v);
