@@ -77,8 +77,7 @@ public static class JSMgr
     }
 
     // 将 js 传递过来的参数转换为 c# 参数
-    // 
-    public static object ConvertJSParam2CSParam(Type t, IntPtr cx, IntPtr vp, int paramIndex)
+    public static object ConvertJSParam2CSParam(Type t, IntPtr cx, IntPtr vp, int paramIndex, Oper op)
     {
         if (t == typeof(System.Boolean))
             return SMDll.JShelp_ArgvBool(cx, vp, paramIndex);
@@ -111,7 +110,11 @@ public static class JSMgr
 //         }
         else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
         {
+            if (SMDll.JShelp_ArgvIsNull(cx, vp, paramIndex))
+                return null;
             IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, paramIndex);
+            if (jsObj == IntPtr.Zero)
+                return null;
             object csObject = SMData.getNativeObj(jsObj);
             return csObject;
         }
@@ -144,7 +147,10 @@ public static class JSMgr
             int paramIndex = paramStartIndex + i;
 
             Type t = ps[i].ParameterType;
-            args.Add(ConvertJSParam2CSParam(t, cx, vp, paramIndex));
+            if (ps[i].IsOptional && SMDll.JShelp_ArgvIsUndefined(cx, vp, paramIndex))
+                args.Add(ps[i].DefaultValue);
+            else
+                args.Add(ConvertJSParam2CSParam(t, cx, vp, paramIndex, Oper.METHOD));
         }
         return args.ToArray();
     }
@@ -242,7 +248,7 @@ public static class JSMgr
         case Oper.SET_FIELD:
             {
                 FieldInfo field = aInfo.fields[index];
-                field.SetValue(csObj, ConvertJSParam2CSParam(field.FieldType, cx, vp, 4));
+                field.SetValue(csObj, ConvertJSParam2CSParam(field.FieldType, cx, vp, 4, Oper.SET_FIELD));
             }
             break;
         case Oper.GET_PROPERTY:
@@ -253,7 +259,7 @@ public static class JSMgr
         case Oper.SET_PROPERTY:
             {
                 PropertyInfo property = aInfo.properties[index];
-                property.SetValue(csObj, ConvertJSParam2CSParam(property.PropertyType, cx, vp, 4), null);
+                property.SetValue(csObj, ConvertJSParam2CSParam(property.PropertyType, cx, vp, 4, Oper.SET_PROPERTY), null);
             }
             break;
         case Oper.METHOD:

@@ -235,6 +235,10 @@ public class SMDll
     /*
      * Arguments from JavaScript
      */
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_ArgvIsUndefined(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_ArgvIsNull(IntPtr cx, IntPtr vp, int i);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JShelp_ArgvBool(IntPtr cx, IntPtr vp, int i);
