@@ -63,6 +63,13 @@ public class CallJS : MonoBehaviour
 //         Debug.Log(go.name);
 //         return;
 
+//         GameObject[] gos = GameObject.FindGameObjectsWithTag("CreditCard");
+//         for (int i = 0; i < gos.Length; i++)
+//         {
+//             Debug.Log(gos[i].name);
+//             
+//         }
+//         retur
         rt = SMDll.JS_Init(10 * 1024 * 1024);
         //Debug.Log("rt: " + rt + "\n");
         cx = SMDll.JS_NewContext(rt, 8192);

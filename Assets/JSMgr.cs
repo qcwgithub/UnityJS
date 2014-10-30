@@ -76,18 +76,170 @@ public static class JSMgr
         METHOD,
     }
 
-    // 将 js 传递过来的参数转换为 c# 参数
-    public static object ConvertJSParam2CSParam(Type t, IntPtr cx, IntPtr vp, int paramIndex, Oper op)
+    // CS -> JS 用于数组
+    public static SMDll.jsval ConvertCSValue2JSValue(IntPtr cx, IntPtr vp, object csObj)
     {
-        if (t == typeof(System.Boolean))
-            return SMDll.JShelp_ArgvBool(cx, vp, paramIndex);
-        else if (t == typeof(string))
+        SMDll.jsval val = new SMDll.jsval();
+
+        if (csObj == null)
+        {
+            SMDll.JShelp_SetJsvalUndefined(ref val);
+            return val;
+        }
+
+        Type t = csObj.GetType();
+
+        if (t == typeof(string))
+        {
+            SMDll.JShelp_SetJsvalString(cx, ref val, (string)csObj);
+        }
+        else if (t.IsEnum)
+        {
+            SMDll.JShelp_SetJsvalInt(ref val, (int)csObj);
+        }
+        else if (t.IsPrimitive)
+        {
+            if (t == typeof(System.Boolean))
+            {
+                SMDll.JShelp_SetJsvalBool(ref val, (bool)csObj);
+            }
+            else if (t == typeof(System.Char) ||
+                t == typeof(System.Byte) || t == typeof(System.SByte) ||
+                t == typeof(System.UInt16) || t == typeof(System.Int16) ||
+                t == typeof(System.UInt32) || t == typeof(System.Int32) ||
+                t == typeof(System.UInt64) || t == typeof(System.Int64))
+            {
+                SMDll.JShelp_SetJsvalInt(ref val, (int)csObj);
+            }
+            else if (t == typeof(System.Single) || t == typeof(System.Double))
+            {
+                SMDll.JShelp_SetJsvalDouble(ref val, (double)csObj);
+            }
+            else
+            {
+                Debug.Log("CS -> JS: Unknown primitive type: " + t.ToString());
+            }
+        }
+        //         else if (t.IsValueType)
+        //         {
+        // 
+        //         }
+        else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
+        {
+            IntPtr jsObj = SMData.getJSObj(csObj);
+            if (jsObj == IntPtr.Zero)
+            {
+                jsObj = SMDll.JShelp_NewObjectAsClass(cx, CallJS.glob, t.Name);
+                if (jsObj != null)
+                    SMData.addNativeJSRelation(jsObj, csObj);
+            }
+            if (jsObj == IntPtr.Zero)
+                SMDll.JShelp_SetJsvalUndefined(ref val);
+            else
+                SMDll.JShelp_SetJsvalObject(ref val, jsObj);
+        }
+        else
+        {
+            Debug.Log("CS -> JS: Unknown CS type: " + t.ToString());
+            SMDll.JShelp_SetJsvalUndefined(ref val);
+        }
+        return val;
+    }
+
+    // 根据 CS 对象的类型，向 JS 返回值
+    // CS -> JS
+    public static void PushResult(IntPtr cx, IntPtr vp, object csObj)
+    {
+        if (csObj == null)
+        {
+            SMDll.JShelp_SetRvalUndefined(cx, vp);
+            return;
+        }
+
+        Type t = csObj.GetType();
+        
+        if (t == typeof(string))
+        {
+            JSMgr.Push(cx, vp, (string)csObj);
+        }
+        else if (t.IsEnum)
+        {
+            JSMgr.Push(cx, vp, (int)csObj);
+        }
+        else if (t.IsPrimitive)
+        {
+            if (t == typeof(System.Boolean))
+            {
+                JSMgr.Push(cx, vp, (bool)csObj);
+            }
+            else if (t == typeof(System.Char) ||
+                t == typeof(System.Byte) || t == typeof(System.SByte) ||
+                t == typeof(System.UInt16) || t == typeof(System.Int16) ||
+                t == typeof(System.UInt32) || t == typeof(System.Int32) ||
+                t == typeof(System.UInt64) || t == typeof(System.Int64))
+            {
+                JSMgr.Push(cx, vp, (int)csObj);
+            }
+            else if (t == typeof(System.Single) || t == typeof(System.Double))
+            {
+                JSMgr.Push(cx, vp, (double)csObj);
+            }
+            else
+            {
+                Debug.Log("PushResult: Unknown primitive type: " + t.ToString());
+            }
+        }
+        //         else if (t.IsValueType)
+        //         {
+        // 
+        //         }
+        else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
+        {
+            IntPtr jsObj = SMData.getJSObj(csObj);
+            if (jsObj == IntPtr.Zero)
+            {
+                jsObj = SMDll.JShelp_NewObjectAsClass(cx, CallJS.glob, t.Name);
+                if (jsObj != null)
+                    SMData.addNativeJSRelation(jsObj, csObj);
+            }
+            if (jsObj == IntPtr.Zero)
+                SMDll.JShelp_SetRvalUndefined(cx, vp);
+            else
+                JSMgr.Push(cx, vp, (IntPtr)jsObj);
+        }
+        else if (t.IsArray)
+        {
+            Array arr = csObj as Array;
+            IntPtr jsArr = SMDll.JS_NewArrayObject(cx, arr.Length);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                SMDll.jsval val = ConvertCSValue2JSValue(cx, vp, arr.GetValue(i));
+                SMDll.JS_SetElement(cx, jsArr, (uint)i, ref val);
+            }
+            JSMgr.Push(cx, vp, (IntPtr)jsArr);
+        }
+        else
+        {
+            Debug.Log("PushResult: Unknown CS type: " + t.ToString());
+            SMDll.JShelp_SetRvalUndefined(cx, vp);
+        }
+    }
+
+    // JS -> CS
+    // 是根据所需要的 C# 参数类型来转换 js 参数
+    public static object ConvertJSValue2CSValue(Type t, IntPtr cx, IntPtr vp, int paramIndex, Oper op)
+    {
+        if (t == typeof(string))
             return SMDll.JShelp_ArgvString(cx, vp, paramIndex);
         else if (t.IsEnum)
             return SMDll.JShelp_ArgvInt(cx, vp, paramIndex);
         else if (t.IsPrimitive)
         {
-            if (t == typeof(System.Char) ||
+            if (t == typeof(System.Boolean))
+            {
+                return SMDll.JShelp_ArgvBool(cx, vp, paramIndex);
+            }
+            else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
                 t == typeof(System.UInt16) || t == typeof(System.Int16) ||
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
@@ -101,7 +253,7 @@ public static class JSMgr
             }
             else
             {
-                Debug.Log("Unknown primitive type: " + t.ToString());
+                Debug.Log("ConvertJSValue2CSValue: Unknown primitive type: " + t.ToString());
             }
         }
 //         else if (t.IsValueType)
@@ -120,7 +272,7 @@ public static class JSMgr
         }
         else
         {
-            Debug.Log("Unknown CS type: " + t.ToString());
+            Debug.Log("ConvertJSValue2CSValue: Unknown CS type: " + t.ToString());
         }
         return null;
     }
@@ -150,51 +302,11 @@ public static class JSMgr
             if (ps[i].IsOptional && SMDll.JShelp_ArgvIsUndefined(cx, vp, paramIndex))
                 args.Add(ps[i].DefaultValue);
             else
-                args.Add(ConvertJSParam2CSParam(t, cx, vp, paramIndex, Oper.METHOD));
+                args.Add(ConvertJSValue2CSValue(t, cx, vp, paramIndex, Oper.METHOD));
         }
         return args.ToArray();
     }
-    public static void PushResult(IntPtr cx, IntPtr vp, object csObj)
-    {
-        if (csObj == null)
-        {
-            SMDll.JShelp_SetRvalUndefined(cx, vp);
-            return;
-        }
-
-        Type t = csObj.GetType();
-
-        if (t == typeof(bool))
-        {
-            JSMgr.Push(cx, vp, (bool)csObj);
-        }
-        else if (t.IsPrimitive || t.IsEnum)
-        {
-            JSMgr.Push(cx, vp, (double)csObj);
-        }
-        else if (t == typeof(string))
-        {
-            JSMgr.Push(cx, vp, (string)csObj);
-        }
-//         else if (t.IsValueType)
-//         {
-// 
-//         }
-        else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
-        {
-            IntPtr jsObj = SMData.getJSObj(csObj);
-            if (jsObj == IntPtr.Zero)
-            {
-                jsObj = SMDll.JShelp_NewObjectAsClass(cx, CallJS.glob, t.Name);
-                if (jsObj != null)
-                    SMData.addNativeJSRelation(jsObj, csObj);
-            }
-            if (jsObj == IntPtr.Zero)
-                SMDll.JShelp_SetRvalUndefined(cx, vp);
-            else
-                JSMgr.Push(cx, vp, jsObj);
-        }
-    }
+    
 
     public static void AddTestObject(IntPtr cx, string className, object csObj, string jsName)
     {
@@ -248,7 +360,7 @@ public static class JSMgr
         case Oper.SET_FIELD:
             {
                 FieldInfo field = aInfo.fields[index];
-                field.SetValue(csObj, ConvertJSParam2CSParam(field.FieldType, cx, vp, 4, Oper.SET_FIELD));
+                field.SetValue(csObj, ConvertJSValue2CSValue(field.FieldType, cx, vp, 4, Oper.SET_FIELD));
             }
             break;
         case Oper.GET_PROPERTY:
@@ -259,7 +371,7 @@ public static class JSMgr
         case Oper.SET_PROPERTY:
             {
                 PropertyInfo property = aInfo.properties[index];
-                property.SetValue(csObj, ConvertJSParam2CSParam(property.PropertyType, cx, vp, 4, Oper.SET_PROPERTY), null);
+                property.SetValue(csObj, ConvertJSValue2CSValue(property.PropertyType, cx, vp, 4, Oper.SET_PROPERTY), null);
             }
             break;
         case Oper.METHOD:

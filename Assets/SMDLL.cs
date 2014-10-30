@@ -221,6 +221,15 @@ public class SMDll
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_DefineProperty(IntPtr cx, IntPtr obj, string name, jsval value, JSPROPERTYOP getter, JS_STRICTPROPERTYSTUB setter, UInt32 attrs );
 
+    // extern JS_PUBLIC_API(JSObject *) JS_NewArrayObject(JSContext *cx, int length, jsval *vector);
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewArrayObject", CharSet = CharSet.Ansi)]
+    public static extern IntPtr JS_NewArrayObject_(IntPtr cx, int length, IntPtr vector);
+    public static IntPtr JS_NewArrayObject(IntPtr cx, int length) { return JS_NewArrayObject_(cx, length, IntPtr.Zero); }
+
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    // extern JS_PUBLIC_API(JSBool)JS_SetElement(JSContext *cx, JSObject *obj, uint32_t index, jsval *vp);
+    public static extern int JS_SetElement(IntPtr cx, IntPtr obj, uint index, ref jsval vp);
+
     public delegate IntPtr JS_NewGlobalObject_Del(IntPtr cx, IntPtr clasp, IntPtr principals);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -231,6 +240,8 @@ public class SMDll
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_ThisObject(IntPtr cx, IntPtr vp);
+
+
 
     /*
      * Arguments from JavaScript
@@ -287,6 +298,9 @@ public class SMDll
     public static extern void JShelp_SetJsvalString(IntPtr cx, ref jsval vp, string value);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern  void JShelp_SetJsvalObject(ref jsval vp, IntPtr value);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JShelp_SetJsvalUndefined(ref jsval vp);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className);
