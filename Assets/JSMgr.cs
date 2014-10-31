@@ -225,6 +225,8 @@ public static class JSMgr
         }
     }
 
+    
+
     // JS -> CS
     // 是根据所需要的 C# 参数类型来转换 js 参数
     public static object ConvertJSValue2CSValue(Type t, IntPtr cx, IntPtr vp, int paramIndex, Oper op)
@@ -386,6 +388,12 @@ public static class JSMgr
         }
 
         JSMgr.PushResult(cx, vp, result);
+        return SMDll.JS_TRUE;
+    }
+
+    static int Wrap(IntPtr cx, uint argc, IntPtr vp)
+    {
+
         return SMDll.JS_TRUE;
     }
 
