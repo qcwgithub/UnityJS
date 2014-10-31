@@ -303,6 +303,12 @@ public class SMDll
     public static extern void JShelp_SetJsvalUndefined(ref jsval vp);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern string JShelp_GetErroReportFileName(IntPtr report);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_GetErroReportLintNo(IntPtr report);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className);
     
 

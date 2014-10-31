@@ -47,7 +47,9 @@ public class CallJS : MonoBehaviour
     }
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
-        Debug.Log(message);
+        string fileName = SMDll.JShelp_GetErroReportFileName(report);
+        int lineno = SMDll.JShelp_GetErroReportLintNo(report);
+        Debug.Log(fileName + "(" + lineno.ToString() + "): " + message);
         return 1;
     }
 //     static int printString(IntPtr cx, UInt32 argc, IntPtr vp)
