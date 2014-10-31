@@ -31,6 +31,24 @@ public static class JSMgr
     public static void Push(IntPtr cx, IntPtr vp, float v) { SMDll.JShelp_SetRvalDouble(cx, vp, (double)v); }
     public static void Push(IntPtr cx, IntPtr vp, decimal v) { SMDll.JShelp_SetRvalDouble(cx, vp, (double)v); }
 
+    public static void EvaluateFile(IntPtr cx, IntPtr glob, string file)
+    {
+        SMDll.jsval val = new SMDll.jsval();
+        StreamReader r = new StreamReader(file, Encoding.UTF8);
+        string s = r.ReadToEnd();
+
+        SMDll.JS_EvaluateScript(cx, glob, s, (uint)s.Length, file, 1, ref val);
+        r.Close();
+    }
+    public static void EvaluateGeneratedScripts(IntPtr cx, IntPtr glob)
+    {
+        string[] files = Directory.GetFiles(Application.dataPath + "/StreamingAssets/JavaScript/Generated");
+        for (int i = 0; i < files.Length; i++)
+        {
+            EvaluateFile(cx, glob, files[i]);
+        }
+    }
+
     public static void RegisterEnum(string name, JSEnum[] enums)
     {
         // 导出到 js 文件中
@@ -308,7 +326,61 @@ public static class JSMgr
         }
         return args.ToArray();
     }
-    
+    public static object[] BuildOverloadedMethodArgs(IntPtr cx, IntPtr vp, MethodInfo[] methods, ref int methodIndex, int paramCount, int paramStartIndex)
+    {
+        ArrayList args = new ArrayList();
+        for (int i = 0; i < paramCount; i++)
+        {
+            int paramIndex = paramStartIndex + i;
+            IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, paramIndex);
+            ValueTypeWrap2.ValueTypeWrap csObj = SMData.getNativeObj(jsObj) as ValueTypeWrap2.ValueTypeWrap;
+            if (jsObj == IntPtr.Zero || csObj == null)
+            {
+                Debug.Log("");
+                return null;
+            }
+            args.Add(csObj);
+        }
+
+
+        int overloadedCount = 1;
+        string name = methods[methodIndex].Name;
+        for (int i = methodIndex; i < methods.Length; i++)
+        {
+            if (methods[i].Name == name)
+            {
+                overloadedCount++;
+
+                ParameterInfo[] ps = methods[i].GetParameters();
+                if (paramCount > ps.Length)
+                    continue;
+
+                bool paramMatch = true;
+                for (int j = 0; j < paramCount; j++)
+                {
+                    if (((ValueTypeWrap2.ValueTypeWrap)args[j]).obj.GetType() != ps[j].ParameterType)
+                    {
+                        paramMatch = false;
+                        break;
+                    }
+                }
+                if (!paramMatch)
+                    continue;
+                for (int j = paramCount; j < ps.Length; j++)
+                {
+                    if (!ps[i].IsOptional)
+                    {
+                        paramMatch = false;
+                        continue;
+                    }
+                }
+                if (!paramMatch)
+                    continue;
+                return args.ToArray();
+            }
+        }
+        return null;
+    }
 
     public static void AddTestObject(IntPtr cx, string className, object csObj, string jsName)
     {
@@ -378,11 +450,25 @@ public static class JSMgr
             break;
         case Oper.METHOD:
             {
-                int methodParamCount = (int)argc - paramCount;
+                bool overloaded = SMDll.JShelp_ArgvBool(cx, vp, paramCount);
+                paramCount++;
 
-                MethodInfo method = aInfo.methods[index];
-                object[] args = BuildMethodArgs(cx, vp, method, methodParamCount, paramCount);
-                result = method.Invoke(csObj, args);
+
+                int methodParamCount = (int)argc - paramCount;
+                if (overloaded)
+                {
+                    int methodIndex = index;
+                    object[] args = BuildOverloadedMethodArgs(cx, vp, aInfo.methods, ref methodIndex, methodParamCount, paramCount);
+                    if (args == null)
+                        return SMDll.JS_FALSE;
+                    result = aInfo.methods[methodIndex].Invoke(csObj, args);
+                }
+                else
+                {
+                    MethodInfo method = aInfo.methods[index];
+                    object[] args = BuildMethodArgs(cx, vp, method, methodParamCount, paramCount);
+                    result = method.Invoke(csObj, args);
+                }
             }
             break;
         }
@@ -424,12 +510,24 @@ public static class JSMgr
 
         ti.properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance/* | BindingFlags.Static*/);
         ti.methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+        List<MethodInfo> lMethods = new List<MethodInfo>();
+        for (int i = 0; i < ti.methods.Length; i++)
+        {
+            // generic method is not supported
+            if (ti.methods[i].IsGenericMethod || ti.methods[i].IsGenericMethodDefinition)
+                continue;
+            else
+                lMethods.Add(ti.methods[i]);
+        }
+        ti.methods = lMethods.ToArray();
 
         int slot = allTypeInfo.Count;
         allTypeInfo.Add(ti);
         tiOut = ti;
         return slot;
     }
+
+    public static IntPtr CSOBJ = IntPtr.Zero;
 
     /*
      * Create a 'CS' global object to use in JS
@@ -450,6 +548,7 @@ public static class JSMgr
         );
 
         SMDll.JS_DefineFunction(cx, obj, "Call", new SMDll.JSNative(Call), 0/* narg */, 0);
+        CSOBJ = obj;
     }
 
     

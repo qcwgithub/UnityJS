@@ -21,7 +21,7 @@ public static class ToJS
     // 一些配置
 
     /* 枚举统一输出到同一个地方去 */
-    static string enumFile = Application.dataPath + "/StreamingAssets/JavaScript/enum.javascript";
+    static string enumFile = Application.dataPath + "/StreamingAssets/JavaScript/Generated/enum.javascript";
     static string tempFile = Application.dataPath + "/StreamingAssets/JavaScript/temp.javascript";
 
     // 开始生成，有一些事情要处理
@@ -124,31 +124,73 @@ Object.defineProperty({0}.prototype, '{1}',
         * 5 actual parameters
         * 6 return type
         * 7 op
+        * 8 is override
         */
         string fmt = @"
 /* {6} */
-{0}.prototype.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, false, this{5}); ]]";
+{0}.prototype.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, false, {8}, this{5}); ]]";
         string fmtStatic = @"
 /* static {6} */
-{0}.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, true{5}); ]]";
+{0}.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, {8}, true{5}); ]]";
+
+        int overloadedIndex = 0;
+        int overloadedCount = 0;
+        int overloadedMaxParamCount = 0;
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < methods.Length; i++)
         {
+            MethodInfo method = methods[i];
+
+            // 这里假设实例函数不会和静态函数同名
+            ParameterInfo[] paramS = method.GetParameters();
+            if (i < methods.Length - 1 && method.Name == methods[i + 1].Name)
+            {
+                if (overloadedCount == 0)
+                {
+                    overloadedCount = 2;
+                    overloadedIndex = i;
+                }
+                else
+                {
+                    overloadedCount++;
+                }
+                overloadedMaxParamCount = Math.Max(overloadedMaxParamCount, paramS.Length);
+                continue;
+            }
             StringBuilder sbFormalParam = new StringBuilder();
             StringBuilder sbActualParam = new StringBuilder();
-            MethodInfo method = methods[i];
-            ParameterInfo[] paramS = method.GetParameters();
-            for (int j = 0; j < paramS.Length; j++)
+
+            if (overloadedCount > 0)
             {
-                ParameterInfo param = paramS[j];
-                sbFormalParam.AppendFormat("arg{0}/* {1} */{2}", j, param.ParameterType.Name, (j == paramS.Length - 1 ? "" : ", "));
-                sbActualParam.AppendFormat("{2}arg{0}{1}", j, (j == paramS.Length - 1 ? "" : ","), (j == 0 ? ", " : ""));
+                for (int j = 0; j < overloadedMaxParamCount; j++)
+                {
+                    sbFormalParam.AppendFormat("a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "));
+                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount  - 1 ? "" : ","), (j == 0 ? ", " : ""));
+                }
+                sb.AppendFormat(@"
+/* overloaded {0} */", overloadedCount);
+                if (!method.IsStatic)
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "true");
+                else
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "true");
             }
-            if (!method.IsStatic)
-                sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD);
             else
-                sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD);
+            {
+                for (int j = 0; j < paramS.Length; j++)
+                {
+                    ParameterInfo param = paramS[j];
+                    sbFormalParam.AppendFormat("a{0}/* {1} */{2}", j, param.ParameterType.Name, (j == paramS.Length - 1 ? "" : ", "));
+                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == paramS.Length - 1 ? "" : ","), (j == 0 ? ", " : ""));
+                }
+                if (!method.IsStatic)
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "false");
+                else
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "false");
+            }
+
+            overloadedCount = 0;
+            overloadedIndex = 0;
         }
         return sb;
     }

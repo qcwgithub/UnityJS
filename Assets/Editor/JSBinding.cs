@@ -84,7 +84,7 @@ public class JSBinding
     static BindType[] binds = new BindType[]
     {
         new BindType("GameObject", typeof(GameObject), ""),
-        new BindType("Camera", typeof(Camera), ""),
+        //new BindType("Camera", typeof(Camera), ""),
         //new BindType("Transform", typeof(Camera), ""),
         //new BindType("EventType", typeof(EventType), ""),
     };

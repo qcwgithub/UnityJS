@@ -132,12 +132,15 @@ public class CallJS : MonoBehaviour
         // GameObjectWrap.Register(cx, glob);
 
         JSMgr.RegisterCS(cx, glob);
+        ValueTypeWrap2.Register(cx);
         JSMgr.AddTypeInfo(typeof(GameObject));
         JSMgr.AddTypeInfo(typeof(Camera));
 
         testGameObject = gameObject;// new GameObject("i love you");
         //testGameObject.tag = "Finish";
-        
+
+        JSMgr.EvaluateGeneratedScripts(cx, glob);
+        JSMgr.EvaluateFile(cx, glob, Application.dataPath + "/StreamingAssets/JavaScript/test.javascript");
 
         SMDll.jsval rval = new SMDll.jsval();
         string filename = "noname";
