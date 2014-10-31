@@ -144,16 +144,6 @@ public class CallJS : MonoBehaviour
         JSMgr.EvaluateGeneratedScripts(cx, glob);
         JSMgr.EvaluateFile(cx, glob, Application.dataPath + "/StreamingAssets/JavaScript/test.javascript");
 
-        SMDll.jsval rval = new SMDll.jsval();
-        string filename = "noname";
-        uint lineno = 0;
-
-        int executeOK = SMDll.JS_EvaluateScript(cx, glob, Test.testScript, (uint)Test.testScript.Length, filename, lineno, ref rval);
-        Debug.Log("evaluate result = " + executeOK);
-        // string source = @"var test = {};";
-
-
-        
         SMDll.JS_DestroyContext(cx);
         SMDll.JS_Finish(rt); 
     }

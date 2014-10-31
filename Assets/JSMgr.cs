@@ -45,6 +45,8 @@ public static class JSMgr
         string[] files = Directory.GetFiles(Application.dataPath + "/StreamingAssets/JavaScript/Generated");
         for (int i = 0; i < files.Length; i++)
         {
+            if (files[i].IndexOf(".meta") == files[i].Length - 5)
+                continue;
             EvaluateFile(cx, glob, files[i]);
         }
     }
@@ -326,12 +328,25 @@ public static class JSMgr
         }
         return args.ToArray();
     }
+    // paramCount 是指这个重载函数最多有几个参数
     public static object[] BuildOverloadedMethodArgs(IntPtr cx, IntPtr vp, MethodInfo[] methods, ref int methodIndex, int paramCount, int paramStartIndex)
     {
+        int realParamCount = 0;
+
         ArrayList args = new ArrayList();
         for (int i = 0; i < paramCount; i++)
         {
             int paramIndex = paramStartIndex + i;
+            if (SMDll.JShelp_ArgvIsUndefined(cx, vp, paramIndex))
+                break;
+
+            realParamCount++;
+
+            if (SMDll.JShelp_ArgvIsNull(cx, vp, paramIndex))
+            {
+                args.Add(null);
+                continue;
+            }
             IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, paramIndex);
             ValueTypeWrap2.ValueTypeWrap csObj = SMData.getNativeObj(jsObj) as ValueTypeWrap2.ValueTypeWrap;
             if (jsObj == IntPtr.Zero || csObj == null)
@@ -339,12 +354,14 @@ public static class JSMgr
                 Debug.Log("");
                 return null;
             }
-            args.Add(csObj);
+            args.Add(csObj.obj);
         }
 
 
         int overloadedCount = 1;
         string name = methods[methodIndex].Name;
+        // 遍历重载函数（名字相同）
+        // 看看哪个参数与传进来的参数匹配
         for (int i = methodIndex; i < methods.Length; i++)
         {
             if (methods[i].Name == name)
@@ -352,13 +369,17 @@ public static class JSMgr
                 overloadedCount++;
 
                 ParameterInfo[] ps = methods[i].GetParameters();
-                if (paramCount > ps.Length)
+                // 传进来的参数个数比这个函数的参数个数还多
+                // 肯定不会是这个函数
+                if (realParamCount > ps.Length)
                     continue;
 
+                // 比较每个传进来的参数与函数参数的类型
+                // 必须要全部相同
                 bool paramMatch = true;
-                for (int j = 0; j < paramCount; j++)
+                for (int j = 0; j < realParamCount; j++)
                 {
-                    if (((ValueTypeWrap2.ValueTypeWrap)args[j]).obj.GetType() != ps[j].ParameterType)
+                    if (args[j].GetType() != ps[j].ParameterType)
                     {
                         paramMatch = false;
                         break;
@@ -366,7 +387,9 @@ public static class JSMgr
                 }
                 if (!paramMatch)
                     continue;
-                for (int j = paramCount; j < ps.Length; j++)
+                // 如果说传进来的参数个数比这个函数的参数个数少
+                // 那么有可能是这个函数后面的参数是可选参数
+                for (int j = realParamCount; j < ps.Length; j++)
                 {
                     if (!ps[i].IsOptional)
                     {

@@ -128,10 +128,10 @@ Object.defineProperty({0}.prototype, '{1}',
         */
         string fmt = @"
 /* {6} */
-{0}.prototype.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, false, {8}, this{5}); ]]";
+{0}.prototype.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, false, this, {8}{5}); ]]";
         string fmtStatic = @"
 /* static {6} */
-{0}.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, {8}, true{5}); ]]";
+{0}.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, true, {8}{5}); ]]";
 
         int overloadedIndex = 0;
         int overloadedCount = 0;
