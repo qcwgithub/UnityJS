@@ -8,6 +8,18 @@ using System.Collections;
 using System.Text;
 using System.Security;
 
+public class Qiucw
+{
+	public static void AddIntOut(out int i)
+	{
+		i = 28;
+	}
+	
+	public static void AddIntRef(ref int i)
+	{
+		i++;
+	}
+}
 #pragma warning disable 414
 public class MonoPInvokeCallbackAttribute : System.Attribute
 {
@@ -133,8 +145,8 @@ public class CallJS : MonoBehaviour
 
         JSMgr.RegisterCS(cx, glob);
         ValueTypeWrap2.Register(cx);
-        JSMgr.AddTypeInfo(typeof(GameObject));
-        JSMgr.AddTypeInfo(typeof(Camera));
+        JSMgr.AddTypeInfo(typeof(Qiucw));
+        //JSMgr.AddTypeInfo(typeof(Camera));
 
         testGameObject = gameObject;// new GameObject("i love you");
         //testGameObject.tag = "Finish";

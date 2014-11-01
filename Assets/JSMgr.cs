@@ -251,6 +251,9 @@ public static class JSMgr
     // 是根据所需要的 C# 参数类型来转换 js 参数
     public static object ConvertJSValue2CSValue(Type t, IntPtr cx, IntPtr vp, int paramIndex, Oper op)
     {
+        if (t.IsByRef)
+            t = t.GetElementType();
+
         if (t == typeof(string))
             return SMDll.JShelp_ArgvString(cx, vp, paramIndex);
         else if (t.IsEnum)

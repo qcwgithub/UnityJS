@@ -10,13 +10,7 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 
-public class Qiucw
-{
-    public static void AddInt(out int i)
-    {
-        i = 28;
-    }
-}
+
 
 public class JSBinding
 {
@@ -87,11 +81,24 @@ public class JSBinding
             baseName = bn;
         }
     }
+	public class Qiucw
+	{
+		public static void AddIntOut(out int i)
+		{
+			i = 28;
+		}
+		
+		public static void AddIntRef(ref int i)
+		{
+			i++;
+		}
+	}
 
     static BindType[] binds = new BindType[]
     {
-        new BindType("GameObject", typeof(GameObject), ""),
-        new BindType("Qiucw", typeof(Qiucw), ""),
+		new BindType("Qiucw", typeof(Qiucw), ""),
+        //new BindType("GameObject", typeof(GameObject), ""),
+        
         //new BindType("Camera", typeof(Camera), ""),
         //new BindType("Transform", typeof(Camera), ""),
         //new BindType("EventType", typeof(EventType), ""),
