@@ -57,21 +57,19 @@ public class CallJS : MonoBehaviour
 // 
 //    
 	// Use this for initialization
+
+    
 	void Awake ()
     {
-//         MethodInfo ms = typeof(GameObject).GetMethod("Find");
-//         object[] para = new object[] { (object)"Main Camera" };
-//         GameObject go = (GameObject)ms.Invoke((object)null, para);
-//         Debug.Log(go.name);
-//         return;
+        /*Type t = typeof(Qiucw);
+        MethodInfo m = t.GetMethod("AddInt");
+        int age = 20;
+        Qiucw q = new Qiucw();
+        var os = new object[]{age};
+        m.Invoke(q, os);
+        Debug.Log((age));
+        return;*/
 
-//         GameObject[] gos = GameObject.FindGameObjectsWithTag("CreditCard");
-//         for (int i = 0; i < gos.Length; i++)
-//         {
-//             Debug.Log(gos[i].name);
-//             
-//         }
-//         retur
         rt = SMDll.JS_Init(10 * 1024 * 1024);
         //Debug.Log("rt: " + rt + "\n");
         cx = SMDll.JS_NewContext(rt, 8192);

@@ -10,6 +10,13 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 
+public class Qiucw
+{
+    public static void AddInt(out int i)
+    {
+        i = 28;
+    }
+}
 
 public class JSBinding
 {
@@ -84,6 +91,7 @@ public class JSBinding
     static BindType[] binds = new BindType[]
     {
         new BindType("GameObject", typeof(GameObject), ""),
+        new BindType("Qiucw", typeof(Qiucw), ""),
         //new BindType("Camera", typeof(Camera), ""),
         //new BindType("Transform", typeof(Camera), ""),
         //new BindType("EventType", typeof(EventType), ""),
