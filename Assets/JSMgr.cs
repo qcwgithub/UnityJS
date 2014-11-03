@@ -92,10 +92,15 @@ public static class JSMgr
     {
         public FieldInfo[] fields;
         public PropertyInfo[] properties;
+        public ConstructorInfo[] constructors;
         public MethodInfo[] methods;
     }
     public static List<ATypeInfo> allTypeInfo = new List<ATypeInfo>();
 
+    public static void ClearTypeInfo()
+    {
+        allTypeInfo.Clear();
+    }
     public static int AddTypeInfo(Type type)
     {
         ATypeInfo tiOut = new ATypeInfo();
@@ -124,6 +129,7 @@ public static class JSMgr
             else
                 lMethods.Add(ti.methods[i]);
         }
+        ti.constructors = type.GetConstructors();
         ti.methods = lMethods.ToArray();
 
         int slot = allTypeInfo.Count;

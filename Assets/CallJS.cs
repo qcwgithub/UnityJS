@@ -10,12 +10,12 @@ using System.Security;
 
 public class Qiucw
 {
-	public static void AddIntOut(out int i)
+    public string yyy = "he lijun";
+	public void AddIntOut(out int i)
 	{
 		i = 28;
 	}
-	
-	public static void AddIntRef(ref int i)
+	public void AddIntRef(ref int i)
 	{
 		i++;
 	}
@@ -83,8 +83,8 @@ public class CallJS : MonoBehaviour
     
 	void Awake ()
     {
-        MethodInfo mi = typeof(YES).GetMethod("Call");
-        Debug.Log(mi.GetParameters()[0].ParameterType.IsArray);
+        //MethodInfo mi = typeof(YES).GetMethod("Call");
+        //Debug.Log(mi.GetParameters()[0].ParameterType.IsArray);
 
         //object result = mi.Invoke(null, new object[]{ 1,2,3,4,5 });
         //Debug.Log((result.ToString()));

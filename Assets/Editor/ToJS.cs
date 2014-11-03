@@ -31,11 +31,15 @@ public static class ToJS
         var writer = OpenFile(enumFile, false);
         writer.Close();
 
+        JSMgr.ClearTypeInfo();
+
     }
     public static void OnEnd()
     {
 
     }
+
+    
 
     public static StringBuilder BuildFields(Type type, FieldInfo[] fields, int slot)
     {
@@ -110,6 +114,44 @@ Object.defineProperty({0}.prototype, '{1}',
                 (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly")
                 );
         }
+        return sb;
+    }
+    public static StringBuilder BuildConstructors(Type type, ConstructorInfo[] constructors, int slot)
+    {
+        /*
+         * 0 op
+         * 1 slot
+         * 2 index
+         * 3 true (isStatic)
+         * 4 args
+         * 5 Class name
+         * 6 overload count
+         * 7 formal parameters
+         */
+        string fmt = @"{5} = function({7}) [[
+    /* overloaded {6} */
+    return CS.Call({0}, {1}, {2}, {3}, {8}{4});
+]]";
+        bool bOverload = constructors.Length > 0;
+        int overloadedMaxParamCount = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < constructors.Length; i++)
+        {
+            ConstructorInfo con = constructors[i];
+            ParameterInfo[] ps = con.GetParameters();
+            overloadedMaxParamCount = Math.Max(ps.Length, overloadedMaxParamCount);
+
+        }
+        StringBuilder sbFormalParam = new StringBuilder();
+        StringBuilder sbActualParam = new StringBuilder();
+        for (int j = 0; j < overloadedMaxParamCount; j++)
+        {
+            sbFormalParam.AppendFormat("a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "));
+            sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ","), (j == 0 ? ", " : ""));
+        }
+
+        sb.AppendFormat(fmt, (int)VCall.Oper.CONSTRUCTOR, slot, 0, "true", sbActualParam, type.Name, constructors.Length, sbFormalParam, bOverload?"true":"false");
+
         return sb;
     }
     public static StringBuilder BuildMethods(Type type, MethodInfo[] methods, int slot)
@@ -194,7 +236,7 @@ Object.defineProperty({0}.prototype, '{1}',
         }
         return sb;
     }
-    public static StringBuilder BuildClass(Type type, StringBuilder sbFields, StringBuilder sbProperties, StringBuilder sbMethods)
+    public static StringBuilder BuildClass(Type type, StringBuilder sbFields, StringBuilder sbProperties, StringBuilder sbMethods, StringBuilder sbConstructors)
     {
         /*
         * class
@@ -202,9 +244,10 @@ Object.defineProperty({0}.prototype, '{1}',
         * 1 fields
         * 2 properties
         * 3 methods
+        * 4 constructors
         */
         string fmt = @"
-{0} = function() [[]]
+{4}
 
 // fields
 {1}
@@ -214,7 +257,7 @@ Object.defineProperty({0}.prototype, '{1}',
 {3}
 ";
         var sb = new StringBuilder();
-        sb.AppendFormat(fmt, type.Name, sbFields.ToString(), sbProperties.ToString(), sbMethods.ToString());
+        sb.AppendFormat(fmt, type.Name, sbFields.ToString(), sbProperties.ToString(), sbMethods.ToString(), sbConstructors.ToString());
         return sb;
     }
 
@@ -235,10 +278,11 @@ Object.defineProperty({0}.prototype, '{1}',
 
         JSMgr.ATypeInfo ti;
         int slot = JSMgr.AddTypeInfo(type, out ti);
+        var sbCons = BuildConstructors(type, ti.constructors, slot);
         var sbFields = BuildFields(type, ti.fields, slot);
         var sbProperties = BuildProperties(type, ti.properties, slot);
         var sbMethods = BuildMethods(type, ti.methods, slot);
-        var sbClass = BuildClass(type, sbFields, sbProperties, sbMethods);
+        var sbClass = BuildClass(type, sbFields, sbProperties, sbMethods, sbCons);
         HandleStringFormat(sbClass);
 
         string fileName = Application.dataPath + "/StreamingAssets/JavaScript/Generated/" + type.Name + ".javascript";

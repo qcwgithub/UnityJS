@@ -36,7 +36,7 @@ public class VCall
     public int jsParamCount { get { return lstCSParam.Count; } }
     public List<CSParam> lstCSParam;
     public int csParamCount { get { return lstCSParam.Count; } }
-    public MethodInfo m_Method;
+    public MethodBase m_Method;
     public ParameterInfo[] m_ParamInfo;
     public object[] callParams;
 
@@ -116,6 +116,7 @@ public class VCall
             else if (SMDll.JS_IsArrayObject(cx, jsObj))
             {
                 jsParam.isArray = true;
+                Debug.LogError("parse js array to cs is not supported");
             }
             else
             {
@@ -138,11 +139,11 @@ public class VCall
      * write into this.method and this.ps
      *
      */
-    public int MatchOverloadedMethod(MethodInfo[] methods, int methodIndex)
+    public int MatchOverloadedMethod(MethodBase[] methods, int methodIndex)
     {
         for (int i = methodIndex; i < methods.Length; i++)
         {
-            MethodInfo method = methods[i];
+            MethodBase method = methods[i];
             if (method.Name != methods[methodIndex].Name)
                 return -1;
             ParameterInfo[] ps = method.GetParameters();
@@ -405,7 +406,7 @@ public class VCall
             }
             SMDll.JShelp_SetJsvalObject(ref val, jsArr);
         }
-        else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
+        else if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass)
         {
             IntPtr jsObj = SMData.getJSObj(csObj);
             if (jsObj == IntPtr.Zero)
@@ -449,7 +450,8 @@ public class VCall
         SET_FIELD = 1,
         GET_PROPERTY = 2,
         SET_PROPERTY = 3,
-        METHOD,
+        METHOD = 4,
+        CONSTRUCTOR = 5,
     }
 
     public int Call(IntPtr cx, uint argc, IntPtr vp)
@@ -511,6 +513,7 @@ public class VCall
                 }
                 break;
             case Oper.METHOD:
+            case Oper.CONSTRUCTOR:
                 {
                     bool overloaded = SMDll.JShelp_ArgvBool(cx, vp, paramCount);
                     paramCount++;
@@ -520,21 +523,27 @@ public class VCall
 
                     if (overloaded)
                     {
-                        if (-1 == MatchOverloadedMethod(aInfo.methods, index))
+                        MethodBase[] methods = aInfo.methods;
+                        if (op == Oper.CONSTRUCTOR)
+                            methods = aInfo.constructors;
+
+                        if (-1 == MatchOverloadedMethod(methods, index))
                             return SMDll.JS_FALSE;
                     }
                     else
                     {
                         m_Method = aInfo.methods[index];
+                        if (op == Oper.CONSTRUCTOR)
+                            m_Method = aInfo.constructors[index];
                     }
 
                     this.ExtractCSParams();
 
-                    object[] args = BuildMethodArgs();
-                    if (null == args)
+                    callParams = BuildMethodArgs();
+                    if (null == callParams)
                         return SMDll.JS_FALSE;
 
-                    result = this.m_Method.Invoke(csObj, args);
+                    result = this.m_Method.Invoke(csObj, callParams);
                 }
                 break;
         }

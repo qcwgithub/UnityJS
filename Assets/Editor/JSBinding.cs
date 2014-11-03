@@ -81,22 +81,23 @@ public class JSBinding
             baseName = bn;
         }
     }
-	public class Qiucw
-	{
-		public static void AddIntOut(out int i)
-		{
-			i = 28;
-		}
-		
-		public static void AddIntRef(ref int i)
-		{
-			i++;
-		}
-	}
+    public class Qiucw
+    {
+        public string yyy = "he lijun";
+        public void AddIntOut(out int i)
+        {
+            i = 28;
+        }
+        public void AddIntRef(ref int i)
+        {
+            i++;
+        }
+    }
 
     static BindType[] binds = new BindType[]
     {
         new BindType("GameObject", typeof(GameObject), ""),
+        //new BindType("GameObject", typeof(GameObject), ""),
         
         //new BindType("Camera", typeof(Camera), ""),
         //new BindType("Transform", typeof(Camera), ""),
