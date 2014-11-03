@@ -20,6 +20,16 @@ public class Qiucw
 		i++;
 	}
 }
+public class YES
+{
+    public static int Call(params object[] os)
+    {
+        int result = 0;
+        for (int i = 0; i < os.Length; i++)
+            result += (int)os[i];
+        return result;
+    }
+}
 #pragma warning disable 414
 public class MonoPInvokeCallbackAttribute : System.Attribute
 {
@@ -73,6 +83,12 @@ public class CallJS : MonoBehaviour
     
 	void Awake ()
     {
+        MethodInfo mi = typeof(YES).GetMethod("Call");
+        Debug.Log(mi.GetParameters()[0].ParameterType.IsArray);
+
+        //object result = mi.Invoke(null, new object[]{ 1,2,3,4,5 });
+        //Debug.Log((result.ToString()));
+
         /*Type t = typeof(Qiucw);
         MethodInfo m = t.GetMethod("AddInt");
         int age = 20;
@@ -145,8 +161,7 @@ public class CallJS : MonoBehaviour
 
         JSMgr.RegisterCS(cx, glob);
         ValueTypeWrap2.Register(cx);
-        JSMgr.AddTypeInfo(typeof(Qiucw));
-        //JSMgr.AddTypeInfo(typeof(Camera));
+        JSMgr.AddTypeInfo(typeof(GameObject));
 
         testGameObject = gameObject;// new GameObject("i love you");
         //testGameObject.tag = "Finish";

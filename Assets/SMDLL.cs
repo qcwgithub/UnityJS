@@ -232,8 +232,14 @@ public class SMDll
 
     public delegate IntPtr JS_NewGlobalObject_Del(IntPtr cx, IntPtr clasp, IntPtr principals);
 
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_IsArrayObject", CharSet = CharSet.Ansi)]
+    public static extern int JS_IsArrayObject_(IntPtr cx, IntPtr obj);
+    public static bool JS_IsArrayObject(IntPtr cx, IntPtr obj) { return (JS_IsArrayObject_(cx, obj) == SMDll.JS_TRUE); }
+
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JS_CreateGlobal(IntPtr cx);
+
+    
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_NewClass(string name, UInt32 flag);    
@@ -301,6 +307,9 @@ public class SMDll
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern void JShelp_SetJsvalUndefined(ref jsval vp);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JShelp_SetRvalJSVAL(IntPtr cx, IntPtr vp, ref jsval value);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JShelp_GetErroReportFileName", CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_GetErroReportFileName_(IntPtr report);

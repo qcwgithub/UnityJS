@@ -71,11 +71,11 @@ Object.defineProperty({0}, '{1}',
         {
             FieldInfo field = fields[i];
             if (!field.IsStatic)
-                sb.AppendFormat(fmt, type.Name, field.Name, slot, i, (int)JSMgr.Oper.GET_FIELD, (int)JSMgr.Oper.SET_FIELD, field.FieldType.Name,
+                sb.AppendFormat(fmt, type.Name, field.Name, slot, i, (int)VCall.Oper.GET_FIELD, (int)VCall.Oper.SET_FIELD, field.FieldType.Name,
                     (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" :""
                     );
             else
-                sb.AppendFormat(fmtStatic, type.Name, field.Name, slot, i, (int)JSMgr.Oper.GET_FIELD, (int)JSMgr.Oper.SET_FIELD, field.FieldType.Name,
+                sb.AppendFormat(fmtStatic, type.Name, field.Name, slot, i, (int)VCall.Oper.GET_FIELD, (int)VCall.Oper.SET_FIELD, field.FieldType.Name,
                     (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" : ""
                     );
         }
@@ -106,7 +106,7 @@ Object.defineProperty({0}.prototype, '{1}',
         for (int i = 0; i < properties.Length; i++)
         {
             PropertyInfo property = properties[i];
-            sb.AppendFormat(fmt, type.Name, property.Name, slot, i, (int)JSMgr.Oper.GET_PROPERTY, (int)JSMgr.Oper.SET_PROPERTY, property.PropertyType.Name,
+            sb.AppendFormat(fmt, type.Name, property.Name, slot, i, (int)VCall.Oper.GET_PROPERTY, (int)VCall.Oper.SET_PROPERTY, property.PropertyType.Name,
                 (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly")
                 );
         }
@@ -171,9 +171,9 @@ Object.defineProperty({0}.prototype, '{1}',
                 sb.AppendFormat(@"
 /* overloaded {0} */", overloadedCount);
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "true");
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "true");
                 else
-                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "true");
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "true");
             }
             else
             {
@@ -184,9 +184,9 @@ Object.defineProperty({0}.prototype, '{1}',
                     sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == paramS.Length - 1 ? "" : ","), (j == 0 ? ", " : ""));
                 }
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "false");
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "false");
                 else
-                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSMgr.Oper.METHOD, "false");
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "false");
             }
 
             overloadedCount = 0;
