@@ -1,1 +1,1 @@
-var go = new GameObject(CS.string('Anmum'))
+print(typeof print)

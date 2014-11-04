@@ -1,10 +1,18 @@
-﻿using System;
+﻿using UnityEngine;
+using UnityEditor;
+using System;
+using System.Collections;
+using System.Text;
+using System.Reflection;
+using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
+using System.IO;
+using System.Text.RegularExpressions;
 
-public class ToExportEnums
+public class JSBindingSettings
 {
-    public static Type[] lst = new Type[]
+    public static Type[] enums = new Type[]
     {
 	    typeof(UnityEngine.FilterMode),
         typeof(UnityEngine.TextureWrapMode),
@@ -144,5 +152,10 @@ public class ToExportEnums
         typeof(UnityEngine.IMECompositionMode),
         typeof(UnityEngine.DeviceOrientation),
         typeof(UnityEngine.LocationServiceStatus),
+    };
+
+    public static Type[] classes = new Type[]
+    {
+        typeof(GameObject),
     };
 }

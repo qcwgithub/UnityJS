@@ -12,14 +12,14 @@ using System.Text.RegularExpressions;
 
 
 
-public class VCall
+public class JSVCall
 {
     public class JSParam
     {
         public int index; // 参数位置
         public object csObj; //对应的cs对象，对于基础类型，string，枚举，这个为null
-        public bool isWrap { get { return csObj != null && csObj is ValueTypeWrap2.ValueTypeWrap; } }
-        public object wrappedObj { get { return ((ValueTypeWrap2.ValueTypeWrap)csObj).obj; } set { ((ValueTypeWrap2.ValueTypeWrap)csObj).obj = value; } }
+        public bool isWrap { get { return csObj != null && csObj is JSValueWrap.Wrap; } }
+        public object wrappedObj { get { return ((JSValueWrap.Wrap)csObj).obj; } set { ((JSValueWrap.Wrap)csObj).obj = value; } }
         public bool isArray;
         public bool isNull;
     }
@@ -85,7 +85,7 @@ public class VCall
     /*
      * ExtractJSParams
      * 
-     * write into lstJSParam
+     * 写入lstJSParam
      * 
      * RETURN
      * false -- fail
@@ -98,29 +98,29 @@ public class VCall
         for (int i = 0; i < count; i++)
         {
             int index = i + start;
-            bool bUndefined = SMDll.JShelp_ArgvIsUndefined(cx, vp, index);
+            bool bUndefined = JSApi.JShelp_ArgvIsUndefined(cx, vp, index);
             if (bUndefined)
                 return true;
 
             JSParam jsParam = new JSParam();
             jsParam.index = index;
-            jsParam.isNull = SMDll.JShelp_ArgvIsNull(cx, vp, index);
+            jsParam.isNull = JSApi.JShelp_ArgvIsNull(cx, vp, index);
             jsParam.isArray = false;
             jsParam.csObj = null;
 
-            IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, index);
+            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, index);
             if (jsObj == IntPtr.Zero)
             {
                 jsParam.csObj = null;
             }
-            else if (SMDll.JS_IsArrayObject(cx, jsObj))
+            else if (JSApi.JS_IsArrayObject(cx, jsObj))
             {
                 jsParam.isArray = true;
                 Debug.LogError("parse js array to cs is not supported");
             }
             else
             {
-                object csObj = SMData.getNativeObj(jsObj);
+                object csObj = JSMgr.getNativeObj(jsObj);
                 if (csObj == null)
                 {
                     Debug.Log("ExtractJSParams: CSObject is not found");
@@ -206,14 +206,14 @@ public class VCall
             t = t.GetElementType();
 
         if (t == typeof(string))
-            return SMDll.JShelp_ArgvString(cx, vp, paramIndex);
+            return JSApi.JShelp_ArgvString(cx, vp, paramIndex);
         else if (t.IsEnum)
-            return SMDll.JShelp_ArgvInt(cx, vp, paramIndex);
+            return JSApi.JShelp_ArgvInt(cx, vp, paramIndex);
         else if (t.IsPrimitive)
         {
             if (t == typeof(System.Boolean))
             {
-                return SMDll.JShelp_ArgvBool(cx, vp, paramIndex);
+                return JSApi.JShelp_ArgvBool(cx, vp, paramIndex);
             }
             else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
@@ -221,11 +221,11 @@ public class VCall
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
-                return SMDll.JShelp_ArgvInt(cx, vp, paramIndex);
+                return JSApi.JShelp_ArgvInt(cx, vp, paramIndex);
             }
             else if (t == typeof(System.Single) || t == typeof(System.Double))
             {
-                return SMDll.JShelp_ArgvDouble(cx, vp, paramIndex);
+                return JSApi.JShelp_ArgvDouble(cx, vp, paramIndex);
             }
             else
             {
@@ -238,14 +238,14 @@ public class VCall
         //         }
         else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
         {
-            if (SMDll.JShelp_ArgvIsNull(cx, vp, paramIndex))
+            if (JSApi.JShelp_ArgvIsNull(cx, vp, paramIndex))
                 return null;
 
-            IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, paramIndex);
+            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, paramIndex);
             if (jsObj == IntPtr.Zero)
                 return null;
 
-            object csObject = SMData.getNativeObj(jsObj);
+            object csObject = JSMgr.getNativeObj(jsObj);
             return csObject;
         }
         else
@@ -309,6 +309,7 @@ public class VCall
                 {
                     // todo
                     // 
+                    Debug.Log("array parameter not supported");
                 }
                 else if (jsParam.isNull)
                 {
@@ -337,10 +338,10 @@ public class VCall
 
     // CS -> JS
     // 将 cs 对象转换为 js 对象
-    public SMDll.jsval CSObject_2_JSValue(object csObj)
+    public JSApi.jsval CSObject_2_JSValue(object csObj)
     {
-        SMDll.jsval val = new SMDll.jsval();
-        SMDll.JShelp_SetJsvalUndefined(ref val);
+        JSApi.jsval val = new JSApi.jsval();
+        JSApi.JShelp_SetJsvalUndefined(ref val);
 
         if (csObj == null)
         {
@@ -354,17 +355,17 @@ public class VCall
         }
         else if (t == typeof(string))
         {
-            SMDll.JShelp_SetJsvalString(cx, ref val, (string)csObj);
+            JSApi.JShelp_SetJsvalString(cx, ref val, (string)csObj);
         }
         else if (t.IsEnum)
         {
-            SMDll.JShelp_SetJsvalInt(ref val, (int)csObj);
+            JSApi.JShelp_SetJsvalInt(ref val, (int)csObj);
         }
         else if (t.IsPrimitive)
         {
             if (t == typeof(System.Boolean))
             {
-                SMDll.JShelp_SetJsvalBool(ref val, (bool)csObj);
+                JSApi.JShelp_SetJsvalBool(ref val, (bool)csObj);
             }
             else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
@@ -372,11 +373,11 @@ public class VCall
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
-                SMDll.JShelp_SetJsvalInt(ref val, (int)csObj);
+                JSApi.JShelp_SetJsvalInt(ref val, (int)csObj);
             }
             else if (t == typeof(System.Single) || t == typeof(System.Double))
             {
-                SMDll.JShelp_SetJsvalDouble(ref val, (double)csObj);
+                JSApi.JShelp_SetJsvalDouble(ref val, (double)csObj);
             }
             else
             {
@@ -397,40 +398,40 @@ public class VCall
                 Debug.LogWarning("cs return [][] may cause problems.");
             }
 
-            IntPtr jsArr = SMDll.JS_NewArrayObject(cx, arr.Length);
+            IntPtr jsArr = JSApi.JS_NewArrayObject(cx, arr.Length);
             
             for (int i = 0; i < arr.Length; i++)
             {
-                SMDll.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
-                SMDll.JS_SetElement(cx, jsArr, (uint)i, ref subVal);
+                JSApi.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
+                JSApi.JS_SetElement(cx, jsArr, (uint)i, ref subVal);
             }
-            SMDll.JShelp_SetJsvalObject(ref val, jsArr);
+            JSApi.JShelp_SetJsvalObject(ref val, jsArr);
         }
         else if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass)
         {
-            IntPtr jsObj = SMData.getJSObj(csObj);
+            IntPtr jsObj = JSMgr.getJSObj(csObj);
             if (jsObj == IntPtr.Zero)
             {
-                jsObj = SMDll.JShelp_NewObjectAsClass(cx, CallJS.glob, t.Name);
+                jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name);
                 if (jsObj != null)
-                    SMData.addNativeJSRelation(jsObj, csObj);
+                    JSMgr.addNativeJSRelation(jsObj, csObj);
             }
             if (jsObj == IntPtr.Zero)
-                SMDll.JShelp_SetJsvalUndefined(ref val);
+                JSApi.JShelp_SetJsvalUndefined(ref val);
             else
-                SMDll.JShelp_SetJsvalObject(ref val, jsObj);
+                JSApi.JShelp_SetJsvalObject(ref val, jsObj);
         }
         else
         {
             Debug.Log("CS -> JS: Unknown CS type: " + t.ToString());
-            SMDll.JShelp_SetJsvalUndefined(ref val);
+            JSApi.JShelp_SetJsvalUndefined(ref val);
         }
         return val;
     }
 
     public void PushResult(object csObj)
     {
-        // handle ref/out parameters
+        // 处理 ref/out 参数
         for (int i = 0; i < lstCSParam.Count; i++)
         {
             if (lstCSParam[i].isRef)
@@ -439,8 +440,8 @@ public class VCall
             }
         }
 
-        SMDll.jsval val = CSObject_2_JSValue(csObj);
-        SMDll.JShelp_SetRvalJSVAL(cx, vp, ref val);
+        JSApi.jsval val = CSObject_2_JSValue(csObj);
+        JSApi.JShelp_SetRvalJSVAL(cx, vp, ref val);
     }
 
 
@@ -459,15 +460,15 @@ public class VCall
         this.Reset(cx, vp);
 
         // 前面4个参数是固定的
-        Oper op = (Oper)SMDll.JShelp_ArgvInt(cx, vp, 0);
-        int slot = SMDll.JShelp_ArgvInt(cx, vp, 1);
-        int index = SMDll.JShelp_ArgvInt(cx, vp, 2);
-        bool isStatic = SMDll.JShelp_ArgvBool(cx, vp, 3);
+        Oper op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
+        int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
+        int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
+        bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
 
         if (slot < 0 || slot >= JSMgr.allTypeInfo.Count)
         {
             Debug.LogError("Bad slot: " + slot);
-            return SMDll.JS_FALSE;
+            return JSApi.JS_FALSE;
         }
         JSMgr.ATypeInfo aInfo = JSMgr.allTypeInfo[slot];
 
@@ -475,13 +476,13 @@ public class VCall
         object csObj = null;
         if (!isStatic)
         {
-            IntPtr jsObj = SMDll.JShelp_ArgvObject(cx, vp, 4);
+            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, 4);
             if (jsObj == IntPtr.Zero)
-                return SMDll.JS_FALSE;
+                return JSApi.JS_FALSE;
 
-            csObj = SMData.getNativeObj(jsObj);
+            csObj = JSMgr.getNativeObj(jsObj);
             if (csObj == null)
-                return SMDll.JS_FALSE;
+                return JSApi.JS_FALSE;
 
             paramCount++;
         }
@@ -515,11 +516,11 @@ public class VCall
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-                    bool overloaded = SMDll.JShelp_ArgvBool(cx, vp, paramCount);
+                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
                     paramCount++;
 
                     if (!this.ExtractJSParams(paramCount, (int)argc - paramCount))
-                        return SMDll.JS_FALSE;
+                        return JSApi.JS_FALSE;
 
                     if (overloaded)
                     {
@@ -528,7 +529,7 @@ public class VCall
                             methods = aInfo.constructors;
 
                         if (-1 == MatchOverloadedMethod(methods, index))
-                            return SMDll.JS_FALSE;
+                            return JSApi.JS_FALSE;
                     }
                     else
                     {
@@ -541,7 +542,7 @@ public class VCall
 
                     callParams = BuildMethodArgs();
                     if (null == callParams)
-                        return SMDll.JS_FALSE;
+                        return JSApi.JS_FALSE;
 
                     result = this.m_Method.Invoke(csObj, callParams);
                 }
@@ -549,6 +550,6 @@ public class VCall
         }
 
         this.PushResult(result);
-        return SMDll.JS_TRUE;
+        return JSApi.JS_TRUE;
     }
 }

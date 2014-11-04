@@ -21,9 +21,7 @@ using System.Collections;
 using System.Text;
 using System.Security;
 
-using JSBool = System.Int32;
-
-public class SMDll
+public class JSApi
 {
 
 /***********************************************************************
@@ -234,7 +232,7 @@ public class SMDll
 
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_IsArrayObject", CharSet = CharSet.Ansi)]
     public static extern int JS_IsArrayObject_(IntPtr cx, IntPtr obj);
-    public static bool JS_IsArrayObject(IntPtr cx, IntPtr obj) { return (JS_IsArrayObject_(cx, obj) == SMDll.JS_TRUE); }
+    public static bool JS_IsArrayObject(IntPtr cx, IntPtr obj) { return (JS_IsArrayObject_(cx, obj) == JSApi.JS_TRUE); }
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JS_CreateGlobal(IntPtr cx);

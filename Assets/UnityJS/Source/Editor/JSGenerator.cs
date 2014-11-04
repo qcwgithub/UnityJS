@@ -10,19 +10,17 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 
-public static class ToJS
+public static class JSGenerator
 {
     // 输入参数
     static StringBuilder sb = null;
     public static Type type = null;
-    public static string className = "TestEnum";
-    public static string baseClassName = "";
 
     // 一些配置
 
     /* 枚举统一输出到同一个地方去 */
-    static string enumFile = Application.dataPath + "/StreamingAssets/JavaScript/Generated/enum.javascript";
-    static string tempFile = Application.dataPath + "/StreamingAssets/JavaScript/temp.javascript";
+    static string enumFile = JSMgr.generatedDir+ "/enum.javascript";
+    static string tempFile = JSMgr.javascriptDir + "/temp.javascript";
 
     // 开始生成，有一些事情要处理
     public static void OnBegin()
@@ -38,8 +36,6 @@ public static class ToJS
     {
 
     }
-
-    
 
     public static StringBuilder BuildFields(Type type, FieldInfo[] fields, int slot)
     {
@@ -75,11 +71,11 @@ Object.defineProperty({0}, '{1}',
         {
             FieldInfo field = fields[i];
             if (!field.IsStatic)
-                sb.AppendFormat(fmt, type.Name, field.Name, slot, i, (int)VCall.Oper.GET_FIELD, (int)VCall.Oper.SET_FIELD, field.FieldType.Name,
+                sb.AppendFormat(fmt, type.Name, field.Name, slot, i, (int)JSVCall.Oper.GET_FIELD, (int)JSVCall.Oper.SET_FIELD, field.FieldType.Name,
                     (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" :""
                     );
             else
-                sb.AppendFormat(fmtStatic, type.Name, field.Name, slot, i, (int)VCall.Oper.GET_FIELD, (int)VCall.Oper.SET_FIELD, field.FieldType.Name,
+                sb.AppendFormat(fmtStatic, type.Name, field.Name, slot, i, (int)JSVCall.Oper.GET_FIELD, (int)JSVCall.Oper.SET_FIELD, field.FieldType.Name,
                     (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" : ""
                     );
         }
@@ -110,7 +106,7 @@ Object.defineProperty({0}.prototype, '{1}',
         for (int i = 0; i < properties.Length; i++)
         {
             PropertyInfo property = properties[i];
-            sb.AppendFormat(fmt, type.Name, property.Name, slot, i, (int)VCall.Oper.GET_PROPERTY, (int)VCall.Oper.SET_PROPERTY, property.PropertyType.Name,
+            sb.AppendFormat(fmt, type.Name, property.Name, slot, i, (int)JSVCall.Oper.GET_PROPERTY, (int)JSVCall.Oper.SET_PROPERTY, property.PropertyType.Name,
                 (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly")
                 );
         }
@@ -147,10 +143,10 @@ Object.defineProperty({0}.prototype, '{1}',
         for (int j = 0; j < overloadedMaxParamCount; j++)
         {
             sbFormalParam.AppendFormat("a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "));
-            sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ","), (j == 0 ? ", " : ""));
+            sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "), (j == 0 ? ", " : ""));
         }
 
-        sb.AppendFormat(fmt, (int)VCall.Oper.CONSTRUCTOR, slot, 0, "true", sbActualParam, type.Name, constructors.Length, sbFormalParam, bOverload?"true":"false");
+        sb.AppendFormat(fmt, (int)JSVCall.Oper.CONSTRUCTOR, slot, 0, "true", sbActualParam, type.Name, constructors.Length, sbFormalParam, bOverload?"true":"false");
 
         return sb;
     }
@@ -208,14 +204,14 @@ Object.defineProperty({0}.prototype, '{1}',
                 for (int j = 0; j < overloadedMaxParamCount; j++)
                 {
                     sbFormalParam.AppendFormat("a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "));
-                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount  - 1 ? "" : ","), (j == 0 ? ", " : ""));
+                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount  - 1 ? "" : ", "), (j == 0 ? ", " : ""));
                 }
                 sb.AppendFormat(@"
 /* overloaded {0} */", overloadedCount);
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "true");
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true");
                 else
-                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "true");
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true");
             }
             else
             {
@@ -223,12 +219,12 @@ Object.defineProperty({0}.prototype, '{1}',
                 {
                     ParameterInfo param = paramS[j];
                     sbFormalParam.AppendFormat("a{0}/* {1} */{2}", j, param.ParameterType.Name, (j == paramS.Length - 1 ? "" : ", "));
-                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == paramS.Length - 1 ? "" : ","), (j == 0 ? ", " : ""));
+                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == paramS.Length - 1 ? "" : ", "), (j == 0 ? ", " : ""));
                 }
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "false");
+                    sb.AppendFormat(fmt, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false");
                 else
-                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)VCall.Oper.METHOD, "false");
+                    sb.AppendFormat(fmtStatic, type.Name, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false");
             }
 
             overloadedCount = 0;
@@ -261,20 +257,13 @@ Object.defineProperty({0}.prototype, '{1}',
         return sb;
     }
 
-    public static void Generate()
+    public static void GenerateClass()
     {
-        /* 如果是枚举，单独处理 */
-        if (type.IsEnum)
-        {
-            GenEnum();
-            return;
-        }
-
-        if (type.IsInterface)
+        /*if (type.IsInterface)
         {
             Debug.Log("Interface: " + type.ToString() + " ignored.");
             return;
-        }
+        }*/
 
         JSMgr.ATypeInfo ti;
         int slot = JSMgr.AddTypeInfo(type, out ti);
@@ -285,7 +274,7 @@ Object.defineProperty({0}.prototype, '{1}',
         var sbClass = BuildClass(type, sbFields, sbProperties, sbMethods, sbCons);
         HandleStringFormat(sbClass);
 
-        string fileName = Application.dataPath + "/StreamingAssets/JavaScript/Generated/" + type.Name + ".javascript";
+        string fileName = JSMgr.generatedDir + "/" + type.Name + ".javascript";
         var writer2 = OpenFile(fileName, false);
         writer2.Write(sbClass.ToString());
         writer2.Close();
@@ -306,23 +295,9 @@ Object.defineProperty({0}.prototype, '{1}',
         var writer = OpenFile(tempFile, false);
         writer.Write(sb.ToString());
         writer.Close();
-
-        return;
-        
-        
-        {
-            GenBegin();
-            GenConstructor();
-            GenRegister();
-            GenEnd();
-        }
-
-        sb.Replace("[[", "{");
-        sb.Replace("]]", "}");
-        sb.Replace("'", "\"");
     }
 
-    static void GenEnum()
+    static void GenerateEnum()
     {
         var writer = OpenFile(enumFile, true/* append */);
 
@@ -385,64 +360,9 @@ Object.defineProperty({0}.prototype, '{1}',
 
     public static void Clear()
     {
-        className = null;
         type = null;
         sb = new StringBuilder();
-    }    
-    /*
-    public static void Generate()
-    {
-        sb = new StringBuilder();
-        string s = "";
-
-        MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance);
-        List<MethodInfo> list = new List<MethodInfo>();
-        for (int i = 0; i < methods.Length; i++)
-        {
-            MethodInfo m = methods[i];
-            if (m.Name.IndexOf("get_") == 0)
-                continue;
-            if (m.IsGenericMethod)
-                continue;
-
-             ParameterInfo[] param = m.GetParameters();
-//             if (param != null && param.Length > 0)
-//             {
-//                 for (int j = 0; j < param.Length; j++)
-//                 {
-//                     if (param[j].ParameterType.IsArray)
-//                 }
-//             }
-
-            if (m.ReturnType.IsArray)
-                continue;
-
-            s += m.ReturnType.ToString() + " " + m.Name + "(";
-            for (int j = 0; j < param.Length; j++)
-            {
-                s += param[j].ToString();
-                if (j < param.Length - 1)
-                    s += ", ";
-            }
-            s += ");\n";
-        }
-
-        Debug.Log(s);
     }
-    */
-    static void GenBegin()
-    {
-        string fmt = @"
-using System;
-using UnityEngine;
-
-public class {0}Wrap
-[[
-";
-
-        sb.AppendFormat(fmt, type.Name);
-    }
-
     static void GenEnd()
     {
         string fmt = @"
@@ -450,100 +370,6 @@ public class {0}Wrap
 ";
         sb.Append(fmt);
     }
-
-    static void GenConstructor()
-    {
-string fmt = @"
-    public static int Constructor(IntPtr cx, UInt32 argc, IntPtr vp)
-    [[
-        var gt = SMData.getGlobalType(typeof({0}));
-        if (gt == null)
-        [[
-             Debug.Log('GlobalType not found:' + typeof({0}).Name);
-             return SMDll.JS_FALSE;
-        ]]
-
-        {0} go = new {0}();
-
-        IntPtr obj = SMDll.JS_NewObject(cx, gt.jsClass, gt.proto, gt.parentProto);
-        SMData.addNativeJSRelation(obj, go);
-
-        return SMDll.JShelp_SetRvalObject (cx, vp, obj);
-    ]]
-";
-        sb.AppendFormat(fmt, type.Name);
-        Debug.Log(sb);
-    }
-
-    static void GenRegister()
-    {
-string fmt = @"
-    public static void Register(IntPtr cx, IntPtr glob)
-    [[
-        IntPtr jsClass = SMDll.JShelp_NewClass('{0}', 0);
-
-        IntPtr obj = SMDll.JS_InitClass(cx, glob,
-            IntPtr.Zero, /* parentProto */
-            jsClass, /* JSClass */
-            {0}Wrap.Constructor, /* constructor */
-            0, /* constructor argument count*/
-            IntPtr.Zero, /* properties */
-            IntPtr.Zero, /* functions */
-            IntPtr.Zero, /* static properties */
-            IntPtr.Zero /* static functions*/
-        );
-
-        SMData.addGlobalType(typeof({0}), jsClass, obj, IntPtr.Zero);
-    ]]
-";
-        sb.AppendFormat(fmt, type.Name);
-
-        Debug.Log(sb);
-    }
-
-    static string GetPushFunction(Type t)
-    {
-        if (t.IsEnum)
-        {
-            return "PushEnum";
-        }
-        else if (t == typeof(bool) || t.IsPrimitive || t == typeof(string))
-        {
-            return "Push";
-        }
-        return "Push";
-    }
-
-    static void GenAFunction(string functionName)
-    {
-string fmt = @"
-    static int animation(IntPtr cx, UInt32 argc, IntPtr vp)
-    [[
-        if (argc != 0)
-            return SMDll.JS_FALSE;
-
-        IntPtr obj = SMDll.JShelp_ThisObject(cx, vp);
-
-        var go = ({0})SMData.getNativeObj(obj);
-        if (go == null)
-            return SMDll.JS_FALSE;
-
-        Animation ani = go.{1};
-        if (ani == null)
-            return SMDll.JS_FALSE;
-
-        IntPtr jsObj = SMData.getJSObj(ani);
-        if (jsObj == IntPtr.Zero)
-        [[
-            IntPtr jsClass = SMDll.JShelp_NewClass('Animation', 0);
-            jsObj = SMDll.JS_NewObject(cx, jsClass, IntPtr.Zero, IntPtr.Zero);
-            SMData.addNativeJSRelation(jsObj, ani);
-        ]]
-        return SMDll.JShelp_SetRvalObject(cx, vp, jsObj);
-    ]]
-";
-    }
-
 
     static void WriteUsingSection(StreamWriter writer)
     {
@@ -562,5 +388,83 @@ using UnityEngine;
         sb.Replace("[[", "{");
         sb.Replace("]]", "}");
         sb.Replace("'", "\"");
+    }
+
+    [MenuItem("JSGenerator/Generate Enum Bindings")]
+    public static void GenerateEnumBindings()
+    {
+        JSGenerator.OnBegin();
+
+        for (int i = 0; i < JSBindingSettings.enums.Length; i++)
+        {
+            JSGenerator.Clear();
+            JSGenerator.type = JSBindingSettings.enums[i];
+            JSGenerator.GenerateEnum();
+        }
+
+        JSGenerator.OnEnd();
+
+        Debug.Log("Generate Enum Bindings finish. total = " + JSBindingSettings.enums.Length.ToString());
+    }
+
+    [MenuItem("JSGenerator/Generate Class Bindings")]
+    public static void GenerateClassBindings()
+    {
+        JSGenerator.OnBegin();
+        for (int i = 0; i < JSBindingSettings.classes.Length; i++)
+        {
+            JSGenerator.Clear();
+            JSGenerator.type = JSBindingSettings.classes[i];
+            JSGenerator.GenerateClass();
+        }
+
+        JSGenerator.OnEnd();
+
+        Debug.Log("Generate Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
+    }
+
+    [MenuItem("JSGenerator/Output All Types in UnityEngine")]
+    public static void OutputAllTypesInUnityEngine()
+    {
+        var asm = typeof(GameObject).Assembly;
+        var tps = asm.GetTypes();
+        var writer = new StreamWriter(tempFile, false, Encoding.UTF8);
+
+        writer.WriteLine("// enum");
+        writer.WriteLine("");
+
+        for (int i = 0; i < tps.Length; i++)
+        {
+            if (tps[i].IsEnum)
+            {
+                if (tps[i].IsEnum)
+                    writer.WriteLine(tps[i].ToString());
+            }
+        }
+
+        writer.WriteLine("");
+        writer.WriteLine("// interface");
+        writer.WriteLine("");
+
+        for (int i = 0; i < tps.Length; i++)
+        {
+            if (tps[i].IsInterface)
+                writer.WriteLine(tps[i].ToString());
+        }
+
+        writer.WriteLine("");
+        writer.WriteLine("// class");
+        writer.WriteLine("");
+
+        for (int i = 0; i < tps.Length; i++)
+        {
+            if ((!tps[i].IsEnum && !tps[i].IsInterface) &&
+                tps[i].IsClass)
+                writer.WriteLine(tps[i].ToString());
+        }
+        writer.Close();
+
+        Debug.Log("Output All Types in UnityEngine finish, file: " + tempFile);
+        return;
     }
 }
