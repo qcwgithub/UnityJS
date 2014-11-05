@@ -240,7 +240,10 @@ public class JSApi
     
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_NewClass(string name, UInt32 flag);    
+    public static extern IntPtr JShelp_NewClass(string name, UInt32 flag, SC_FINALIZE finalizeOp);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JShelp_InitClass(IntPtr cx, IntPtr jsClass);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JShelp_ThisObject(IntPtr cx, IntPtr vp);
@@ -321,8 +324,10 @@ public class JSApi
     public static extern int JShelp_GetErroReportLintNo(IntPtr report);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className);
-    
+    public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className, SC_FINALIZE finalizeOp);
+
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_SetClassFinalize(IntPtr cx, string className, SC_FINALIZE finalizeOp);
 
     [StructLayout(LayoutKind.Explicit)]
     public struct jsval
@@ -363,6 +368,11 @@ public class JSApi
     //JS_ValueToInt32(JSContext *cx, jsval v, int32_t *ip);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ValueToInt32(IntPtr cx, jsval v, ref int ip);
+
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JS_GC(IntPtr rt);
+
+    
 
     //     [StructLayout(LayoutKind.Sequential)]
     //     public class SystemTime

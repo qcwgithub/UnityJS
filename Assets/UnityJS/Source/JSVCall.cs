@@ -149,6 +149,8 @@ public class JSVCall
             ParameterInfo[] ps = method.GetParameters();
             if (jsParamCount > ps.Length)
                 continue;
+
+            bool matchSuccess = true;
             for (int j = 0; j < ps.Length; j++)
             {
                 ParameterInfo p = ps[j];
@@ -160,31 +162,50 @@ public class JSVCall
                         // 重载函数只匹配是否数组
                         // 无法识别2个都是数组参数但是类型不同的重载函数，这种情况只会调用第1个
                         if (!lstJSParam[j].isArray)
-                            continue;
+                        {
+                            matchSuccess = false;
+                            break;
+                        }
                     }
                     else if (!lstJSParam[j].isWrap)
                     {
                         if (lstJSParam[j].csObj == null || p.ParameterType != lstJSParam[j].csObj.GetType())
-                            continue;
+                        {
+                            matchSuccess = false;
+                            break;
+                        }
                     }
                     else if (lstJSParam[j].isWrap)
                     {
                         if (p.ParameterType != lstJSParam[j].wrappedObj.GetType())
-                            continue;
+                        {
+                            matchSuccess = false;
+                            break;
+                        }
                     }
                     else
-                        continue;
+                    {
+                        matchSuccess = false;
+                        break;
+                    }
                 }
                 else
                 {
                     if (!p.IsOptional)
-                        continue;
+                    {
+                        matchSuccess = false;
+                        break;
+                    }
                 }
             }
-            // yes, this method is what we want
-            this.m_Method = method;
-            this.m_ParamInfo = ps;
-            return i;
+
+            if (matchSuccess)
+            {
+                // yes, this method is what we want
+                this.m_Method = method;
+                this.m_ParamInfo = ps;
+                return i;
+            }
         }
         return -1;
     }
@@ -412,7 +433,7 @@ public class JSVCall
             IntPtr jsObj = JSMgr.getJSObj(csObj);
             if (jsObj == IntPtr.Zero)
             {
-                jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name);
+                jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
                 if (jsObj != null)
                     JSMgr.addNativeJSRelation(jsObj, csObj);
             }
@@ -499,7 +520,7 @@ public class JSVCall
             case Oper.SET_FIELD:
                 {
                     FieldInfo field = aInfo.fields[index];
-                    field.SetValue(csObj, JSValue_2_CSObject(field.FieldType, 4));
+                    field.SetValue(csObj, JSValue_2_CSObject(field.FieldType, paramCount));
                 }
                 break;
             case Oper.GET_PROPERTY:
@@ -510,7 +531,7 @@ public class JSVCall
             case Oper.SET_PROPERTY:
                 {
                     PropertyInfo property = aInfo.properties[index];
-                    property.SetValue(csObj, JSValue_2_CSObject(property.PropertyType, 4), null);
+                    property.SetValue(csObj, JSValue_2_CSObject(property.PropertyType, paramCount), null);
                 }
                 break;
             case Oper.METHOD:

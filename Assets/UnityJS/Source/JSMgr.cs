@@ -123,8 +123,8 @@ public static class JSMgr
         }
 
         JSMgr.EvaluateGeneratedScripts();
-        
     }
+    public static JSApi.SC_FINALIZE mjsFinalizer = new JSApi.SC_FINALIZE(JSObjectFinalizer);
 
     public static void FinishJSEngine()
     {
@@ -270,7 +270,7 @@ public static class JSMgr
      */
     public static void RegisterCS(IntPtr cx, IntPtr glob)
     {
-        IntPtr jsClass = JSApi.JShelp_NewClass("CS", 0);
+        IntPtr jsClass = JSApi.JShelp_NewClass("CS", 0, null);
 
         IntPtr obj = JSApi.JS_InitClass(cx, glob,
             IntPtr.Zero, /* parentProto */
@@ -285,6 +285,11 @@ public static class JSMgr
 
         JSApi.JS_DefineFunction(cx, obj, "Call", new JSApi.JSNative(Call), 0/* narg */, 0);
         CSOBJ = obj;
+    }
+
+    public static void JS_GC()
+    {
+        JSApi.JS_GC(rt);
     }
 
     /*
@@ -303,6 +308,8 @@ public static class JSMgr
 
     public static void addNativeJSRelation(IntPtr jsObj, object nativeObj)
     {
+        Debug.Log("jsObj added: " + jsObj.ToInt32().ToString());
+
         mDict1.Add(jsObj.GetHashCode(), new JS_Native_Relation(jsObj, nativeObj));
         mDict2.Add(nativeObj.GetHashCode(), new JS_Native_Relation(jsObj, nativeObj));
     }
@@ -323,8 +330,21 @@ public static class JSMgr
     static Dictionary<int, JS_Native_Relation> mDict1 = new Dictionary<int, JS_Native_Relation>(); // key = jsObj.hashCode()
     static Dictionary<int, JS_Native_Relation> mDict2 = new Dictionary<int, JS_Native_Relation>(); // key = nativeObj.hashCode()
 
-
-
+    static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
+    {
+        JS_Native_Relation obj;
+        if (mDict1.TryGetValue(jsObj.GetHashCode(), out obj))
+        {
+            string name = obj.nativeObj.GetType().Name;
+            mDict1.Remove(jsObj.GetHashCode());
+            Debug.Log(name + " finalized, left " + mDict1.Count.ToString());
+        }
+        else
+        {
+            Debug.Log("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
+        }
+    }
+    AnimatorOverrideController
     /*
      * 记录已注册的类型
      */

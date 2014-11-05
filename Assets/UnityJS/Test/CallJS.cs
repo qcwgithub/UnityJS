@@ -13,10 +13,12 @@ public class CallJS : MonoBehaviour
 {
 	void Awake ()
     {
+        JSMgr.InitJSEngine();
         JSMgr.EvaluateFile(Application.dataPath + "/StreamingAssets/JavaScript/test.javascript");
+        JSMgr.JS_GC();
     }
 
 	void Update () {
-	
+        
 	}
 }
