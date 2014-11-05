@@ -344,7 +344,7 @@ public static class JSMgr
             Debug.Log("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
         }
     }
-    AnimatorOverrideController
+    
     /*
      * 记录已注册的类型
      */

@@ -163,12 +163,13 @@ Object.defineProperty({0}.prototype, '{1}',
         * 6 return type
         * 7 op
         * 8 is override
+         * 9 some information
         */
         string fmt = @"
-/* {6} */
+/* {6} {9} */
 {0}.prototype.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, false, this, {8}{5}); ]]";
         string fmtStatic = @"
-/* static {6} */
+/* static {6} {9} */
 {0}.{1} = function({2}) [[ return CS.Call({7}, {3}, {4}, true, {8}{5}); ]]";
 
         int overloadedIndex = 0;
@@ -209,12 +210,15 @@ Object.defineProperty({0}.prototype, '{1}',
                 sb.AppendFormat(@"
 /* overloaded {0} */", overloadedCount);
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, className, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true");
+                    sb.AppendFormat(fmt, className, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true", "");
                 else
-                    sb.AppendFormat(fmtStatic, className, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true");
+                    sb.AppendFormat(fmtStatic, className, method.Name, sbFormalParam.ToString(), slot, overloadedIndex, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "true", "");
             }
             else
             {
+                StringBuilder sbInfo = new StringBuilder();
+                sbInfo.AppendFormat("{0}", method.IsSpecialName?"SPECIAL":"");
+
                 for (int j = 0; j < paramS.Length; j++)
                 {
                     ParameterInfo param = paramS[j];
@@ -222,9 +226,9 @@ Object.defineProperty({0}.prototype, '{1}',
                     sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == paramS.Length - 1 ? "" : ", "), (j == 0 ? ", " : ""));
                 }
                 if (!method.IsStatic)
-                    sb.AppendFormat(fmt, className, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false");
+                    sb.AppendFormat(fmt, className, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false", sbInfo);
                 else
-                    sb.AppendFormat(fmtStatic, className, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false");
+                    sb.AppendFormat(fmtStatic, className, method.Name, sbFormalParam.ToString(), slot, i, sbActualParam, method.ReturnType.Name, (int)JSVCall.Oper.METHOD, "false", sbInfo);
             }
 
             overloadedCount = 0;
