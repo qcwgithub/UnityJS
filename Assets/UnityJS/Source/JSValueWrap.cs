@@ -21,7 +21,7 @@ public class JSValueWrap
     static int GetString(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalString(cx, vp, (string)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -38,7 +38,7 @@ public class JSValueWrap
     static int GetBool(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalBool(cx, vp, (bool)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -55,7 +55,7 @@ public class JSValueWrap
     static int GetChar(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -72,7 +72,7 @@ public class JSValueWrap
     static int GetByte(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -89,7 +89,7 @@ public class JSValueWrap
     static int GetSByte(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -106,7 +106,7 @@ public class JSValueWrap
     static int GetUInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -123,7 +123,7 @@ public class JSValueWrap
     static int GetInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -140,7 +140,7 @@ public class JSValueWrap
     static int GetUInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -157,7 +157,7 @@ public class JSValueWrap
     static int GetInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -174,7 +174,7 @@ public class JSValueWrap
     static int GetUInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -192,7 +192,7 @@ public class JSValueWrap
     static int GetInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -209,7 +209,7 @@ public class JSValueWrap
     static int GetSingle(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalDouble(cx, vp, (double)csObj.obj);
         return JSApi.JS_TRUE;
     }
@@ -226,7 +226,7 @@ public class JSValueWrap
     static int GetDouble(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JShelp_ThisObject(cx, vp);
-        Wrap csObj = (Wrap)JSMgr.getNativeObj(jsObj);
+        Wrap csObj = (Wrap)JSMgr.getCSObj(jsObj);
         JSApi.JShelp_SetRvalDouble(cx, vp, (double)csObj.obj);
         return JSApi.JS_TRUE;
     }

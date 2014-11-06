@@ -19,8 +19,8 @@ public static class JSGenerator
     // 一些配置
 
     /* 枚举统一输出到同一个地方去 */
-    static string enumFile = JSMgr.generatedDir+ "/enum.javascript";
-    static string tempFile = JSMgr.javascriptDir + "/temp.javascript";
+    static string enumFile = JSMgr.jsGeneratedDir+ "/enum.javascript";
+    static string tempFile = JSMgr.jsDir + "/temp.javascript";
 
     // 开始生成，有一些事情要处理
     public static void OnBegin()
@@ -66,6 +66,11 @@ Object.defineProperty({0}, '{1}',
     set: function(v) [[ return CS.Call({5}, {2}, {3}, true, v); ]]
 ]]);
 ";
+//         if (fields.Length > 0)
+//         {
+//             Debug.Log(type.Name);
+//         }
+
         var sb = new StringBuilder();
         for (int i = 0; i < fields.Length; i++)
         {
@@ -93,25 +98,58 @@ Object.defineProperty({0}, '{1}',
         * 5 SET_PROPERTY
         * 6 return type
         * 7 READ only / WRITE only
+        * 8 isStatic
         */
         string fmt = @"
 /* {7} {6} */
 Object.defineProperty({0}.prototype, '{1}', 
 [[
-    get: function() [[ return CS.Call({4}, {2}, {3}, false, this); ]],
-    set: function(v) [[ return CS.Call({5}, {2}, {3}, false, this, v); ]]
+    get: function() [[ return CS.Call({4}, {2}, {3}, {8}, this); ]],
+    set: function(v) [[ return CS.Call({5}, {2}, {3}, {8}, this, v); ]]
+]]);
+";
+        string fmtStatic = @"
+/* {7} {6} */
+Object.defineProperty({0}, '{1}', 
+[[
+    get: function() [[ return CS.Call({4}, {2}, {3}, {8}); ]],
+    set: function(v) [[ return CS.Call({5}, {2}, {3}, {8}, v); ]]
 ]]);
 ";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < properties.Length; i++)
         {
             PropertyInfo property = properties[i];
-            sb.AppendFormat(fmt, className, property.Name, slot, i, (int)JSVCall.Oper.GET_PROPERTY, (int)JSVCall.Oper.SET_PROPERTY, property.PropertyType.Name,
-                (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly")
+            if (property.Name == "Item") //[] not support
+                continue;
+
+            bool isStatic = false;
+            MethodInfo[] accessors = property.GetAccessors();
+            isStatic = accessors[0].IsStatic;
+
+            foreach (var v in accessors)
+            {
+                if (!classPropertyAccessors.ContainsKey(v.Name))
+                    classPropertyAccessors.Add(v.Name, 0);
+            }
+            
+//             if (property.Name == "Item")
+//             {
+//                 Debug.Log("");
+//             }
+//             if (property.IsSpecialName)
+//             {
+//                 if (!mDictJJ.ContainsKey(property.Name))
+//                     mDictJJ.Add(property.Name, "");
+//             }
+
+            sb.AppendFormat(isStatic?fmtStatic:fmt, className, property.Name, slot, i, (int)JSVCall.Oper.GET_PROPERTY, (int)JSVCall.Oper.SET_PROPERTY, property.PropertyType.Name,
+                (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly"), (isStatic ? "true" : "false")
                 );
         }
         return sb;
     }
+    static Dictionary<string, string> mDictJJ = new Dictionary<string, string>();
     public static StringBuilder BuildConstructors(Type type, ConstructorInfo[] constructors, int slot)
     {
         /*
@@ -180,6 +218,28 @@ Object.defineProperty({0}.prototype, '{1}',
         for (int i = 0; i < methods.Length; i++)
         {
             MethodInfo method = methods[i];
+
+            // skip property accessor
+            if (method.IsSpecialName &&
+                classPropertyAccessors.ContainsKey(method.Name))
+                continue;
+
+//             if (method.IsSpecialName)
+//             {
+//                 //if (!mDictJJ.ContainsKey(method.Name))
+//                 //    mDictJJ.Add(method.Name, "");
+//                 if (classPropertyAccessors.ContainsKey(method.Name))
+//                 {
+// 
+//                 }
+//                 else if (!method.IsStatic)
+//                 {
+//                     if (!classSpecialMethodNames.ContainsKey(method.Name))
+//                         classSpecialMethodNames.Add(method.Name, 0);
+//                 }
+//             }
+            // todo 
+            // 如果最后一个是重载的，可能会有问题
 
             // 这里假设实例函数不会和静态函数同名
             ParameterInfo[] paramS = method.GetParameters();
@@ -278,27 +338,10 @@ Object.defineProperty({0}.prototype, '{1}',
         var sbClass = BuildClass(type, sbFields, sbProperties, sbMethods, sbCons);
         HandleStringFormat(sbClass);
 
-        string fileName = JSMgr.generatedDir + "/" + className + ".javascript";
+        string fileName = JSMgr.jsGeneratedDir + "/" + className + ".javascript";
         var writer2 = OpenFile(fileName, false);
         writer2.Write(sbClass.ToString());
         writer2.Close();
-
-        return;
-
-
-        var sb = new StringBuilder();
-        
-
-
-
-        MethodInfo[] methods = type.GetMethods(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.IgnoreCase);
-        for (int i = 0; i < methods.Length; i++)
-        {
-            sb.AppendLine(methods[i].Name);
-        }
-        var writer = OpenFile(tempFile, false);
-        writer.Write(sb.ToString());
-        writer.Close();
     }
 
     static void GenerateEnum()
@@ -418,18 +461,24 @@ using UnityEngine;
     static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
     static string className = string.Empty;
 
+     static Dictionary<string, int> classPropertyAccessors = new Dictionary<string, int>();
+
     [MenuItem("JSGenerator/Generate Class Bindings")]
     public static void GenerateClassBindings()
     {
-        typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
+		if (!typeClassName.ContainsKey(typeof(UnityEngine.Object)))
+        	typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
 
         JSGenerator.OnBegin();
         for (int i = 0; i < JSBindingSettings.classes.Length; i++)
         {
             JSGenerator.Clear();
             JSGenerator.type = JSBindingSettings.classes[i];
+//             if (type != typeof(Physics))
+//                 continue;
             if (!typeClassName.TryGetValue(type, out className))
                 className = type.Name;
+            classPropertyAccessors.Clear();
             JSGenerator.GenerateClass();
         }
 

@@ -24,9 +24,12 @@ public static class JSMgr
     public static IntPtr rt;
     public static IntPtr cx;
     public static IntPtr glob;
+    public static bool useReflection = true;
 
-    public static string javascriptDir = Application.dataPath + "/StreamingAssets/JavaScript";
-    public static string generatedDir = javascriptDir + "/Generated";
+    public static string jsDir = Application.dataPath + "/StreamingAssets/JavaScript";
+    public static string jsGeneratedDir = jsDir + "/Generated";
+    public static string csDir = Application.dataPath + "/CSharp";
+    public static string csGeneratedDir = csDir + "/Generated";
 
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int printInt(IntPtr cx, UInt32 argc, IntPtr vp)
@@ -164,7 +167,7 @@ public static class JSMgr
     }
     public static void EvaluateGeneratedScripts()
     {
-        string[] files = Directory.GetFiles(JSMgr.generatedDir);
+        string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
         for (int i = 0; i < files.Length; i++)
         {
             if (files[i].IndexOf(".meta") == files[i].Length - 5)
@@ -205,6 +208,24 @@ public static class JSMgr
 
     /// <summary>
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// callback function list
+    /// </summary>
+    /// 
+
+    // 对于 field，property，get和set放在同一个函数中
+    // 对于
+    public delegate void CSCallback(JSVCall vc);
+    public class CallbackInfo
+    {
+        public List<CSCallback> fields;
+        public List<CSCallback> properties;
+        public List<CSCallback> constructors;
+        public List<CSCallback> methods;
+    }
+    public static List<CallbackInfo> allCallbackInfo = new List<CallbackInfo>();
+
+    /// <summary>
+    /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// type info list
     /// </summary>
 
@@ -238,7 +259,7 @@ public static class JSMgr
 //             lstField.Add(field);
 //         }
 
-        ti.properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance/* | BindingFlags.Static*/);
+        ti.properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.Static);
         ti.methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
         List<MethodInfo> lMethods = new List<MethodInfo>();
         for (int i = 0; i < ti.methods.Length; i++)
@@ -262,7 +283,10 @@ public static class JSMgr
     static JSVCall vCall = new JSVCall();
     static int Call(IntPtr cx, uint argc, IntPtr vp)
     {
-        return vCall.Call(cx, argc, vp);
+        if (useReflection)
+            return vCall.CallReflection(cx, argc, vp);
+        else
+            return vCall.CallCallback(cx, argc, vp);
     }
 
     /*
@@ -295,14 +319,14 @@ public static class JSMgr
     /*
      * 这2个是记录 C#对象和js对象的对应关系
      */
-    class JS_Native_Relation
+    class JS_CS_Relation
     {
         public IntPtr jsObj;
-        public object nativeObj;
-        public JS_Native_Relation(IntPtr a, object b)
+        public object csObj;
+        public JS_CS_Relation(IntPtr a, object b)
         {
             jsObj = a;
-            nativeObj = b;
+            csObj = b;
         }
     }
 
@@ -310,32 +334,32 @@ public static class JSMgr
     {
         Debug.Log("jsObj added: " + jsObj.ToInt32().ToString());
 
-        mDict1.Add(jsObj.GetHashCode(), new JS_Native_Relation(jsObj, nativeObj));
-        mDict2.Add(nativeObj.GetHashCode(), new JS_Native_Relation(jsObj, nativeObj));
+        mDict1.Add(jsObj.GetHashCode(), new JS_CS_Relation(jsObj, nativeObj));
+        mDict2.Add(nativeObj.GetHashCode(), new JS_CS_Relation(jsObj, nativeObj));
     }
-    public static object getNativeObj(IntPtr jsObj)
+    public static object getCSObj(IntPtr jsObj)
     {
-        JS_Native_Relation obj;
+        JS_CS_Relation obj;
         if (mDict1.TryGetValue(jsObj.GetHashCode(), out obj))
-            return obj.nativeObj;
+            return obj.csObj;
         return null;
     }
     public static IntPtr getJSObj(object nativeObj)
     {
-        JS_Native_Relation obj;
+        JS_CS_Relation obj;
         if (mDict2.TryGetValue(nativeObj.GetHashCode(), out obj))
             return obj.jsObj;
         return IntPtr.Zero;
     }
-    static Dictionary<int, JS_Native_Relation> mDict1 = new Dictionary<int, JS_Native_Relation>(); // key = jsObj.hashCode()
-    static Dictionary<int, JS_Native_Relation> mDict2 = new Dictionary<int, JS_Native_Relation>(); // key = nativeObj.hashCode()
+    static Dictionary<int, JS_CS_Relation> mDict1 = new Dictionary<int, JS_CS_Relation>(); // key = jsObj.hashCode()
+    static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
 
     static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
     {
-        JS_Native_Relation obj;
+        JS_CS_Relation obj;
         if (mDict1.TryGetValue(jsObj.GetHashCode(), out obj))
         {
-            string name = obj.nativeObj.GetType().Name;
+            string name = obj.csObj.GetType().Name;
             mDict1.Remove(jsObj.GetHashCode());
             Debug.Log(name + " finalized, left " + mDict1.Count.ToString());
         }

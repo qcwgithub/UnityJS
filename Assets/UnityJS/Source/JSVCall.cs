@@ -30,6 +30,17 @@ public class JSVCall
         public bool isRef;
         public bool isOptional;
         public bool isArray;
+        public Type type;
+        public object defaultValue;
+        public CSParam() { }
+        public CSParam(bool r, bool o, bool i, Type t, object d)
+        {
+            isRef = r;
+            isOptional = o;
+            isArray = i;
+            type = t;
+            defaultValue = d;
+        }
     }
 
     public List<JSParam> lstJSParam;
@@ -78,6 +89,7 @@ public class JSVCall
             csParam.isOptional = p.IsOptional;
             csParam.isRef = p.ParameterType.IsByRef;
             csParam.isArray = p.ParameterType.IsArray;
+            csParam.type = p.ParameterType;
             lstCSParam.Add(csParam);
         }
     }
@@ -120,7 +132,7 @@ public class JSVCall
             }
             else
             {
-                object csObj = JSMgr.getNativeObj(jsObj);
+                object csObj = JSMgr.getCSObj(jsObj);
                 if (csObj == null)
                 {
                     Debug.Log("ExtractJSParams: CSObject is not found");
@@ -266,7 +278,7 @@ public class JSVCall
             if (jsObj == IntPtr.Zero)
                 return null;
 
-            object csObject = JSMgr.getNativeObj(jsObj);
+            object csObject = JSMgr.getCSObj(jsObj);
             return csObject;
         }
         else
@@ -286,9 +298,9 @@ public class JSVCall
         JSParam jsParam = lstJSParam[index];
         int paramIndex = jsParam.index;
         CSParam csParam = lstCSParam[index];
-        ParameterInfo p = m_ParamInfo[index];
+        //ParameterInfo p = m_ParamInfo[index];
 
-        Type t = p.ParameterType;
+        Type t = csParam.type;
 
         if (csParam.isRef)
             t = t.GetElementType();
@@ -304,7 +316,7 @@ public class JSVCall
             return jsParam.csObj;
         }
 
-        return JSValue_2_CSObject(p.ParameterType, paramIndex);
+        return JSValue_2_CSObject(csParam.type, paramIndex);
     }
 
     /*
@@ -314,10 +326,10 @@ public class JSVCall
      * null -- fail
      * not null -- success
      */
-    public object[] BuildMethodArgs()
+    public object[] BuildMethodArgs(bool addDefaultValue)
     {
         ArrayList args = new ArrayList();
-        for (int i = 0; i < this.m_ParamInfo.Length; i++)
+        for (int i = 0; i < this.lstCSParam.Count; i++)
         {
             if (i < this.lstJSParam.Count)
             {
@@ -343,9 +355,13 @@ public class JSVCall
             }
             else
             {
-                ParameterInfo p = this.m_ParamInfo[i];
-                if (p.IsOptional)
-                    args.Add(p.DefaultValue);
+                if (lstCSParam[i].isOptional)
+                {
+                    if (addDefaultValue)
+                        args.Add(lstCSParam[i].defaultValue);
+                    else
+                        break;
+                }
                 else
                 {
                     Debug.LogError("Not enough arguments calling function '" + m_Method.Name + "'");
@@ -476,7 +492,116 @@ public class JSVCall
         CONSTRUCTOR = 5,
     }
 
-    public int Call(IntPtr cx, uint argc, IntPtr vp)
+    public bool bGet = false, bStatic = false;
+    public object csObj, result, arg;
+    public object[] args;
+    public int currentParamCount = 0;
+//     public static bool CSCallback()
+//     {
+//         if (JSVCall.bGet)
+//             result = ((GameObject)JSVCall.jsObj).activeSelf;
+//         else
+//         {
+//             object arg = JSValue_2_CSObject(typeof(bool), JSVCall.currentParamCount);
+//             ((GameObject)JSVCall.jsObj).activeSelf = (bool)JSVCall.arg;
+//         }
+//     }
+
+    public int CallCallback(IntPtr cx, uint argc, IntPtr vp)
+    {
+        this.Reset(cx, vp);
+
+        // 前面4个参数是固定的
+        Oper op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
+        int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
+        int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
+        bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
+
+        if (slot < 0 || slot >= JSMgr.allCallbackInfo.Count)
+        {
+            Debug.LogError("Bad slot: " + slot);
+            return JSApi.JS_FALSE;
+        }
+        JSMgr.CallbackInfo aInfo = JSMgr.allCallbackInfo[slot];
+
+        int paramCount = 4;
+        if (!isStatic)
+        {
+            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, 4);
+            if (jsObj == IntPtr.Zero)
+                return JSApi.JS_FALSE;
+
+            this.csObj = JSMgr.getCSObj(jsObj);
+            if (this.csObj == null)
+                return JSApi.JS_FALSE;
+
+            paramCount++;
+        }
+
+        object result = null;
+        
+        switch (op)
+        {
+            case Oper.GET_FIELD:
+            case Oper.SET_FIELD:
+                {
+                    this.bGet = (op == Oper.GET_FIELD);
+                    if (aInfo.fields[index] == null)
+                        return JSApi.JS_FALSE;
+                    aInfo.fields[index](this);
+                }
+                break;
+            case Oper.GET_PROPERTY:
+            case Oper.SET_PROPERTY:
+                {
+                    this.bGet = (op == Oper.GET_PROPERTY);
+
+                    if (aInfo.properties[index] == null)
+                        return JSApi.JS_FALSE;
+                    aInfo.properties[index](this);
+                }
+                break;
+            case Oper.METHOD:
+            case Oper.CONSTRUCTOR:
+                {
+//                     bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
+//                     paramCount++;
+// 
+//                     if (!this.ExtractJSParams(paramCount, (int)argc - paramCount))
+//                         return JSApi.JS_FALSE;
+// 
+//                     if (overloaded)
+//                     {
+//                         MethodBase[] methods = aInfo.methods;
+//                         if (op == Oper.CONSTRUCTOR)
+//                             methods = aInfo.constructors;
+// 
+//                         if (-1 == MatchOverloadedMethod(methods, index))
+//                             return JSApi.JS_FALSE;
+//                     }
+//                     else
+//                     {
+//                         m_Method = aInfo.methods[index];
+//                         if (op == Oper.CONSTRUCTOR)
+//                             m_Method = aInfo.constructors[index];
+//                     }
+// 
+//                     this.ExtractCSParams();
+// 
+//                     callParams = BuildMethodArgs(true);
+//                     if (null == callParams)
+//                         return JSApi.JS_FALSE;
+// 
+//                     result = this.m_Method.Invoke(csObj, callParams);
+                }
+                break;
+        }
+
+        this.PushResult(result);
+        return JSApi.JS_TRUE;
+    }
+
+    public int CallReflection(IntPtr cx, uint argc, IntPtr vp)
     {
         this.Reset(cx, vp);
 
@@ -501,7 +626,7 @@ public class JSVCall
             if (jsObj == IntPtr.Zero)
                 return JSApi.JS_FALSE;
 
-            csObj = JSMgr.getNativeObj(jsObj);
+            csObj = JSMgr.getCSObj(jsObj);
             if (csObj == null)
                 return JSApi.JS_FALSE;
 
@@ -561,7 +686,7 @@ public class JSVCall
 
                     this.ExtractCSParams();
 
-                    callParams = BuildMethodArgs();
+                    callParams = BuildMethodArgs(true);
                     if (null == callParams)
                         return JSApi.JS_FALSE;
 
