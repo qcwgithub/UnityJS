@@ -109,25 +109,26 @@ public static class CSGenerator
         * property
         * 0 class name
         * 1 property name
-        * 2 property type
+        * 2 property type name
+        * 3 class full name
         */
         string fmt = @"static void {0}_{1}(JSVCall vc)
 [[
     if (vc.bGet)
-        vc.result = (({0})vc.csObj).{1};
+        vc.result = (({3})vc.csObj).{1};
     else
     [[
-        (({0})vc.csObj).{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
+        (({3})vc.csObj).{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
     ]]
 ]]
 ";
         string fmtValueType = @"static void {0}_{1}(JSVCall vc)
 [[
     if (vc.bGet)
-        vc.result = (({0})vc.csObj).{1};
+        vc.result = (({3})vc.csObj).{1};
     else
     [[
-        {0} argThis = ({0})vc.csObj; // unboxing
+        {3} argThis = ({3})vc.csObj; // unboxing
         argThis.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
         JSMgr.changeCSObj(vc.csObj, argThis);
     ]]
@@ -136,16 +137,16 @@ public static class CSGenerator
         string fmtStatic = @"static void {0}_{1}(JSVCall vc)
 [[
     if (vc.bGet)
-        vc.result = {0}.{1};
+        vc.result = {3}.{1};
     else
     [[
-        {0}.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
+        {3}.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
     ]]
 ]]
 ";
-        string fmtReadOnly = @"static void {0}_{1}(JSVCall vc) [[ vc.result = (({0})vc.csObj).{1}; ]]
+        string fmtReadOnly = @"static void {0}_{1}(JSVCall vc) [[ vc.result = (({3})vc.csObj).{1}; ]]
 ";
-        string fmtReadOnlyStatic = @"static void {0}_{1}(JSVCall vc) [[ vc.result = {0}.{1}; ]]
+        string fmtReadOnlyStatic = @"static void {0}_{1}(JSVCall vc) [[ vc.result = {3}.{1}; ]]
 ";
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < properties.Length; i++)
@@ -160,7 +161,7 @@ public static class CSGenerator
             else if (bReadOnly) f = fmtReadOnly;
             else if (type.IsValueType) f = fmtValueType;
 
-            sb.AppendFormat(f, type.Name, property.Name, GetTypeFullName(property.PropertyType));
+            sb.AppendFormat(f, type.Name, property.Name, GetTypeFullName(property.PropertyType), GetTypeFullName(type));
             ccbn.properties.Add(type.Name + "_" + property.Name);
         }
         return sb;
@@ -181,6 +182,22 @@ public static class CSGenerator
             sb.AppendFormat(fmt, t.IsByRef?"true":"false", p.IsOptional?"true":"false", t.IsArray?"true":"false", "typeof("+GetTypeFullName(t)+")", t.IsByRef?".MakeByRefType()":"","null");
         }
         return sb;
+    }
+    static StringBuilder GenListCSParam2(ParameterInfo[] ps)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        string fmt = "new JSVCall.CSParam({0}, {1}, {2}, {3}{4}, {5}), ";
+        for (int i = 0; i < ps.Length; i++)
+        {
+            ParameterInfo p = ps[i];
+            Type t = p.ParameterType;
+            sb.AppendFormat(fmt, t.IsByRef ? "true" : "false", p.IsOptional ? "true" : "false", t.IsArray ? "true" : "false", "typeof(" + GetTypeFullName(t) + ")", t.IsByRef ? ".MakeByRefType()" : "", "null");
+        }
+        fmt = "new JSVCall.CSParam[][[{0}]]";
+        StringBuilder sbX = new StringBuilder();
+        sbX.AppendFormat(fmt, sb);
+        return sbX;
     }
     public static StringBuilder BuildSpecialFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid)
     {
@@ -277,7 +294,7 @@ public static class CSGenerator
         {4} new {1}{2}({3});
 {7}
     ]]
-", j, "", className/* 这里不能使用methodName，因为methodName是 .ctor*/, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+", j, "", GetTypeFullName(type)/* 这里不能使用methodName，因为methodName是 .ctor*/, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
             }
             else if (bStatic)
             {
@@ -287,7 +304,7 @@ public static class CSGenerator
         {4}{1}.{2}({3});
 {7}
     ]]
-", j, className, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
             }
             else
             {
@@ -299,7 +316,7 @@ public static class CSGenerator
         {4}(({1})vc.csObj).{2}({3});
 {7}
     ]]
-", j, className, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
                 }
                 else // 如果是 ValueType 需要先拆箱再调用，之后还要保存
                 {
@@ -311,7 +328,7 @@ public static class CSGenerator
         JSMgr.changeCSObj(vc.csObj, argThis);
 {7}
     ]]
-", j, className, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
                 }
             }
 
@@ -357,13 +374,7 @@ public static class CSGenerator
         string fmt = @"
 static bool {0}(JSVCall vc, int start, int count)
 [[
-    if (!vc.ExtractJSParams(start, count)) 
-        return false;
 {1}
-    vc.callParams = vc.BuildMethodArgs(false);
-    if (null == vc.callParams)
-        return false;
-{2}
     return true;
 ]]
 ";
@@ -380,10 +391,10 @@ static bool {0}(JSVCall vc, int start, int count)
             string functionName = type.Name + "_" + type.Name + (olIndex > 0 ? olIndex.ToString() : "") + (cons.IsStatic ? "_S" : "");
 
             sb.AppendFormat(fmt, functionName,
-                GenListCSParam(paramS).ToString(),
                 BuildNormalFunctionCall(paramS, type.Name, cons.Name, cons.IsStatic, returnVoid, true));
 
             ccbn.constructors.Add(functionName);
+            ccbn.constructorsCSParam.Add(GenListCSParam2(paramS).ToString());
         }
         return sb;
     }
@@ -398,13 +409,7 @@ static bool {0}(JSVCall vc, int start, int count)
         string fmt = @"
 static bool {0}(JSVCall vc, int start, int count)
 [[
-    if (!vc.ExtractJSParams(start, count)) 
-        return false;
 {1}
-    vc.callParams = vc.BuildMethodArgs(false);
-    if (null == vc.callParams)
-        return false;
-{2}
     return true;
 ]]
 ";
@@ -421,12 +426,12 @@ static bool {0}(JSVCall vc, int start, int count)
             string functionName = type.Name + "_" + method.Name + (olIndex > 0 ? olIndex.ToString() : "") + (method.IsStatic ? "_S" : "");
 
             sb.AppendFormat(fmt, functionName,
-                GenListCSParam(paramS).ToString(),
-
+                
                 method.IsSpecialName ? BuildSpecialFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid)
                 : BuildNormalFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid, false));
 
             ccbn.methods.Add(functionName);
+            ccbn.methodsCSParam.Add(GenListCSParam2(paramS).ToString());
         }
         return sb;
     }
@@ -459,16 +464,24 @@ static bool {0}(JSVCall vc, int start, int count)
         return sb;
     }
 
+    // 用于记录生成过程中的信息
     public class ClassCallbackNames
     {
+        // 类名
         public Type type;
+
+        // 生成的函数名
         public List<string> fields;
         public List<string> properties;
         public List<string> constructors;
         public List<string> methods;
+
+        // 生成的，生成 CSParam 的代码
+        public List<string> constructorsCSParam;
+        public List<string> methodsCSParam;
     }
     public static List<ClassCallbackNames> allClassCallbackNames;
-    static StringBuilder BuildRegisterFunction(ClassCallbackNames ccbn)
+    static StringBuilder BuildRegisterFunction(ClassCallbackNames ccbn, JSMgr.ATypeInfo ti)
     {
         string fmt = @"
 public static void __Register()
@@ -483,11 +496,11 @@ public static void __Register()
     [[
 {2}
     ]];
-    ci.constructors = new JSMgr.CSCallbackMethod[]
+    ci.constructors = new JSMgr.MethodCallBackInfo[]
     [[
 {3}
     ]];
-    ci.methods = new JSMgr.CSCallbackMethod[]
+    ci.methods = new JSMgr.MethodCallBackInfo[]
     [[
 {4}
     ]];
@@ -506,11 +519,11 @@ public static void __Register()
         for (int i = 0; i < ccbn.properties.Count; i++)
             sbProperty.AppendFormat("        {0},\r\n", ccbn.properties[i]);
         for (int i = 0; i < ccbn.constructors.Count; i++)
-            sbCons.AppendFormat("        {0},\r\n", ccbn.constructors[i]);
+            sbCons.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.constructors[i], ccbn.constructorsCSParam[i], ti.constructors[i].Name);
         for (int i = 0; i < ccbn.methods.Count; i++)
-            sbMethod.AppendFormat("        {0},\r\n", ccbn.methods[i]);
+            sbMethod.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.methods[i], ccbn.methodsCSParam[i], ti.methods[i].Name);
 
-        sb.AppendFormat(fmt, ccbn.type.Name, sbField, sbProperty, sbCons, sbMethod);
+        sb.AppendFormat(fmt, GetTypeFullName(ccbn.type), sbField, sbProperty, sbCons, sbMethod);
         return sb;
     }
     public static void GenerateRegisterAll()
@@ -562,13 +575,16 @@ public class CSharpGenerated
             ccbn.properties = new List<string>(ti.properties.Length);
             ccbn.constructors = new List<string>(ti.constructors.Length);
             ccbn.methods = new List<string>(ti.methods.Length);
+
+            ccbn.constructorsCSParam = new List<string>(ti.constructors.Length);
+            ccbn.methodsCSParam = new List<string>(ti.methods.Length);
         }
 
         var sbFields = BuildFields(type, ti.fields, ccbn);
         var sbProperties = BuildProperties(type, ti.properties, ccbn);
         var sbMethods = BuildMethods(type, ti.methods, ti.methodsOLInfo, ccbn);
         var sbCons = BuildConstructors(type, ti.constructors, ccbn);
-        var sbRegister = BuildRegisterFunction(ccbn);
+        var sbRegister = BuildRegisterFunction(ccbn, ti);
         var sbClass = BuildClass(type, sbFields, sbProperties, sbMethods, sbCons, sbRegister);
 
         /*
@@ -581,6 +597,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using {2};
 

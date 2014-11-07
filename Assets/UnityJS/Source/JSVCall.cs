@@ -44,10 +44,11 @@ public class JSVCall
     }
 
     public List<JSParam> lstJSParam;
-    public int jsParamCount { get { return lstCSParam.Count; } }
-    public List<CSParam> lstCSParam;
+    public int jsParamCount { get { return lstJSParam.Count; } }
+
+    public int csParamCount { get { return arrCSParam.Length; } }
     public CSParam[] arrCSParam;
-    public int csParamCount { get { return lstCSParam.Count; } }
+
     public MethodBase m_Method;
     public ParameterInfo[] m_ParamInfo;
     public object[] callParams;
@@ -61,10 +62,9 @@ public class JSVCall
             lstJSParam = new List<JSParam>();
         else
             lstJSParam.Clear();
-        if (lstCSParam == null)
-            lstCSParam = new List<CSParam>();
-        else
-            lstCSParam.Clear();
+
+        arrCSParam = null;
+
         m_Method = null;
         m_ParamInfo = null;
         callParams = null;
@@ -78,20 +78,25 @@ public class JSVCall
      *
      * extract some info to use latter
      * write into m_ParamInfo and lstCSParam
+     * 仅反射版本使用
      */
     public void ExtractCSParams()
     {
         if (m_ParamInfo == null)
             m_ParamInfo = m_Method.GetParameters();
+
+        arrCSParam = new CSParam[m_ParamInfo.Length];
+
         for (int i = 0; i < m_ParamInfo.Length; i++)
         {
             ParameterInfo p = m_ParamInfo[i];
+
             CSParam csParam = new CSParam();
             csParam.isOptional = p.IsOptional;
             csParam.isRef = p.ParameterType.IsByRef;
             csParam.isArray = p.ParameterType.IsArray;
             csParam.type = p.ParameterType;
-            lstCSParam.Add(csParam);
+            arrCSParam[i] = csParam;
         }
     }
 
@@ -146,11 +151,48 @@ public class JSVCall
         return true;
     }
 
+    // 不牵到 ParamterInfo
+    // 有使用 lstJSParam
+    // 来判断第i个参数类型是否匹配
+    public bool IsParamMatch(int csParamIndex, bool csIsOptional, Type csType)
+    {
+        if (csParamIndex < jsParamCount)
+        {
+            if (csType.IsArray)
+            {
+                // todo
+                // 重载函数只匹配是否数组
+                // 无法识别2个都是数组参数但是类型不同的重载函数，这种情况只会调用第1个
+                if (!lstJSParam[csParamIndex].isArray)
+                    return false;
+            }
+            else if (!lstJSParam[csParamIndex].isWrap)
+            {
+                if (lstJSParam[csParamIndex].csObj == null || csType != lstJSParam[csParamIndex].csObj.GetType())
+                    return false;
+            }
+            else if (lstJSParam[csParamIndex].isWrap)
+            {
+                if (csType != lstJSParam[csParamIndex].wrappedObj.GetType())
+                    return false;
+            }
+            else
+                return false;
+        }
+        else
+        {
+            if (!csIsOptional)
+                return false;
+        }
+        return true;
+    }
+
     /*
      * MatchOverloadedMethod
      * 
      * write into this.method and this.ps
      *
+     * 仅反射方案使用这个函数
      */
     public int MatchOverloadedMethod(MethodBase[] methods, int methodIndex)
     {
@@ -167,48 +209,11 @@ public class JSVCall
             for (int j = 0; j < ps.Length; j++)
             {
                 ParameterInfo p = ps[j];
-                if (j < jsParamCount)
+
+                if (!IsParamMatch(j, p.IsOptional, p.ParameterType))
                 {
-                    if (p.ParameterType.IsArray)
-                    {
-                        // todo
-                        // 重载函数只匹配是否数组
-                        // 无法识别2个都是数组参数但是类型不同的重载函数，这种情况只会调用第1个
-                        if (!lstJSParam[j].isArray)
-                        {
-                            matchSuccess = false;
-                            break;
-                        }
-                    }
-                    else if (!lstJSParam[j].isWrap)
-                    {
-                        if (lstJSParam[j].csObj == null || p.ParameterType != lstJSParam[j].csObj.GetType())
-                        {
-                            matchSuccess = false;
-                            break;
-                        }
-                    }
-                    else if (lstJSParam[j].isWrap)
-                    {
-                        if (p.ParameterType != lstJSParam[j].wrappedObj.GetType())
-                        {
-                            matchSuccess = false;
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        matchSuccess = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    if (!p.IsOptional)
-                    {
-                        matchSuccess = false;
-                        break;
-                    }
+                    matchSuccess = false;
+                    break;
                 }
             }
 
@@ -221,6 +226,19 @@ public class JSVCall
             }
         }
         return -1;
+    }
+
+    /*
+     * 不使用反射的方案使用这个函数
+     */
+    public bool IsMethodMatch(CSParam[] arrCSParam)
+    {
+        for (int i = 0; i < arrCSParam.Length; i++)
+        {
+            if (!IsParamMatch(i, arrCSParam[i].isOptional, arrCSParam[i].type))
+                return false;
+        }
+        return true;
     }
 
     // index means 
@@ -298,7 +316,7 @@ public class JSVCall
     {
         JSParam jsParam = lstJSParam[index];
         int paramIndex = jsParam.index;
-        CSParam csParam = lstCSParam[index];
+        CSParam csParam = arrCSParam[index];
         //ParameterInfo p = m_ParamInfo[index];
 
         Type t = csParam.type;
@@ -330,7 +348,7 @@ public class JSVCall
     public object[] BuildMethodArgs(bool addDefaultValue)
     {
         ArrayList args = new ArrayList();
-        for (int i = 0; i < this.lstCSParam.Count; i++)
+        for (int i = 0; i < this.arrCSParam.Length; i++)
         {
             if (i < this.lstJSParam.Count)
             {
@@ -356,10 +374,10 @@ public class JSVCall
             }
             else
             {
-                if (lstCSParam[i].isOptional)
+                if (arrCSParam[i].isOptional)
                 {
                     if (addDefaultValue)
-                        args.Add(lstCSParam[i].defaultValue);
+                        args.Add(arrCSParam[i].defaultValue);
                     else
                         break;
                 }
@@ -469,12 +487,15 @@ public class JSVCall
 
     public void PushResult(object csObj)
     {
-        // 处理 ref/out 参数
-        for (int i = 0; i < lstCSParam.Count; i++)
+        if (/*this.op == Oper.METHOD && */ arrCSParam != null)
         {
-            if (lstCSParam[i].isRef)
+            // 处理 ref/out 参数
+            for (int i = 0; i < arrCSParam.Length; i++)
             {
-                lstJSParam[i].wrappedObj = callParams[i];
+                if (arrCSParam[i].isRef)
+                {
+                    lstJSParam[i].wrappedObj = callParams[i];
+                }
             }
         }
 
@@ -497,6 +518,7 @@ public class JSVCall
     public object csObj, result, arg;
     public object[] args;
     public int currentParamCount = 0;
+    public Oper op;
 //     public static bool CSCallback()
 //     {
 //         if (JSVCall.bGet)
@@ -513,7 +535,7 @@ public class JSVCall
         this.Reset(cx, vp);
 
         // 前面4个参数是固定的
-        Oper op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
+        this.op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
         int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
         int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
         bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
@@ -525,7 +547,7 @@ public class JSVCall
         }
         JSMgr.CallbackInfo aInfo = JSMgr.allCallbackInfo[slot];
 
-        int paramCount = 4;
+        currentParamCount = 4;
         if (!isStatic)
         {
             IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, 4);
@@ -536,10 +558,8 @@ public class JSVCall
             if (this.csObj == null)
                 return JSApi.JS_FALSE;
 
-            paramCount++;
+            currentParamCount++;
         }
-
-        object result = null;
         
         switch (op)
         {
@@ -564,12 +584,52 @@ public class JSVCall
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
-                    paramCount++;
+                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, currentParamCount);
+                    currentParamCount++;
 
-                    JSMgr.CSCallbackMethod fun = aInfo.methods[index];
-                    if (fun == null) return JSApi.JS_FALSE;
-                    if (!fun(this, paramCount, (int)argc - paramCount))
+                    if (!this.ExtractJSParams(currentParamCount, (int)argc - currentParamCount))
+                        return JSApi.JS_FALSE;
+
+                    JSMgr.MethodCallBackInfo[] arrMethod;
+                    if (op == Oper.METHOD)
+                        arrMethod = aInfo.methods;
+                    else
+                        arrMethod = aInfo.constructors;
+
+                    if (overloaded)
+                    {
+                        string methodName = arrMethod[index].methodName;
+
+                        int i = index;
+                        while (true)
+                        {
+                            if (IsMethodMatch(arrMethod[i].arrCSParam))
+                            {
+                                index = i;
+                                break;
+                            }
+                            i++;
+                            if (arrMethod[i].methodName != methodName)
+                            {
+                                Debug.LogError("Overloaded function can't find match: " + methodName);
+                                return JSApi.JS_FALSE;
+                            }
+                        }
+                    }
+
+                    JSMgr.CSCallbackMethod fun;
+                    
+                    fun = arrMethod[index].fun;
+                    arrCSParam = arrMethod[index].arrCSParam;
+
+                    if (fun == null || arrCSParam == null) 
+                        return JSApi.JS_FALSE;
+
+                    callParams = BuildMethodArgs(false);
+                    if (null == callParams)
+                        return JSApi.JS_FALSE;
+                    
+                    if (!fun(this, currentParamCount, (int)argc - currentParamCount))
                         return JSApi.JS_FALSE;
                 }
                 break;
@@ -584,7 +644,7 @@ public class JSVCall
         this.Reset(cx, vp);
 
         // 前面4个参数是固定的
-        Oper op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
+        this.op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
         int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
         int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
         bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
@@ -596,7 +656,7 @@ public class JSVCall
         }
         JSMgr.ATypeInfo aInfo = JSMgr.allTypeInfo[slot];
 
-        int paramCount = 4;
+        currentParamCount = 4;
         object csObj = null;
         if (!isStatic)
         {
@@ -608,10 +668,10 @@ public class JSVCall
             if (csObj == null)
                 return JSApi.JS_FALSE;
 
-            paramCount++;
+            currentParamCount++;
         }
 
-        object result = null;
+        //object result = null;
 
         switch (op)
         {
@@ -623,7 +683,7 @@ public class JSVCall
             case Oper.SET_FIELD:
                 {
                     FieldInfo field = aInfo.fields[index];
-                    field.SetValue(csObj, JSValue_2_CSObject(field.FieldType, paramCount));
+                    field.SetValue(csObj, JSValue_2_CSObject(field.FieldType, currentParamCount));
                 }
                 break;
             case Oper.GET_PROPERTY:
@@ -634,16 +694,16 @@ public class JSVCall
             case Oper.SET_PROPERTY:
                 {
                     PropertyInfo property = aInfo.properties[index];
-                    property.SetValue(csObj, JSValue_2_CSObject(property.PropertyType, paramCount), null);
+                    property.SetValue(csObj, JSValue_2_CSObject(property.PropertyType, currentParamCount), null);
                 }
                 break;
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
-                    paramCount++;
+                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, currentParamCount);
+                    currentParamCount++;
 
-                    if (!this.ExtractJSParams(paramCount, (int)argc - paramCount))
+                    if (!this.ExtractJSParams(currentParamCount, (int)argc - currentParamCount))
                         return JSApi.JS_FALSE;
 
                     if (overloaded)

@@ -24,7 +24,7 @@ public static class JSMgr
     public static IntPtr rt;
     public static IntPtr cx;
     public static IntPtr glob;
-    public static bool useReflection = true;
+    public static bool useReflection = false;
 
     public static string jsDir = Application.dataPath + "/StreamingAssets/JavaScript";
     public static string jsGeneratedDir = jsDir + "/Generated";
@@ -119,10 +119,14 @@ public static class JSMgr
 
         JSMgr.RegisterCS(cx, glob);
         JSValueWrap.Register(CSOBJ, cx);
-
-        for (int i = 0; i < JSBindingSettings.classes.Length; i++)
+        if (useReflection)
         {
-            JSMgr.AddTypeInfo(JSBindingSettings.classes[i]);
+            for (int i = 0; i < JSBindingSettings.classes.Length; i++)
+                JSMgr.AddTypeInfo(JSBindingSettings.classes[i]);
+        }
+        else
+        {
+            CSharpGenerated.RegisterAll();
         }
 
         JSMgr.EvaluateGeneratedScripts();
@@ -218,6 +222,14 @@ public static class JSMgr
     public delegate void CSCallbackProperty(JSVCall vc);
     public delegate bool CSCallbackMethod(JSVCall vc, int start, int count);
 
+    public class MethodCallBackInfo
+    {
+        public MethodCallBackInfo(CSCallbackMethod f, string n, JSVCall.CSParam[] a) { fun = f; methodName = n;  arrCSParam = a; }
+        public CSCallbackMethod fun;
+        public string methodName;//这个用于判断是否重载函数
+        public JSVCall.CSParam[] arrCSParam;
+    }
+
     // 用途：
     // 用于js对cs的非反射调用
     public class CallbackInfo
@@ -225,8 +237,9 @@ public static class JSMgr
         public Type type;
         public CSCallbackField[] fields;
         public CSCallbackProperty[] properties;
-        public CSCallbackMethod[] constructors;
-        public CSCallbackMethod[] methods;
+
+        public MethodCallBackInfo[] constructors;
+        public MethodCallBackInfo[] methods;
     }
     public static List<CallbackInfo> allCallbackInfo = new List<CallbackInfo>();
 
@@ -254,7 +267,6 @@ public static class JSMgr
 //         CallbackInfo cbi = new CallbackInfo();
 //         cbi.fields = new List<CSCallbackField>();
 //         cbi.fields.Add(Vector3Generated.Vector3_x);
-
 
         allTypeInfo.Clear();
     }
