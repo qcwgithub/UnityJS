@@ -46,6 +46,7 @@ public class JSVCall
     public List<JSParam> lstJSParam;
     public int jsParamCount { get { return lstCSParam.Count; } }
     public List<CSParam> lstCSParam;
+    public CSParam[] arrCSParam;
     public int csParamCount { get { return lstCSParam.Count; } }
     public MethodBase m_Method;
     public ParameterInfo[] m_ParamInfo;

@@ -293,7 +293,7 @@ public class JSBindingSettings
 // typeof(UnityEngine.AnimationCurve),////ok
         //typeof(UnityEngine.Animation),//重载函数排序问题
 //         typeof(UnityEngine.AnimationState),//ok
-         typeof(UnityEngine.GameObject),//ok
+         //typeof(UnityEngine.GameObject),//ok
 //         typeof(UnityEngine.Animator),//ok
 //         typeof(UnityEngine.AvatarBuilder),//ok
 //         typeof(UnityEngine.RuntimeAnimatorController),//ok
@@ -373,7 +373,7 @@ public class JSBindingSettings
 //         typeof(UnityEngine.GUILayout),
 //         typeof(UnityEngine.GUILayoutUtility),                                    //ok
 //         typeof(UnityEngine.GUILayoutOption),                                     //ok
-        typeof(UnityEngine.ExitGUIException),//GetType问题
+//        typeof(UnityEngine.ExitGUIException),//GetType问题
 //         typeof(UnityEngine.GUIUtility),//ok
 //         typeof(UnityEngine.GUISettings),//ok
 //         typeof(UnityEngine.GUISkin),//ok
@@ -502,7 +502,7 @@ public class JSBindingSettings
 //         typeof(UnityEngine.iPhoneTouch),                    //ok
 //         typeof(UnityEngine.iPhoneAccelerationEvent),        //ok
 //         typeof(UnityEngine.Vector2),                        //ok
-//          typeof(UnityEngine.Vector3),                    //ok
+          typeof(UnityEngine.Vector3),                    //ok
 //         typeof(UnityEngine.Color),                       //ok
 //         typeof(UnityEngine.Color32),                     //ok
 //         typeof(UnityEngine.Quaternion),                  //ok

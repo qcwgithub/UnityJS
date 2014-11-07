@@ -218,12 +218,15 @@ public static class JSMgr
     public delegate void CSCallbackProperty(JSVCall vc);
     public delegate bool CSCallbackMethod(JSVCall vc, int start, int count);
 
+    // 用途：
+    // 用于js对cs的非反射调用
     public class CallbackInfo
     {
-        public List<CSCallbackField> fields;
-        public List<CSCallbackProperty> properties;
-        public List<CSCallbackMethod> constructors;
-        public List<CSCallbackMethod> methods;
+        public Type type;
+        public CSCallbackField[] fields;
+        public CSCallbackProperty[] properties;
+        public CSCallbackMethod[] constructors;
+        public CSCallbackMethod[] methods;
     }
     public static List<CallbackInfo> allCallbackInfo = new List<CallbackInfo>();
 
@@ -232,17 +235,27 @@ public static class JSMgr
     /// type info list
     /// </summary>
 
+    // 用途：
+    // 用于生成js代码
+    // 用于生成cs代码
+    // 用于js对cs的反射调用
     public class ATypeInfo
     {
         public FieldInfo[] fields;
         public PropertyInfo[] properties;
         public ConstructorInfo[] constructors;
         public MethodInfo[] methods;
+        public int[] methodsOLInfo;//0 not overloaded >0 overloaded index
     }
     public static List<ATypeInfo> allTypeInfo = new List<ATypeInfo>();
 
     public static void ClearTypeInfo()
     {
+//         CallbackInfo cbi = new CallbackInfo();
+//         cbi.fields = new List<CSCallbackField>();
+//         cbi.fields.Add(Vector3Generated.Vector3_x);
+
+
         allTypeInfo.Clear();
     }
     public static int AddTypeInfo(Type type)
@@ -258,7 +271,7 @@ public static class JSMgr
         ti.methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);        
         ti.constructors = type.GetConstructors();
 
-        FilterTypeInfo(ti);
+        FilterTypeInfo(type, ti);
 
         int slot = allTypeInfo.Count;
         allTypeInfo.Add(ti);
@@ -277,7 +290,15 @@ public static class JSMgr
         }
         return false;
     }
-    public static void FilterTypeInfo(ATypeInfo ti)
+    public static int MethodInfoComparison(MethodInfo m1, MethodInfo m2)
+    {
+        if (!m1.IsStatic && m2.IsStatic)
+            return -1;
+        if (m1.IsStatic && !m2.IsStatic)
+            return 1;
+        return string.Compare(m1.Name, m2.Name);
+    }
+    public static void FilterTypeInfo(Type type, ATypeInfo ti)
     {
         List<FieldInfo> lstField = new List<FieldInfo>();
         List<PropertyInfo> lstPro = new List<PropertyInfo>();
@@ -321,9 +342,28 @@ public static class JSMgr
                 proAccessors.ContainsKey(method.Name))
                 continue;
 
-            // 先忽略特殊名字，后面再处理
             if (method.IsSpecialName)
-                continue;
+            {
+                if (method.Name == "op_Addition" ||
+                    method.Name == "op_Subtraction" ||
+                    method.Name == "op_UnaryNegation" ||
+                    method.Name == "op_Multiply" ||
+                    method.Name == "op_Division" ||
+                    method.Name == "op_Equality" ||
+                    method.Name == "op_Inequality")
+                {
+                    if (!method.IsStatic)
+                    {
+                        Debug.LogWarning("IGNORE not-static special-name function: " + type.Name + "." + method.Name);
+                        continue;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("IGNORE special-name function:" + type.Name + "." + method.Name);
+                    continue;
+                }
+            }
 
             // Skip Obsolete
             if (IsMemberObsolete(method))
@@ -333,6 +373,43 @@ public static class JSMgr
                 continue;
 
             lstMethod.Add(method);
+        }
+
+        if (lstMethod.Count == 0)
+            ti.methodsOLInfo = null;
+        else 
+        {
+            // sort methods
+            lstMethod.Sort(MethodInfoComparison);
+            ti.methodsOLInfo = new int[lstMethod.Count];
+        }
+
+        int overloadedIndex = 1;
+        bool bOL = false;
+        for (int i = 0; i < lstMethod.Count; i++)
+        {
+            ti.methodsOLInfo[i] = 0;
+            if (bOL)
+            {
+                ti.methodsOLInfo[i] = overloadedIndex;
+            }
+
+            if (i < lstMethod.Count - 1 && lstMethod[i].Name == lstMethod[i + 1].Name &&
+                ((lstMethod[i].IsStatic && lstMethod[i + 1].IsStatic) || (!lstMethod[i].IsStatic && !lstMethod[i + 1].IsStatic)))
+            {
+                if (!bOL)
+                {
+                    overloadedIndex = 1;
+                    bOL = true;
+                    ti.methodsOLInfo[i] = overloadedIndex;
+                }
+                overloadedIndex++;
+            }
+            else
+            {
+                bOL = false;
+                overloadedIndex = 1;
+            }
         }
 
         ti.fields = lstField.ToArray();

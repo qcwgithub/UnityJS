@@ -66,11 +66,6 @@ Object.defineProperty({0}, '{1}',
     set: function(v) [[ return CS.Call({5}, {2}, {3}, true, v); ]]
 ]]);
 ";
-//         if (fields.Length > 0)
-//         {
-//             Debug.Log(type.Name);
-//         }
-
         var sb = new StringBuilder();
         for (int i = 0; i < fields.Length; i++)
         {
@@ -123,15 +118,8 @@ Object.defineProperty({0}, '{1}',
             if (property.Name == "Item") //[] not support
                 continue;
 
-            bool isStatic = false;
             MethodInfo[] accessors = property.GetAccessors();
-            isStatic = accessors[0].IsStatic;
-
-            foreach (var v in accessors)
-            {
-                if (!classPropertyAccessors.ContainsKey(v.Name))
-                    classPropertyAccessors.Add(v.Name, 0);
-            }
+            bool isStatic = accessors[0].IsStatic;
             
 //             if (property.Name == "Item")
 //             {
@@ -219,25 +207,6 @@ Object.defineProperty({0}, '{1}',
         {
             MethodInfo method = methods[i];
 
-            // skip property accessor
-            if (method.IsSpecialName &&
-                classPropertyAccessors.ContainsKey(method.Name))
-                continue;
-
-//             if (method.IsSpecialName)
-//             {
-//                 //if (!mDictJJ.ContainsKey(method.Name))
-//                 //    mDictJJ.Add(method.Name, "");
-//                 if (classPropertyAccessors.ContainsKey(method.Name))
-//                 {
-// 
-//                 }
-//                 else if (!method.IsStatic)
-//                 {
-//                     if (!classSpecialMethodNames.ContainsKey(method.Name))
-//                         classSpecialMethodNames.Add(method.Name, 0);
-//                 }
-//             }
             // todo 
             // 如果最后一个是重载的，可能会有问题
 
@@ -461,7 +430,6 @@ using UnityEngine;
     static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
     static string className = string.Empty;
 
-     static Dictionary<string, int> classPropertyAccessors = new Dictionary<string, int>();
 
     [MenuItem("JSGenerator/Generate Class Bindings")]
     public static void GenerateClassBindings()
@@ -478,7 +446,6 @@ using UnityEngine;
 //                 continue;
             if (!typeClassName.TryGetValue(type, out className))
                 className = type.Name;
-            classPropertyAccessors.Clear();
             JSGenerator.GenerateClass();
         }
 
