@@ -31,7 +31,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetString), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -48,7 +48,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetBool), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -65,7 +65,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetChar), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -82,7 +82,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetByte), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -99,7 +99,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetSByte), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -116,7 +116,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetUInt16), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -133,7 +133,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetInt16), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -150,7 +150,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetUInt32), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -167,7 +167,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetInt32), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -184,7 +184,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetUInt64), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -202,7 +202,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetInt64), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -219,7 +219,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetSingle), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
@@ -236,7 +236,7 @@ public class JSValueWrap
         var w = new Wrap(b);
         IntPtr jsObj = JSApi.JS_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
         JSApi.JS_DefineFunction(cx, jsObj, "Value", new JSApi.JSNative(GetDouble), 0/* narg */, 0);
-        JSMgr.addNativeJSRelation(jsObj, w);
+        JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JShelp_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }

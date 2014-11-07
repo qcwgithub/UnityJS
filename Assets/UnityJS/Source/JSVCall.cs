@@ -451,7 +451,7 @@ public class JSVCall
             {
                 jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
                 if (jsObj != null)
-                    JSMgr.addNativeJSRelation(jsObj, csObj);
+                    JSMgr.addJSCSRelation(jsObj, csObj);
             }
             if (jsObj == IntPtr.Zero)
                 JSApi.JShelp_SetJsvalUndefined(ref val);
@@ -546,53 +546,30 @@ public class JSVCall
             case Oper.SET_FIELD:
                 {
                     this.bGet = (op == Oper.GET_FIELD);
-                    if (aInfo.fields[index] == null)
-                        return JSApi.JS_FALSE;
-                    aInfo.fields[index](this);
+                    JSMgr.CSCallbackField fun = aInfo.fields[index];
+                    if (fun == null) return JSApi.JS_FALSE;
+                    fun(this);
                 }
                 break;
             case Oper.GET_PROPERTY:
             case Oper.SET_PROPERTY:
                 {
                     this.bGet = (op == Oper.GET_PROPERTY);
-
-                    if (aInfo.properties[index] == null)
-                        return JSApi.JS_FALSE;
-                    aInfo.properties[index](this);
+                    JSMgr.CSCallbackProperty fun = aInfo.properties[index];
+                    if (fun == null) return JSApi.JS_FALSE;
+                    fun(this);
                 }
                 break;
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-//                     bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
-//                     paramCount++;
-// 
-//                     if (!this.ExtractJSParams(paramCount, (int)argc - paramCount))
-//                         return JSApi.JS_FALSE;
-// 
-//                     if (overloaded)
-//                     {
-//                         MethodBase[] methods = aInfo.methods;
-//                         if (op == Oper.CONSTRUCTOR)
-//                             methods = aInfo.constructors;
-// 
-//                         if (-1 == MatchOverloadedMethod(methods, index))
-//                             return JSApi.JS_FALSE;
-//                     }
-//                     else
-//                     {
-//                         m_Method = aInfo.methods[index];
-//                         if (op == Oper.CONSTRUCTOR)
-//                             m_Method = aInfo.constructors[index];
-//                     }
-// 
-//                     this.ExtractCSParams();
-// 
-//                     callParams = BuildMethodArgs(true);
-//                     if (null == callParams)
-//                         return JSApi.JS_FALSE;
-// 
-//                     result = this.m_Method.Invoke(csObj, callParams);
+                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, paramCount);
+                    paramCount++;
+
+                    JSMgr.CSCallbackMethod fun = aInfo.methods[index];
+                    if (fun == null) return JSApi.JS_FALSE;
+                    if (!fun(this, paramCount, (int)argc - paramCount))
+                        return JSApi.JS_FALSE;
                 }
                 break;
         }

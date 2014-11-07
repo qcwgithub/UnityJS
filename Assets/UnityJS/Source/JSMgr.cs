@@ -214,13 +214,16 @@ public static class JSMgr
 
     // 对于 field，property，get和set放在同一个函数中
     // 对于
-    public delegate void CSCallback(JSVCall vc);
+    public delegate void CSCallbackField(JSVCall vc);
+    public delegate void CSCallbackProperty(JSVCall vc);
+    public delegate bool CSCallbackMethod(JSVCall vc, int start, int count);
+
     public class CallbackInfo
     {
-        public List<CSCallback> fields;
-        public List<CSCallback> properties;
-        public List<CSCallback> constructors;
-        public List<CSCallback> methods;
+        public List<CSCallbackField> fields;
+        public List<CSCallbackProperty> properties;
+        public List<CSCallbackMethod> constructors;
+        public List<CSCallbackMethod> methods;
     }
     public static List<CallbackInfo> allCallbackInfo = new List<CallbackInfo>();
 
@@ -251,32 +254,90 @@ public static class JSMgr
     {
         ATypeInfo ti = new ATypeInfo();
         ti.fields = type.GetFields(BindingFlags.Public | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.Instance | BindingFlags.Static);
-//         var lstField = new List<FieldInfo>();
-//         foreach (var field in ti.fields)
-//         {
-//             if (field.IsInitOnly)
-//                 continue;
-//             lstField.Add(field);
-//         }
-
         ti.properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.Static);
-        ti.methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-        List<MethodInfo> lMethods = new List<MethodInfo>();
-        for (int i = 0; i < ti.methods.Length; i++)
-        {
-            // 泛型函数不支持
-            if (ti.methods[i].IsGenericMethod || ti.methods[i].IsGenericMethodDefinition)
-                continue;
-            else
-                lMethods.Add(ti.methods[i]);
-        }
+        ti.methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);        
         ti.constructors = type.GetConstructors();
-        ti.methods = lMethods.ToArray();
+
+        FilterTypeInfo(ti);
 
         int slot = allTypeInfo.Count;
         allTypeInfo.Add(ti);
         tiOut = ti;
         return slot;
+    }
+    public static bool IsMemberObsolete(MemberInfo mi)
+    {
+        object[] attrs = mi.GetCustomAttributes(true);
+        for (int j = 0; j < attrs.Length; j++)
+        {
+            if (attrs[j].GetType() == typeof(System.ObsoleteAttribute))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static void FilterTypeInfo(ATypeInfo ti)
+    {
+        List<FieldInfo> lstField = new List<FieldInfo>();
+        List<PropertyInfo> lstPro = new List<PropertyInfo>();
+        Dictionary<string, int> proAccessors = new Dictionary<string, int>();
+        List<MethodInfo> lstMethod = new List<MethodInfo>();
+
+
+        for (int i = 0; i < ti.fields.Length; i++)
+        {
+            if (!IsMemberObsolete(ti.fields[i]))
+                lstField.Add(ti.fields[i]);
+        }
+
+
+        for (int i = 0; i < ti.properties.Length; i++)
+        {
+            PropertyInfo pro = ti.properties[i];
+
+            MethodInfo[] accessors = pro.GetAccessors();
+            foreach (var v in accessors)
+            {
+                if (!proAccessors.ContainsKey(v.Name))
+                    proAccessors.Add(v.Name, 0);
+            }
+
+            if (pro.Name == "Item") //[] not support
+                continue;
+
+            // Skip Obsolete
+            if (IsMemberObsolete(pro))
+                continue;
+
+            lstPro.Add(pro);
+        }
+
+        for (int i = 0; i < ti.methods.Length; i++)
+        {
+            MethodInfo method = ti.methods[i];
+            // skip property accessor
+            if (method.IsSpecialName &&
+                proAccessors.ContainsKey(method.Name))
+                continue;
+
+            // 先忽略特殊名字，后面再处理
+            if (method.IsSpecialName)
+                continue;
+
+            // Skip Obsolete
+            if (IsMemberObsolete(method))
+                continue;
+
+            if (method.IsGenericMethod || method.IsGenericMethodDefinition)
+                continue;
+
+            lstMethod.Add(method);
+        }
+
+        ti.fields = lstField.ToArray();
+        ti.properties = lstPro.ToArray();
+        ti.methods = lstMethod.ToArray();
     }
 
     public static IntPtr CSOBJ = IntPtr.Zero;
@@ -330,12 +391,12 @@ public static class JSMgr
         }
     }
 
-    public static void addNativeJSRelation(IntPtr jsObj, object nativeObj)
+    public static void addJSCSRelation(IntPtr jsObj, object csObj)
     {
         Debug.Log("jsObj added: " + jsObj.ToInt32().ToString());
 
-        mDict1.Add(jsObj.GetHashCode(), new JS_CS_Relation(jsObj, nativeObj));
-        mDict2.Add(nativeObj.GetHashCode(), new JS_CS_Relation(jsObj, nativeObj));
+        mDict1.Add(jsObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
+        mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
     }
     public static object getCSObj(IntPtr jsObj)
     {
@@ -344,12 +405,22 @@ public static class JSMgr
             return obj.csObj;
         return null;
     }
-    public static IntPtr getJSObj(object nativeObj)
+    public static IntPtr getJSObj(object csObj)
     {
         JS_CS_Relation obj;
-        if (mDict2.TryGetValue(nativeObj.GetHashCode(), out obj))
+        if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
             return obj.jsObj;
         return IntPtr.Zero;
+    }
+    public static void changeCSObj(object csObj, object csObjNew)
+    {
+        IntPtr jsObj = getJSObj(csObj);
+        if (jsObj == IntPtr.Zero)
+            return;
+
+        mDict1.Remove(jsObj.GetHashCode());
+        mDict2.Remove(csObj.GetHashCode());
+        addJSCSRelation(jsObj, csObj);
     }
     static Dictionary<int, JS_CS_Relation> mDict1 = new Dictionary<int, JS_CS_Relation>(); // key = jsObj.hashCode()
     static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()

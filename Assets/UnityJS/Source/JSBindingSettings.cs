@@ -293,7 +293,7 @@ public class JSBindingSettings
 // typeof(UnityEngine.AnimationCurve),////ok
         //typeof(UnityEngine.Animation),//重载函数排序问题
 //         typeof(UnityEngine.AnimationState),//ok
-//         typeof(UnityEngine.GameObject),//ok
+         typeof(UnityEngine.GameObject),//ok
 //         typeof(UnityEngine.Animator),//ok
 //         typeof(UnityEngine.AvatarBuilder),//ok
 //         typeof(UnityEngine.RuntimeAnimatorController),//ok
@@ -373,7 +373,7 @@ public class JSBindingSettings
 //         typeof(UnityEngine.GUILayout),
 //         typeof(UnityEngine.GUILayoutUtility),                                    //ok
 //         typeof(UnityEngine.GUILayoutOption),                                     //ok
-//        typeof(UnityEngine.ExitGUIException),//GetType问题
+        typeof(UnityEngine.ExitGUIException),//GetType问题
 //         typeof(UnityEngine.GUIUtility),//ok
 //         typeof(UnityEngine.GUISettings),//ok
 //         typeof(UnityEngine.GUISkin),//ok
@@ -454,73 +454,73 @@ public class JSBindingSettings
 
         // ValueType
 
-//         typeof(UnityEngine.SocialPlatforms.Range),
-//         typeof(UnityEngine.TextGenerationSettings),
-//         typeof(UnityEngine.JointMotor),
-//         typeof(UnityEngine.JointSpring),
-//         typeof(UnityEngine.JointLimits),
-//         typeof(UnityEngine.SoftJointLimit),
-//         typeof(UnityEngine.JointDrive),
-//         typeof(UnityEngine.WheelFrictionCurve),
-//         typeof(UnityEngine.WheelHit),
-//         typeof(UnityEngine.RaycastHit),
-//         typeof(UnityEngine.ContactPoint),
-//         typeof(UnityEngine.ClothSkinningCoefficient),
-//         typeof(UnityEngine.RaycastHit2D),
-//         typeof(UnityEngine.ContactPoint2D),
-//         typeof(UnityEngine.JointAngleLimits2D),
-//         typeof(UnityEngine.JointTranslationLimits2D),
-//         typeof(UnityEngine.JointMotor2D),
-//         typeof(UnityEngine.JointSuspension2D),
-//         typeof(UnityEngine.OffMeshLinkData),
-//         typeof(UnityEngine.NavMeshHit),
-//         typeof(UnityEngine.NavMeshTriangulation),
-//         typeof(UnityEngine.WebCamDevice),
-//         typeof(UnityEngine.Keyframe),
-//         typeof(UnityEngine.AnimationInfo),
-//         typeof(UnityEngine.AnimatorStateInfo),
-//         typeof(UnityEngine.AnimatorTransitionInfo),
-//         typeof(UnityEngine.MatchTargetWeightMask),
-//         typeof(UnityEngine.SkeletonBone),
-//         typeof(UnityEngine.HumanLimit),
-//         typeof(UnityEngine.HumanBone),
-//         typeof(UnityEngine.HumanDescription),
-//         typeof(UnityEngine.TreeInstance),
-//         typeof(UnityEngine.UIVertex),
-//         typeof(UnityEngine.LayerMask),
-//         typeof(UnityEngine.CombineInstance),
-//         typeof(UnityEngine.BoneWeight),
-//         typeof(UnityEngine.Particle),
-//         typeof(UnityEngine.RenderBuffer),
-//         typeof(UnityEngine.Resolution),
-//         typeof(UnityEngine.CharacterInfo),
-//         typeof(UnityEngine.UICharInfo),
-//         typeof(UnityEngine.UILineInfo),
-//         typeof(UnityEngine.LOD),
-//         typeof(UnityEngine.GradientColorKey),
-//         typeof(UnityEngine.GradientAlphaKey),
-//         typeof(UnityEngine.iPhoneTouch),
-//         typeof(UnityEngine.iPhoneAccelerationEvent),
-//         typeof(UnityEngine.Vector2),
-         typeof(UnityEngine.Vector3),
-//         typeof(UnityEngine.Color),
-//         typeof(UnityEngine.Color32),
-//         typeof(UnityEngine.Quaternion),
-//         typeof(UnityEngine.Rect),
-//         typeof(UnityEngine.Matrix4x4),
-//         typeof(UnityEngine.Bounds),
-//         typeof(UnityEngine.Vector4),
-//         typeof(UnityEngine.Ray),
-//         typeof(UnityEngine.Ray2D),
-//         typeof(UnityEngine.Plane),
-//         typeof(UnityEngine.Mathf),
-//         typeof(UnityEngine.NetworkPlayer),
-//         typeof(UnityEngine.NetworkViewID),
-//         typeof(UnityEngine.NetworkMessageInfo),
-//         typeof(UnityEngine.CacheIndex),
-//         typeof(UnityEngine.Touch),
-//         typeof(UnityEngine.AccelerationEvent),
-//         typeof(UnityEngine.LocationInfo),
+//         typeof(UnityEngine.SocialPlatforms.Range),             //ok
+//         typeof(UnityEngine.TextGenerationSettings),            //ok
+//         typeof(UnityEngine.JointMotor),                        //ok
+//         typeof(UnityEngine.JointSpring),                       //ok
+//         typeof(UnityEngine.JointLimits),                       //ok
+//         typeof(UnityEngine.SoftJointLimit),                    //ok
+//         typeof(UnityEngine.JointDrive),                        //ok
+//         typeof(UnityEngine.WheelFrictionCurve),                //ok
+//         typeof(UnityEngine.WheelHit),                          //ok
+//         typeof(UnityEngine.RaycastHit),                        //ok
+//         typeof(UnityEngine.ContactPoint),                      //ok
+//         typeof(UnityEngine.ClothSkinningCoefficient),          //ok
+//         typeof(UnityEngine.RaycastHit2D),                      //ok
+//         typeof(UnityEngine.ContactPoint2D),                    //ok
+//         typeof(UnityEngine.JointAngleLimits2D),                //ok
+//         typeof(UnityEngine.JointTranslationLimits2D),          //ok
+//         typeof(UnityEngine.JointMotor2D),                      //ok
+//         typeof(UnityEngine.JointSuspension2D),                 //ok
+//         typeof(UnityEngine.OffMeshLinkData),                //ok
+//         typeof(UnityEngine.NavMeshHit),                     //ok
+//         typeof(UnityEngine.NavMeshTriangulation),           //ok
+//         typeof(UnityEngine.WebCamDevice),                   //ok
+//         typeof(UnityEngine.Keyframe),                       //ok
+//         typeof(UnityEngine.AnimationInfo),                  //ok
+//         typeof(UnityEngine.AnimatorStateInfo),              //ok
+//         typeof(UnityEngine.AnimatorTransitionInfo),         //ok
+//         typeof(UnityEngine.MatchTargetWeightMask),          //ok
+//         typeof(UnityEngine.SkeletonBone),                   //ok
+//         typeof(UnityEngine.HumanLimit),                     //ok
+//         typeof(UnityEngine.HumanBone),                      //ok
+//         typeof(UnityEngine.HumanDescription),               //ok
+//         typeof(UnityEngine.TreeInstance),                   //ok
+//         typeof(UnityEngine.UIVertex),                       //ok
+//         typeof(UnityEngine.LayerMask),                      //ok
+//         typeof(UnityEngine.CombineInstance),                //ok
+//         typeof(UnityEngine.BoneWeight),                     //ok
+//         typeof(UnityEngine.Particle),                       //ok
+//         typeof(UnityEngine.RenderBuffer),                   //ok
+//         typeof(UnityEngine.Resolution),                     //ok
+//         typeof(UnityEngine.CharacterInfo),                  //ok
+//         typeof(UnityEngine.UICharInfo),                     //ok
+//         typeof(UnityEngine.UILineInfo),                     //ok
+//         typeof(UnityEngine.LOD),                            //ok
+//         typeof(UnityEngine.GradientColorKey),               //ok
+//         typeof(UnityEngine.GradientAlphaKey),               //ok
+//         typeof(UnityEngine.iPhoneTouch),                    //ok
+//         typeof(UnityEngine.iPhoneAccelerationEvent),        //ok
+//         typeof(UnityEngine.Vector2),                        //ok
+//          typeof(UnityEngine.Vector3),                    //ok
+//         typeof(UnityEngine.Color),                       //ok
+//         typeof(UnityEngine.Color32),                     //ok
+//         typeof(UnityEngine.Quaternion),                  //ok
+//         typeof(UnityEngine.Rect),                        //ok
+//         typeof(UnityEngine.Matrix4x4),                   //ok
+//         typeof(UnityEngine.Bounds),                      //ok
+//         typeof(UnityEngine.Vector4),                     //ok
+//         typeof(UnityEngine.Ray),                         //ok
+//         typeof(UnityEngine.Ray2D),                       //ok
+//         typeof(UnityEngine.Plane),                       //ok
+//         typeof(UnityEngine.Mathf),                       //ok
+//         typeof(UnityEngine.NetworkPlayer),               //ok
+//         typeof(UnityEngine.NetworkViewID),               //ok
+//         typeof(UnityEngine.NetworkMessageInfo),          //ok
+//         typeof(UnityEngine.CacheIndex),                  //ok
+//         typeof(UnityEngine.Touch),                       //ok
+//         typeof(UnityEngine.AccelerationEvent),           //ok
+//         typeof(UnityEngine.LocationInfo),                //ok
 //         typeof(UnityEngine.jvalue),
 
     };

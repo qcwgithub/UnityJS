@@ -55,6 +55,19 @@ public static class CSGenerator
     ]]
 ]]
 ";
+        string fmtValueType = @"void {0}_{1}(JSVCall vc)
+[[
+    if (vc.bGet)
+        vc.result = (({0})vc.csObj).{1};
+    else
+    [[
+        {0} argThis = ({0})vc.csObj;
+        argThis.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
+        JSMgr.changeCSObj(vc.csObj, argThis);
+    ]]
+]]
+";
+
         string fmtReadOnly = @"void {0}_{1}(JSVCall vc)
 [[
     vc.result = (({0})vc.csObj).{1};
@@ -81,13 +94,14 @@ public static class CSGenerator
             if (IsMemberObsolete(field))
                 continue;
 
-
             bool bReadOnly = (field.IsInitOnly || field.IsLiteral);
 
-            if (!field.IsStatic)
-                sb.AppendFormat(bReadOnly ? fmtReadOnly : fmt, type.Name, field.Name, field.FieldType);
-            else
-                sb.AppendFormat(bReadOnly ? fmtStaticReadOnly : fmtStatic, type.Name, field.Name, field.FieldType);
+            string f = fmt;
+            if (field.IsStatic) f = bReadOnly ? fmtStaticReadOnly : fmtStatic;
+            else if (bReadOnly) f = fmtReadOnly;
+            else if (type.IsValueType) f = fmtValueType;
+
+            sb.AppendFormat(f, type.Name, field.Name, field.FieldType);
         }
         return sb;
     }
@@ -108,7 +122,19 @@ public static class CSGenerator
         (({0})vc.csObj).{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
     ]]
 ]]
-";.............................................................................................
+";
+        string fmtValueType = @"void {0}_{1}(JSVCall vc)
+[[
+    if (vc.bGet)
+        vc.result = (({0})vc.csObj).{1};
+    else
+    [[
+        {0} argThis = ({0})vc.csObj; // unboxing
+        argThis.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
+        JSMgr.changeCSObj(vc.csObj, argThis);
+    ]]
+]]
+";
         string fmtStatic = @"void {0}_{1}(JSVCall vc)
 [[
     if (vc.bGet)
@@ -148,10 +174,12 @@ public static class CSGenerator
             isStatic = accessors[0].IsStatic;
 
             bool bReadOnly = !property.CanWrite;
-            if (!isStatic)
-                sb.AppendFormat((bReadOnly ? fmtReadOnly : fmt), type.Name, property.Name, GetTypeFullName(property.PropertyType));
-            else
-                sb.AppendFormat((bReadOnly ? fmtReadOnlyStatic : fmtStatic), type.Name, property.Name, GetTypeFullName(property.PropertyType));
+            string f = fmt;
+            if (isStatic) f = bReadOnly ? fmtReadOnlyStatic : fmtStatic;
+            else if (bReadOnly) f = fmtReadOnly;
+            else if (type.IsValueType) f = fmtValueType;
+
+            sb.AppendFormat(f, type.Name, property.Name, GetTypeFullName(property.PropertyType));
         }
         return sb;
     }
@@ -209,14 +237,6 @@ public static class CSGenerator
         }
         return sb;
     }
-    public static StringBuilder BuildSpecialFunctionCall(MethodInfo method)
-    {
-        if (!method.IsSpecialName)
-            return null;
-        StringBuilder sb = new StringBuilder();
-//        Matrix4x4
-        return null;
-    }
     public static StringBuilder BuildNormalFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid)
     {
         // 最少需要几个参数
@@ -265,13 +285,26 @@ public static class CSGenerator
             }
             else
             {
-                sb.AppendFormat(@"    {5}if (len == {0}) 
+                if (!type.IsValueType)
+                {
+                    sb.AppendFormat(@"    {5}if (len == {0}) 
     [[
 {6}
         {4}(({1})vc.csObj).{2}({3});
     ]]
 ", j, className, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable);
-
+                }
+                else
+                {
+                    sb.AppendFormat(@"    {5}if (len == {0}) 
+    [[
+{6}
+        {1} argThis = ({1})vc.csObj;
+        {4}argThis.{2}({3});
+        JSMgr.changeCSObj(vc.csObj, argThis);
+    ]]
+", j, className, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable);
+                }
             }
 
         }
@@ -383,6 +416,10 @@ bool {0}_{1}{2}(JSVCall vc, int start, int count)
             // skip property accessor
             if (method.IsSpecialName &&
                 classPropertyAccessors.ContainsKey(method.Name))
+                continue;
+
+            // 先忽略特殊名字，后面再处理
+            if (method.IsSpecialName)
                 continue;
 
             // Skip Obsolete
