@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -560,7 +558,7 @@ public class CSharpGenerated
         }*/
 
         JSMgr.ATypeInfo ti;
-        int slot = JSMgr.AddTypeInfo(type, out ti);
+        /*int slot = */JSMgr.AddTypeInfo(type, out ti);
 //         var sbCons = BuildConstructors(type, ti.constructors, slot);
 //         var sbFields = BuildFields(type, ti.fields, slot);
 //         var sbProperties = BuildProperties(type, ti.properties, slot);
@@ -594,7 +592,6 @@ public class CSharpGenerated
          */
         string fmtFile = @"
 using UnityEngine;
-using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -713,8 +710,8 @@ using UnityEngine;
      * Some classes have another name
      * for example: js has 'Object'
      */
-    static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
-    static string className = string.Empty;
+    //static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
+    //static string className = string.Empty;
 
 //     public class TEST2
 //     {

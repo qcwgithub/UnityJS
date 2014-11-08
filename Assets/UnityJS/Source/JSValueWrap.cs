@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
-using UnityEditor;
+//using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;

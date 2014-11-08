@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
-using UnityEditor;
+//using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -108,7 +106,7 @@ public class JSBindingSettings
         typeof(UnityEngine.FullScreenMovieControlMode),
         typeof(UnityEngine.FullScreenMovieScalingMode),
         typeof(UnityEngine.iOSActivityIndicatorStyle),
-        typeof(UnityEngine.AndroidActivityIndicatorStyle),
+//        typeof(UnityEngine.AndroidActivityIndicatorStyle),
         typeof(UnityEngine.TouchScreenKeyboardType),
         typeof(UnityEngine.iPhoneGeneration),
         typeof(UnityEngine.KeyCode),
@@ -169,10 +167,10 @@ public class JSBindingSettings
 
          //class
 
-        typeof(UnityEngine.AndroidJavaException), 
-        typeof(UnityEngine.AndroidJavaProxy),
-        typeof(UnityEngine.AndroidJavaObject),
-        typeof(UnityEngine.AndroidJavaClass),
+//         typeof(UnityEngine.AndroidJavaException), 
+//         typeof(UnityEngine.AndroidJavaProxy),
+//         typeof(UnityEngine.AndroidJavaObject),
+//         typeof(UnityEngine.AndroidJavaClass),
         typeof(AOT.MonoPInvokeCallbackAttribute),
         typeof(UnityEngine.ThreadSafeAttribute),
 
@@ -216,8 +214,8 @@ public class JSBindingSettings
          typeof(UnityEngine.Internal.DefaultValueAttribute),
          typeof(UnityEngine.Internal.ExcludeFromDocsAttribute),
          typeof(UnityEngine.iPhone),
-         typeof(UnityEngine.ADBannerView),
-         typeof(UnityEngine.ADInterstitialAd),
+         //typeof(UnityEngine.ADBannerView),
+         //typeof(UnityEngine.ADInterstitialAd),
          typeof(UnityEngine.Serialization.UnitySurrogateSelector),
          typeof(UnityEngineInternal.TypeInferenceRuleAttribute),
          typeof(UnityEngineInternal.GenericStack),
@@ -440,9 +438,9 @@ public class JSBindingSettings
         typeof(UnityEngine.YieldInstruction),
         typeof(UnityEngine.PlayerPrefsException),
          typeof(UnityEngine.PlayerPrefs),                              
-         typeof(UnityEngine.AndroidJNIHelper),                         
-         typeof(UnityEngine.AndroidJNI),                               
-         typeof(UnityEngine.AndroidInput),                             
+//          typeof(UnityEngine.AndroidJNIHelper),                         
+//          typeof(UnityEngine.AndroidJNI),                               
+//          typeof(UnityEngine.AndroidInput),                             
          typeof(UnityEngine.Motion),                                   
          typeof(UnityEngine.SamsungTV),                                
 
@@ -514,7 +512,9 @@ public class JSBindingSettings
          typeof(UnityEngine.CacheIndex),                  
          typeof(UnityEngine.Touch),                       
          typeof(UnityEngine.AccelerationEvent),           
-         typeof(UnityEngine.LocationInfo),                
+         typeof(UnityEngine.LocationInfo),    
+         
+         typeof(System.Diagnostics.Stopwatch),
 
 //         typeof(UnityEngine.jvalue),
         // typeof(UnityEngine.SocialPlatforms.GameCenter.GameCenterPlatform), //Action<>..... 哦，懂了 ，可以手动添加一个名字空间就可以了

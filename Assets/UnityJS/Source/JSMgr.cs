@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
-using UnityEditor;
+//using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -47,6 +45,13 @@ public static class JSMgr
         return 1;
     }
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
+    static int printDouble(IntPtr cx, UInt32 argc, IntPtr vp)
+    {
+        double value = JSApi.JShelp_ArgvDouble(cx, vp, 0);
+        Debug.Log(value);
+        return 1;
+    }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
         string fileName = JSApi.JShelp_GetErroReportFileName(report);
@@ -62,7 +67,7 @@ public static class JSMgr
         cx = JSApi.JS_NewContext(rt, 8192);
         //Debug.Log("cx: " + cx + "\n");
 
-        int sizeofJSClass = Marshal.SizeOf(typeof(JSApi.JSClass));
+        //int sizeofJSClass = Marshal.SizeOf(typeof(JSApi.JSClass));
 
 
         // 
@@ -109,12 +114,12 @@ public static class JSMgr
 
         //SMDll.JSAutoCompartment(cx, glob);
 
-        int b;
-        b = JSApi.JS_InitStandardClasses(cx, glob);
+        /*int b = */JSApi.JS_InitStandardClasses(cx, glob);
         JSApi.JS_InitReflect(cx, glob);
 
         JSApi.JS_DefineFunction(cx, glob, "printInt", new JSApi.JSNative(printInt), 1, 0/*4164*/);
         JSApi.JS_DefineFunction(cx, glob, "printString", new JSApi.JSNative(printString), 1, 0/*4164*/);
+        JSApi.JS_DefineFunction(cx, glob, "printDouble", new JSApi.JSNative(printDouble), 1, 0/*4164*/);
         JSApi.JS_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
 
         JSMgr.RegisterCS(cx, glob);
@@ -128,7 +133,6 @@ public static class JSMgr
         {
             CSharpGenerated.RegisterAll();
         }
-
         JSMgr.EvaluateGeneratedScripts();
     }
     public static JSApi.SC_FINALIZE mjsFinalizer = new JSApi.SC_FINALIZE(JSObjectFinalizer);
@@ -484,20 +488,25 @@ public static class JSMgr
     {
         Debug.Log("jsObj added: " + jsObj.ToInt32().ToString());
 
-        mDict1.Add(jsObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
-        mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
+        int index = nextRelationIndex++;
+
+//         JSApi.jsval val = new JSApi.jsval();
+//         JSApi.JShelp_SetJsvalInt(ref val, index);
+//         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
+        mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
+        mDict2.Add(csObj, new JS_CS_Relation(jsObj, csObj));
     }
     public static object getCSObj(IntPtr jsObj)
     {
         JS_CS_Relation obj;
-        if (mDict1.TryGetValue(jsObj.GetHashCode(), out obj))
+        if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
             return obj.csObj;
         return null;
     }
     public static IntPtr getJSObj(object csObj)
     {
         JS_CS_Relation obj;
-        if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
+        if (mDict2.TryGetValue(csObj, out obj))
             return obj.jsObj;
         return IntPtr.Zero;
     }
@@ -507,20 +516,21 @@ public static class JSMgr
         if (jsObj == IntPtr.Zero)
             return;
 
-        mDict1.Remove(jsObj.GetHashCode());
-        mDict2.Remove(csObj.GetHashCode());
+        mDict1.Remove(jsObj.ToInt64());
+        mDict2.Remove(csObj);
         addJSCSRelation(jsObj, csObj);
     }
-    static Dictionary<int, JS_CS_Relation> mDict1 = new Dictionary<int, JS_CS_Relation>(); // key = jsObj.hashCode()
-    static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
+    static Dictionary<long, JS_CS_Relation> mDict1 = new Dictionary<long, JS_CS_Relation>(); // key = jsObj.hashCode()
+    static Dictionary<object, JS_CS_Relation> mDict2 = new Dictionary<object, JS_CS_Relation>(); // key = nativeObj.hashCode()
+    static int nextRelationIndex = 0;
 
     static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
     {
         JS_CS_Relation obj;
-        if (mDict1.TryGetValue(jsObj.GetHashCode(), out obj))
+        if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
         {
             string name = obj.csObj.GetType().Name;
-            mDict1.Remove(jsObj.GetHashCode());
+            mDict1.Remove(jsObj.ToInt64());
             Debug.Log(name + " finalized, left " + mDict1.Count.ToString());
         }
         else

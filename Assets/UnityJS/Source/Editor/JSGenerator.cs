@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -137,7 +135,7 @@ Object.defineProperty({0}, '{1}',
         }
         return sb;
     }
-    static Dictionary<string, string> mDictJJ = new Dictionary<string, string>();
+    //static Dictionary<string, string> mDictJJ = new Dictionary<string, string>();
     public static StringBuilder BuildConstructors(Type type, ConstructorInfo[] constructors, int slot)
     {
         /*

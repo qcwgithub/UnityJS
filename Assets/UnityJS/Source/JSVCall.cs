@@ -1,11 +1,9 @@
 ﻿using UnityEngine;
-using UnityEditor;
+//using UnityEditor;
 using System;
-using System.Collections;
 using System.Text;
 using System.Reflection;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -429,7 +427,7 @@ public class JSVCall
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
-                JSApi.JShelp_SetJsvalInt(ref val, (int)csObj);
+                JSApi.JShelp_SetJsvalInt(ref val, (Int32)(Int64)csObj);
             }
             else if (t == typeof(System.Single) || t == typeof(System.Double))
             {
@@ -469,7 +467,7 @@ public class JSVCall
             if (jsObj == IntPtr.Zero)
             {
                 jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
-                if (jsObj != null)
+                if (jsObj != IntPtr.Zero)
                     JSMgr.addJSCSRelation(jsObj, csObj);
             }
             if (jsObj == IntPtr.Zero)

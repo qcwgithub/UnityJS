@@ -1,10 +1,13 @@
 (function createagameobject()
 {
 	var v = new GameObject();
-	v.tag = "Respawn"
-	v.name = "helj"
 
-	var v2 = new GameObject();
-	v2.tag = "Player";
-	v2.name = "qiucw"
+	var watch = new Stopwatch();
+	watch.Start();
+	for (var i=0; 100000>i; i++)
+	{
+		v.SetActive(false)
+	}
+	watch.Stop();
+	printInt(watch.ElapsedMilliseconds)
 })()

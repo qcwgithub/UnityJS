@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 // public class SMDLL : MonoBehaviour {
 // 
@@ -174,6 +173,11 @@ public class JSApi
     // JSObject* JS_InitReflect(JSContext *cx, JSObject *global); 
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JS_InitReflect(IntPtr cx, IntPtr global);
+
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JS_GetProperty(IntPtr cx, IntPtr obj, string name, ref jsval vp);
+    [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JS_SetProperty(IntPtr cx, IntPtr obj, string name, ref jsval vp);
 
     /*
     * JSObject* JS_NewGlobalObject(JSContext *cx, JSClass *clasp, JSPrincipals *principals);

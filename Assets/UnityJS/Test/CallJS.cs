@@ -1,7 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using System.Collections;
-using System;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Collections;
