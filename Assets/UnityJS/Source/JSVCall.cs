@@ -12,6 +12,10 @@ using System.Text.RegularExpressions;
 
 public class JSVCall
 {
+    public enum Consts
+    {
+        MaxParams = 16,
+    }
     public class JSParam
     {
         public int index; // 参数位置
@@ -41,31 +45,40 @@ public class JSVCall
         }
     }
 
-    public List<JSParam> lstJSParam;
-    public int jsParamCount { get { return lstJSParam.Count; } }
+    public JSParam[] arrJSParam = null;
+    public int arrJSParamsLength = 0;
 
-    public int csParamCount { get { return arrCSParam.Length; } }
-    public CSParam[] arrCSParam;
+    public CSParam[] arrCSParam = null;
+    public int arrCSParamsLength = 0;
+
+    public object[] callParams = null;
+    public int callParamsLength = 0;
 
     public MethodBase m_Method;
     public ParameterInfo[] m_ParamInfo;
-    public object[] callParams;
 
     IntPtr cx;
     IntPtr vp;
 
     public void Reset(IntPtr cx, IntPtr vp)
     {
-        if (lstJSParam == null)
-            lstJSParam = new List<JSParam>();
-        else
-            lstJSParam.Clear();
-
-        arrCSParam = null;
+        if (arrJSParam == null)
+        {
+            arrJSParam = new JSParam[(int)Consts.MaxParams];
+            arrCSParam = new CSParam[(int)Consts.MaxParams];
+            for (int i = 0; (int)Consts.MaxParams > i; i++)
+            {
+                arrJSParam[i] = new JSParam();
+                arrCSParam[i] = new CSParam();
+            }
+            callParams = new object[(int)Consts.MaxParams];
+        }
+        arrJSParamsLength = 0;
+        arrCSParamsLength = 0;
+        callParamsLength = 0;
 
         m_Method = null;
         m_ParamInfo = null;
-        callParams = null;
 
         this.cx = cx;
         this.vp = vp;
@@ -83,18 +96,16 @@ public class JSVCall
         if (m_ParamInfo == null)
             m_ParamInfo = m_Method.GetParameters();
 
-        arrCSParam = new CSParam[m_ParamInfo.Length];
-
+        arrCSParamsLength = m_ParamInfo.Length;
         for (int i = 0; i < m_ParamInfo.Length; i++)
         {
             ParameterInfo p = m_ParamInfo[i];
 
-            CSParam csParam = new CSParam();
+            CSParam csParam = arrCSParam[i];
             csParam.isOptional = p.IsOptional;
             csParam.isRef = p.ParameterType.IsByRef;
             csParam.isArray = p.ParameterType.IsArray;
             csParam.type = p.ParameterType;
-            arrCSParam[i] = csParam;
         }
     }
 
@@ -111,6 +122,7 @@ public class JSVCall
      */
     public bool ExtractJSParams(int start, int count)
     {
+        arrJSParamsLength = 0;
         for (int i = 0; i < count; i++)
         {
             int index = i + start;
@@ -118,7 +130,7 @@ public class JSVCall
             if (bUndefined)
                 return true;
 
-            JSParam jsParam = new JSParam();
+            JSParam jsParam = arrJSParam[arrJSParamsLength++]; //new JSParam();
             jsParam.index = index;
             jsParam.isNull = JSApi.JShelp_ArgvIsNull(cx, vp, index);
             jsParam.isArray = false;
@@ -144,7 +156,7 @@ public class JSVCall
                 }
                 jsParam.csObj = csObj;
             }
-            lstJSParam.Add(jsParam);
+            //lstJSParam.Add(jsParam);
         }
         return true;
     }
@@ -154,24 +166,24 @@ public class JSVCall
     // 来判断第i个参数类型是否匹配
     public bool IsParamMatch(int csParamIndex, bool csIsOptional, Type csType)
     {
-        if (csParamIndex < jsParamCount)
+        if (csParamIndex < arrJSParamsLength)
         {
             if (csType.IsArray)
             {
                 // todo
                 // 重载函数只匹配是否数组
                 // 无法识别2个都是数组参数但是类型不同的重载函数，这种情况只会调用第1个
-                if (!lstJSParam[csParamIndex].isArray)
+                if (!arrJSParam[csParamIndex].isArray)
                     return false;
             }
-            else if (!lstJSParam[csParamIndex].isWrap)
+            else if (!arrJSParam[csParamIndex].isWrap)
             {
-                if (lstJSParam[csParamIndex].csObj == null || csType != lstJSParam[csParamIndex].csObj.GetType())
+                if (arrJSParam[csParamIndex].csObj == null || csType != arrJSParam[csParamIndex].csObj.GetType())
                     return false;
             }
-            else if (lstJSParam[csParamIndex].isWrap)
+            else if (arrJSParam[csParamIndex].isWrap)
             {
-                if (csType != lstJSParam[csParamIndex].wrappedObj.GetType())
+                if (csType != arrJSParam[csParamIndex].wrappedObj.GetType())
                     return false;
             }
             else
@@ -200,7 +212,7 @@ public class JSVCall
             if (method.Name != methods[methodIndex].Name)
                 return -1;
             ParameterInfo[] ps = method.GetParameters();
-            if (jsParamCount > ps.Length)
+            if (arrJSParamsLength > ps.Length)
                 continue;
 
             bool matchSuccess = true;
@@ -286,7 +298,7 @@ public class JSVCall
         //         {
         // 
         //         }
-        else if (typeof(UnityEngine.Object).IsAssignableFrom(t))
+        else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsValueType)
         {
             if (JSApi.JShelp_ArgvIsNull(cx, vp, paramIndex))
                 return null;
@@ -298,10 +310,10 @@ public class JSVCall
             object csObject = JSMgr.getCSObj(jsObj);
             return csObject;
         }
-        else
-        {
-            Debug.Log("ConvertJSValue2CSValue: Unknown CS type: " + t.ToString());
-        }
+//         else
+//         {
+//             Debug.Log("ConvertJSValue2CSValue: Unknown CS type: " + t.ToString());
+//         }
         return null;
     }
 
@@ -312,7 +324,7 @@ public class JSVCall
     // for calling method
     public object JSValue_2_CSObject(int index)
     {
-        JSParam jsParam = lstJSParam[index];
+        JSParam jsParam = arrJSParam[index];
         int paramIndex = jsParam.index;
         CSParam csParam = arrCSParam[index];
         //ParameterInfo p = m_ParamInfo[index];
@@ -322,16 +334,20 @@ public class JSVCall
         if (csParam.isRef)
             t = t.GetElementType();
 
-        if (typeof(UnityEngine.Object).IsAssignableFrom(t))
-        {
-            if (jsParam.isNull)
-                return null;
+        if (jsParam.isNull) return null;
+        else if (jsParam.isWrap) return jsParam.wrappedObj;
+        else if (jsParam.csObj != null) return jsParam.csObj;
 
-            if (jsParam.isWrap)
-                return jsParam.wrappedObj;
-
-            return jsParam.csObj;
-        }
+//         if (typeof(UnityEngine.Object).IsAssignableFrom(t))
+//         {
+//             if (jsParam.isNull)
+//                 return null;
+// 
+//             if (jsParam.isWrap)
+//                 return jsParam.wrappedObj;
+// 
+//             return jsParam.csObj;
+//         }
 
         return JSValue_2_CSObject(csParam.type, paramIndex);
     }
@@ -343,51 +359,58 @@ public class JSVCall
      * null -- fail
      * not null -- success
      */
-    public object[] BuildMethodArgs(bool addDefaultValue)
+    public bool BuildMethodArgs(bool addDefaultValue)
     {
-        ArrayList args = new ArrayList();
-        for (int i = 0; i < this.arrCSParam.Length; i++)
+        //ArrayList args = new ArrayList();
+        callParamsLength = 0;
+        for (int i = 0; i < this.arrCSParamsLength; i++)
         {
-            if (i < this.lstJSParam.Count)
+            callParamsLength++;
+
+            if (i < this.arrJSParamsLength)
             {
-                JSParam jsParam = lstJSParam[i];
+                JSParam jsParam = arrJSParam[i];
                 if (jsParam.isWrap)
                 {
-                    args.Add(jsParam.wrappedObj);
+                    //args.Add(jsParam.wrappedObj);
+                    callParams[i] = jsParam.wrappedObj;
                 }
                 else if (jsParam.isArray)
                 {
                     // todo
                     // 
                     Debug.Log("array parameter not supported");
+                    callParams[i] = null;
                 }
                 else if (jsParam.isNull)
                 {
-                    args.Add(null);
+                    //args.Add(null);
+                    callParams[i] = null;
                 }
                 else
                 {
-                    args.Add(JSValue_2_CSObject(i));
+                    //args.Add(JSValue_2_CSObject(i));
+                    callParams[i] = JSValue_2_CSObject(i);
                 }
             }
             else
             {
                 if (arrCSParam[i].isOptional)
                 {
-                    if (addDefaultValue)
-                        args.Add(arrCSParam[i].defaultValue);
+                    if (addDefaultValue)//args.Add(arrCSParam[i].defaultValue);
+                        callParams[i] = arrCSParam[i].defaultValue;
                     else
                         break;
                 }
                 else
                 {
                     Debug.LogError("Not enough arguments calling function '" + m_Method.Name + "'");
-                    return null;
+                    return false;
                 }
             }
         }
-
-        return args.ToArray();
+        //return args.ToArray();
+        return true;
     }
 
     // CS -> JS
@@ -461,7 +484,7 @@ public class JSVCall
             }
             JSApi.JShelp_SetJsvalObject(ref val, jsArr);
         }
-        else if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass)
+        else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass || t.IsValueType)
         {
             IntPtr jsObj = JSMgr.getJSObj(csObj);
             if (jsObj == IntPtr.Zero)
@@ -475,11 +498,11 @@ public class JSVCall
             else
                 JSApi.JShelp_SetJsvalObject(ref val, jsObj);
         }
-        else
-        {
-            Debug.Log("CS -> JS: Unknown CS type: " + t.ToString());
-            JSApi.JShelp_SetJsvalUndefined(ref val);
-        }
+//         else
+//         {
+//             Debug.Log("CS -> JS: Unknown CS type: " + t.ToString());
+//             JSApi.JShelp_SetJsvalUndefined(ref val);
+//         }
         return val;
     }
 
@@ -488,11 +511,11 @@ public class JSVCall
         if (/*this.op == Oper.METHOD && */ arrCSParam != null)
         {
             // 处理 ref/out 参数
-            for (int i = 0; i < arrCSParam.Length; i++)
+            for (int i = 0; i < arrCSParamsLength; i++)
             {
                 if (arrCSParam[i].isRef)
                 {
-                    lstJSParam[i].wrappedObj = callParams[i];
+                    arrJSParam[i].wrappedObj = callParams[i];
                 }
             }
         }
@@ -619,13 +642,13 @@ public class JSVCall
                     
                     fun = arrMethod[index].fun;
                     arrCSParam = arrMethod[index].arrCSParam;
+                    arrCSParamsLength = arrCSParam.Length;
 
                     if (fun == null || arrCSParam == null) 
                         return JSApi.JS_FALSE;
 
-                    callParams = BuildMethodArgs(false);
-                    if (null == callParams)
-                        return JSApi.JS_FALSE;
+                    if (!BuildMethodArgs(false))
+                         return JSApi.JS_FALSE;
                     
                     if (!fun(this, currentParamCount, (int)argc - currentParamCount))
                         return JSApi.JS_FALSE;
@@ -722,11 +745,15 @@ public class JSVCall
 
                     this.ExtractCSParams();
 
-                    callParams = BuildMethodArgs(true);
-                    if (null == callParams)
-                        return JSApi.JS_FALSE;
+                    //!!!!!!!!!!!!!!!!!!!!
+                    if (!BuildMethodArgs(true))
+                         return JSApi.JS_FALSE;
 
-                    result = this.m_Method.Invoke(csObj, callParams);
+                    object[] cp = new object[callParamsLength];
+                    for (int i = 0; callParamsLength > i; i++)
+                        cp[i] = callParams[i];
+
+                    result = this.m_Method.Invoke(csObj, cp);
                 }
                 break;
         }

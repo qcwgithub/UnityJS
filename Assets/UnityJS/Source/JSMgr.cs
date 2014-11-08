@@ -117,9 +117,9 @@ public static class JSMgr
         /*int b = */JSApi.JS_InitStandardClasses(cx, glob);
         JSApi.JS_InitReflect(cx, glob);
 
-        JSApi.JS_DefineFunction(cx, glob, "printInt", new JSApi.JSNative(printInt), 1, 0/*4164*/);
-        JSApi.JS_DefineFunction(cx, glob, "printString", new JSApi.JSNative(printString), 1, 0/*4164*/);
-        JSApi.JS_DefineFunction(cx, glob, "printDouble", new JSApi.JSNative(printDouble), 1, 0/*4164*/);
+        JSApi.JS_DefineFunction(cx, glob, "printInt", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printInt)), 1, 0/*4164*/);
+        JSApi.JS_DefineFunction(cx, glob, "printString", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printString)), 1, 0/*4164*/);
+        JSApi.JS_DefineFunction(cx, glob, "printDouble", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printDouble)), 1, 0/*4164*/);
         JSApi.JS_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
 
         JSMgr.RegisterCS(cx, glob);
@@ -435,6 +435,7 @@ public static class JSMgr
 
     public static IntPtr CSOBJ = IntPtr.Zero;
     static JSVCall vCall = new JSVCall();
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int Call(IntPtr cx, uint argc, IntPtr vp)
     {
         if (useReflection)
@@ -461,7 +462,7 @@ public static class JSMgr
             IntPtr.Zero /* static functions*/
         );
 
-        JSApi.JS_DefineFunction(cx, obj, "Call", new JSApi.JSNative(Call), 0/* narg */, 0);
+        JSApi.JS_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 20/* narg */, 0);
         CSOBJ = obj;
     }
 

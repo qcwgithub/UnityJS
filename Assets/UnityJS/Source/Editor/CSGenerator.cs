@@ -237,7 +237,7 @@ public static class CSGenerator
             minNeedParams++;
         }
         StringBuilder sb = new StringBuilder();
-        sb.Append("    int len = vc.callParams.Length;\r\n");
+        sb.Append("    int len = vc.callParamsLength;\r\n");
         for (int j = minNeedParams; j <= ps.Length; j++)
         {
             StringBuilder sbRefVariable = new StringBuilder();

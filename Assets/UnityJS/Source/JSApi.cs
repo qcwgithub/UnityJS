@@ -211,7 +211,7 @@ public class JSApi
 //    const char *name, JSNative call, uintN nargs, uintN flags);
 
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj, string name, JSNative call, UInt32 nargs, UInt32 flags);
+    public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj, string name, /*JSNative*/IntPtr call, UInt32 nargs, UInt32 flags);
 
     // extern JS_PUBLIC_API(JSErrorReporter) JS_SetErrorReporter(JSContext *cx, JSErrorReporter er);
     [DllImport(SMDLL, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
