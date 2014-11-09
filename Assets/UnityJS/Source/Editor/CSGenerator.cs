@@ -37,65 +37,59 @@ public static class CSGenerator
 
     public static StringBuilder BuildFields(Type type, FieldInfo[] fields, ClassCallbackNames ccbn)
     {
-        /*
-        * fields
-        * 0 class name
-        * 1 field name
-        * 2 field type
-        */
-        string fmt = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = (({0})vc.csObj).{1};
-    else
-    [[
-        (({0})vc.csObj).{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-    ]]
-]]
-";
-        string fmtValueType = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = (({0})vc.csObj).{1};
-    else
-    [[
-        {0} argThis = ({0})vc.csObj;
-        argThis.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-        JSMgr.changeCSObj(vc.csObj, argThis);
-    ]]
-]]
-";
-
-        string fmtReadOnly = @"static void {0}_{1}(JSVCall vc)
-[[
-    vc.result = (({0})vc.csObj).{1};
-]]
-";
-        string fmtStatic = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = {0}.{1};
-    else
-        {0}.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-]]
-";
-        string fmtStaticReadOnly = @"static void {0}_{1}(JSVCall vc)
-[[
-    vc.result = {0}.{1};
-]]
-";
         var sb = new StringBuilder();
         for (int i = 0; i < fields.Length; i++)
         {
+            var sbCall = new StringBuilder();
+
             FieldInfo field = fields[i];
+
+            sb.AppendFormat("static void {0}_{1}(JSVCall vc)\r\n[[\r\n", type.Name, field.Name);
+
             bool bReadOnly = (field.IsInitOnly || field.IsLiteral);
+            if (!bReadOnly)
+                sb.Append("if (vc.bGet)\r\n");
 
-            string f = fmt;
-            if (field.IsStatic) f = bReadOnly ? fmtStaticReadOnly : fmtStatic;
-            else if (bReadOnly) f = fmtReadOnly;
-            else if (type.IsValueType) f = fmtValueType;
+            
+            //if (type.IsValueType && !field.IsStatic)
+            //    sb.AppendFormat("{0} argThis = ({0})vc.csObj;", type.Name);
 
-            sb.AppendFormat(f, type.Name, field.Name, field.FieldType);
+            // get 部分
+            if (field.IsStatic)
+                sbCall.AppendFormat("{0}.{1}", type.Name, field.Name);
+            else
+                sbCall.AppendFormat("(({0})vc.csObj).{1}", type.Name, field.Name);
+            sb.AppendFormat("    {0};\r\n", BuildReturnObject(field.FieldType, sbCall.ToString()));
+
+            // set 部分
+            if (!bReadOnly)
+            {
+                sb.Append("else\r\n");
+                if (field.IsStatic)
+                    sb.AppendFormat("{0}.{1} = ({2}){3};", type.Name, field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
+                else
+                {
+                    if (type.IsValueType)
+                    {
+                        sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
+                        sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
+                        sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                    }
+                    else
+                    {
+                        sb.AppendFormat("(({0})vc.csObj).{1} = ({2});", GetTypeFullName(type), field.Name, BuildRetriveParam(field.FieldType));
+                    }
+                }
+            }
+
+            sb.AppendFormat("]]\r\n");
+
+//             string f = fmt;
+//             if (field.IsStatic) f = bReadOnly ? fmtStaticReadOnly : fmtStatic;
+//             else if (bReadOnly) f = fmtReadOnly;
+//             else if (type.IsValueType) f = fmtValueType;
+// 
+//             sb.AppendFormat(f, type.Name, field.Name, field.FieldType);
             ccbn.fields.Add(type.Name + "_" + field.Name);
         }
 
@@ -103,63 +97,59 @@ public static class CSGenerator
     }
     public static StringBuilder BuildProperties(Type type, PropertyInfo[] properties, ClassCallbackNames ccbn)
     {
-        /*
-        * property
-        * 0 class name
-        * 1 property name
-        * 2 property type name
-        * 3 class full name
-        */
-        string fmt = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = (({3})vc.csObj).{1};
-    else
-    [[
-        (({3})vc.csObj).{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-    ]]
-]]
-";
-        string fmtValueType = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = (({3})vc.csObj).{1};
-    else
-    [[
-        {3} argThis = ({3})vc.csObj; // unboxing
-        argThis.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-        JSMgr.changeCSObj(vc.csObj, argThis);
-    ]]
-]]
-";
-        string fmtStatic = @"static void {0}_{1}(JSVCall vc)
-[[
-    if (vc.bGet)
-        vc.result = {3}.{1};
-    else
-    [[
-        {3}.{1} = ({2})(vc.JSValue_2_CSObject(typeof({2}), vc.currentParamCount));
-    ]]
-]]
-";
-        string fmtReadOnly = @"static void {0}_{1}(JSVCall vc) [[ vc.result = (({3})vc.csObj).{1}; ]]
-";
-        string fmtReadOnlyStatic = @"static void {0}_{1}(JSVCall vc) [[ vc.result = {3}.{1}; ]]
-";
+        
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < properties.Length; i++)
         {
+            var sbCall = new StringBuilder();
+
             PropertyInfo property = properties[i];
+
+            sb.AppendFormat("static void {0}_{1}(JSVCall vc)\r\n[[\r\n", type.Name, property.Name);
+
             MethodInfo[] accessors = property.GetAccessors();
             bool isStatic = accessors[0].IsStatic;
 
             bool bReadOnly = !property.CanWrite;
-            string f = fmt;
-            if (isStatic) f = bReadOnly ? fmtReadOnlyStatic : fmtStatic;
-            else if (bReadOnly) f = fmtReadOnly;
-            else if (type.IsValueType) f = fmtValueType;
 
-            sb.AppendFormat(f, type.Name, property.Name, GetTypeFullName(property.PropertyType), GetTypeFullName(type));
+
+            if (!bReadOnly)
+                sb.Append("if (vc.bGet)\r\n");
+
+
+            //if (type.IsValueType && !field.IsStatic)
+            //    sb.AppendFormat("{0} argThis = ({0})vc.csObj;", type.Name);
+
+            // get 部分
+            if (isStatic)
+                sbCall.AppendFormat("{0}.{1}", GetTypeFullName(type), property.Name);
+            else
+                sbCall.AppendFormat("(({0})vc.csObj).{1}", GetTypeFullName(type), property.Name);
+            sb.AppendFormat("    {0};\r\n", BuildReturnObject(property.PropertyType, sbCall.ToString()));
+
+            // set 部分
+            if (!bReadOnly)
+            {
+                sb.Append("else\r\n");
+                if (isStatic)
+                    sb.AppendFormat("{0}.{1} = ({2}){3};", GetTypeFullName(type), property.Name, GetTypeFullName(property.PropertyType), BuildRetriveParam(property.PropertyType));
+                else
+                {
+                    if (type.IsValueType)
+                    {
+                        sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", GetTypeFullName(type));
+                        sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", property.Name, GetTypeFullName(property.PropertyType), BuildRetriveParam(property.PropertyType));
+                        sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                    }
+                    else
+                    {
+                        sb.AppendFormat("(({0})vc.csObj).{1} = ({2});", GetTypeFullName(type), property.Name, BuildRetriveParam(property.PropertyType));
+                    }
+                }
+            }
+
+            sb.AppendFormat("]]\r\n");
+
             ccbn.properties.Add(type.Name + "_" + property.Name);
         }
         return sb;
@@ -226,8 +216,70 @@ public static class CSGenerator
 
         return sb;
     }
-    public static StringBuilder BuildNormalFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid, bool bConstructor)
+    // 取得：获取参数并转换为相应类型的表达式
+    public static string BuildRetriveParam(Type paramType)
     {
+        if (paramType == typeof(Boolean)) return "vc.getBool()";
+        else if (paramType == typeof(String)) return "vc.getString()";
+        else if (paramType == typeof(Char)) return "vc.getChar()";
+        else if (paramType == typeof(Byte)) return "vc.getByte()";
+        else if (paramType == typeof(SByte)) return "vc.getSByte()";
+        else if (paramType == typeof(UInt16)) return "vc.getUInt16()";
+        else if (paramType == typeof(Int16)) return "vc.getInt16()";
+        else if (paramType == typeof(UInt32)) return "vc.getUInt32()";
+        else if (paramType == typeof(Int32)) return "vc.getInt32()";
+        else if (paramType == typeof(UInt64)) return "vc.getUInt64()";
+        else if (paramType == typeof(Int64)) return "vc.getInt64()";
+        else if (paramType.IsEnum) return "(" + GetTypeFullName(paramType) + ")" + "vc.getEnum()";
+        else if (paramType == typeof(Single)) return "vc.getFloat()";
+        else if (paramType == typeof(Double)) return "vc.getDouble()";
+        else return "(" + GetTypeFullName(paramType) + ")" + "vc.getObject()";
+    }
+    public static string BuildReturnObject(Type paramType, string callString)
+    {
+        if (paramType == typeof(Boolean)) return "vc.returnBool(" + callString + ")";
+        else if (paramType == typeof(String)) return "vc.returnString(" + callString + ")";
+        else if (paramType == typeof(Char)) return "vc.returnChar(" + callString + ")";
+        else if (paramType == typeof(Byte)) return "vc.returnByte(" + callString + ")";
+        else if (paramType == typeof(SByte)) return "vc.returnSByte(" + callString + ")";
+        else if (paramType == typeof(UInt16)) return "vc.returnUInt16(" + callString + ")";
+        else if (paramType == typeof(Int16)) return "vc.returnInt16(" + callString + ")";
+        else if (paramType == typeof(UInt32)) return "vc.returnUInt32(" + callString + ")";
+        else if (paramType == typeof(Int32)) return "vc.returnInt32(" + callString + ")";
+        else if (paramType == typeof(UInt64)) return "vc.returnUInt64(" + callString + ")";
+        else if (paramType == typeof(Int64)) return "vc.returnInt64(" + callString + ")";
+        else if (paramType.IsEnum) return "vc.returnEnum((Int32)" + callString + ")";
+        else if (paramType == typeof(Single)) return "vc.returnFloat(" + callString + ")";
+        else if (paramType == typeof(Double)) return "vc.returnDouble(" + callString + ")";
+        else return "vc.returnObject(\"" + paramType.Name + "\", " + callString + ")";
+    }
+    // 是否直接返回
+    // 如果是  就是直接return 扣号里是调用语句
+    // 如果不是  就是先用 object 接一下  再 return
+    public static bool IsDirectReturn(Type paramType)
+    {
+        if (paramType == typeof(Boolean)) return true;
+        else if (paramType == typeof(String)) return true;
+        else if (paramType == typeof(Char)) return true;
+        else if (paramType == typeof(Byte)) return true;
+        else if (paramType == typeof(SByte)) return true;
+        else if (paramType == typeof(UInt16)) return true;
+        else if (paramType == typeof(Int16)) return true;
+        else if (paramType == typeof(UInt32)) return true;
+        else if (paramType == typeof(Int32)) return true;
+        else if (paramType == typeof(UInt64)) return true;
+        else if (paramType == typeof(Int64)) return true;
+        else if (paramType.IsEnum) return true;
+        else if (paramType == typeof(Single)) return true;
+        else if (paramType == typeof(Double)) return true;
+        else return false;
+    }
+    public static StringBuilder BuildNormalFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid, Type returnType, bool bConstructor)
+    {
+        bool directReturn = true;
+        if (!bConstructor)
+            IsDirectReturn(returnType);
+
         // 最少需要几个参数
         int minNeedParams = 0;
         for (int i = 0; i < ps.Length; i++)
@@ -237,22 +289,24 @@ public static class CSGenerator
             minNeedParams++;
         }
         StringBuilder sb = new StringBuilder();
-        sb.Append("    int len = vc.callParamsLength;\r\n");
+        sb.Append("    int len = count;\r\n");
         for (int j = minNeedParams; j <= ps.Length; j++)
         {
             StringBuilder sbRefVariable = new StringBuilder();
 
+            // ref/out 变量要先接一下
             for (int i = 0; i < j; i++)
             {
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    // 接一下变量才能调
-                    sbRefVariable.AppendFormat("        {0} arg{1} = ({0})vc.callParams[{1}];\r\n", GetTypeFullName(p.ParameterType), i);
+                    //sbRefVariable.AppendFormat("        {0} arg{1} = {2};\r\n", GetTypeFullName(p.ParameterType), i, BuildRetriveParam(p.ParameterType));
+                    sbRefVariable.AppendFormat("        JSValueWrap.Wrap wrap{0} = vc.getWrap();\r\n", i);
+                    sbRefVariable.AppendFormat("        {0} arg{1} = ({0})wrap{1}.obj;\r\n", GetTypeFullName(p.ParameterType), i);
                 }
             }
 
-            // sP：实参
+            // sP：实参列表
             StringBuilder sbP = new StringBuilder();
             for (int i = 0; i < j; i++)
             {
@@ -260,17 +314,17 @@ public static class CSGenerator
                 if (p.ParameterType.IsByRef || p.IsOut)
                     sbP.AppendFormat("{0} arg{1}{2}", p.IsOut ? "out" : "ref", i, (i == ps.Length - 1 ? "" : ", "));
                 else
-                    sbP.AppendFormat("({0})vc.callParams[{1}]{2}", GetTypeFullName(ps[i].ParameterType), i, (i == ps.Length - 1 ? "" : ", "));
+                    sbP.AppendFormat("{0}{1}", BuildRetriveParam(p.ParameterType), (i == ps.Length - 1 ? "" : ", "));
             }
 
+            // ref/out 变量要写回去
             StringBuilder sbSaveRefVariable = new StringBuilder();
             for (int i = 0; i < j; i++)
             {
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    // 接一下变量才能调
-                    sbSaveRefVariable.AppendFormat("        vc.callParams[{0}] = arg{0};\r\n", i);
+                    sbSaveRefVariable.AppendFormat("        wrap{0}.obj = arg{0};\r\n", i);
                 }
             }
 
@@ -286,48 +340,45 @@ public static class CSGenerator
              */
             if (bConstructor)
             {
-                sb.AppendFormat(@"    {5}if (len == {0}) 
+                sb.AppendFormat(@"    {4}if (len == {0}) 
     [[
+{5}
+        vc.returnObject( '{7}', new {1}{2}({3}) );
 {6}
-        {4} new {1}{2}({3});
-{7}
     ]]
-", j, "", GetTypeFullName(type)/* 这里不能使用methodName，因为methodName是 .ctor*/, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
-            }
-            else if (bStatic)
-            {
-                sb.AppendFormat(@"    {5}if (len == {0}) 
-    [[
-{6}
-        {4}{1}.{2}({3});
-{7}
-    ]]
-", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+", j, "", GetTypeFullName(type)/* 这里不能使用methodName，因为methodName是 .ctor*/, sbP.ToString(), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable, type.Name);
             }
             else
             {
-                if (!type.IsValueType)
+                StringBuilder sbCall = new StringBuilder();
+                if (bStatic)
+                    sbCall.AppendFormat("{0}.{1}({2})", GetTypeFullName(type), methodName, sbP.ToString());
+                else if (!type.IsValueType)
+                    sbCall.AppendFormat("(({0})vc.csObj).{1}({2})", GetTypeFullName(type), methodName, sbP.ToString());
+                else
+                    sbCall.AppendFormat("argThis.{0}({1})", methodName, sbP.ToString());
+                StringBuilder sbFullCall = new StringBuilder();
+                if (returnVoid) sbFullCall.AppendFormat("{0};", sbCall);
+                else if (directReturn) sbFullCall.AppendFormat("{0};", BuildReturnObject(returnType, sbCall.ToString()));
+                else sbFullCall.AppendFormat("object ret = {0};\r\n{1};", sbCall, BuildReturnObject(returnType, "ret"));
+
+                StringBuilder sbStruct = null;
+                if (type.IsValueType)
                 {
-                    sb.AppendFormat(@"    {5}if (len == {0}) 
-    [[
-{6}
-        {4}(({1})vc.csObj).{2}({3});
-{7}
-    ]]
-", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
+                    sbStruct = new StringBuilder();
+                    sbStruct.AppendFormat("{0} argThis = ({0})vc.csObj;", GetTypeFullName(type));
                 }
-                else // 如果是 ValueType 需要先拆箱再调用，之后还要保存
-                {
-                    sb.AppendFormat(@"    {5}if (len == {0}) 
+
+                sb.AppendFormat(@"    {1}if (len == {0}) 
     [[
+{5}
+        {3}
+        {2}
+        {4}
 {6}
-        {1} argThis = ({1})vc.csObj;
-        {4}argThis.{2}({3});
-        JSMgr.changeCSObj(vc.csObj, argThis);
-{7}
     ]]
-", j, GetTypeFullName(type)/*className*/, methodName, sbP.ToString(), (returnVoid ? "" : "vc.result = "), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable);
-                }
+", j, (j == minNeedParams) ? "" : "else ", sbFullCall, type.IsValueType?sbStruct.ToString():"", type.IsValueType?"JSMgr.changeCSObj(vc.csObj, argThis);":"", sbRefVariable, sbSaveRefVariable);
+
             }
 
         }
@@ -389,7 +440,7 @@ static bool {0}(JSVCall vc, int start, int count)
             string functionName = type.Name + "_" + type.Name + (olIndex > 0 ? olIndex.ToString() : "") + (cons.IsStatic ? "_S" : "");
 
             sb.AppendFormat(fmt, functionName,
-                BuildNormalFunctionCall(paramS, type.Name, cons.Name, cons.IsStatic, returnVoid, true));
+                BuildNormalFunctionCall(paramS, type.Name, cons.Name, cons.IsStatic, returnVoid, null, true));
 
             ccbn.constructors.Add(functionName);
             ccbn.constructorsCSParam.Add(GenListCSParam2(paramS).ToString());
@@ -426,7 +477,7 @@ static bool {0}(JSVCall vc, int start, int count)
             sb.AppendFormat(fmt, functionName,
                 
                 method.IsSpecialName ? BuildSpecialFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid)
-                : BuildNormalFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid, false));
+                : BuildNormalFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid, method.ReturnType, false));
 
             ccbn.methods.Add(functionName);
             ccbn.methodsCSParam.Add(GenListCSParam2(paramS).ToString());

@@ -261,6 +261,12 @@ public class JSApi
     public static extern bool JShelp_ArgvIsUndefined(IntPtr cx, IntPtr vp, int i);
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JShelp_ArgvIsNull(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_ArgvIsBool(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_ArgvIsString(IntPtr cx, IntPtr vp, int i);
+    [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JShelp_ArgvIsNumber(IntPtr cx, IntPtr vp, int i);
 
     [DllImport(SMHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JShelp_ArgvBool(IntPtr cx, IntPtr vp, int i);

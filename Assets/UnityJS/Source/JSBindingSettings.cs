@@ -151,7 +151,17 @@ public class JSBindingSettings
         typeof(UnityEngine.DeviceOrientation),
         typeof(UnityEngine.LocationServiceStatus),
     };
+    public static Type[] classes2 = new Type[]
+    {
+         //interface
 
+        typeof(UnityEngine.GameObject), 
+        typeof(UnityEngine.Vector3), 
+        typeof(System.Diagnostics.Stopwatch),
+        typeof(Transform),
+
+
+    };
     public static Type[] classes = new Type[]
     {
          //interface

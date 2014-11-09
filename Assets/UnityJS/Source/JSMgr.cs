@@ -386,7 +386,10 @@ public static class JSMgr
                 continue;
 
             if (method.IsGenericMethod || method.IsGenericMethodDefinition)
+            {
+                Debug.Log(type.Name + "." + method.Name);
                 continue;
+            }
 
             lstMethod.Add(method);
         }

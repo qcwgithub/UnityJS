@@ -59,6 +59,8 @@ public class JSVCall
 
     IntPtr cx;
     IntPtr vp;
+    public int currIndex = 0;
+    JSApi.jsval valReturn = new JSApi.jsval();
 
     public void Reset(IntPtr cx, IntPtr vp)
     {
@@ -82,7 +84,83 @@ public class JSVCall
 
         this.cx = cx;
         this.vp = vp;
+        currIndex = 0;
     }
+    public Boolean getBool() { return JSApi.JShelp_ArgvBool(cx, vp, currIndex++); }
+    public String  getString() { 
+		return JSApi.JShelp_ArgvString(cx, vp, currIndex++); }
+    public Char    getChar() { return (Char)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Byte    getByte() { return (Byte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public SByte   getSByte() { return (SByte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public UInt16  getUInt16() { return (UInt16)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Int16   getInt16() { return (Int16)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public UInt32  getUInt32() { return (UInt32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Int32   getInt32() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public UInt64  getUInt64() { return (UInt64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Int64   getInt64() { return (Int64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Int32   getEnum() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
+    public Single  getFloat() { return (Single)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
+    public Double  getDouble() { return (Double)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
+    public JSValueWrap.Wrap getWrap()
+    {
+        IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, currIndex++);
+        object csObj = JSMgr.getCSObj(jsObj);
+        return (JSValueWrap.Wrap)csObj;
+    }
+    public object getObject()
+    {
+        IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, currIndex++);
+        object csObj = JSMgr.getCSObj(jsObj);
+        if (csObj is JSValueWrap.Wrap)
+            return ((JSValueWrap.Wrap)csObj).obj;
+        else
+            return csObj;
+    }
+
+    public void returnBool(bool v) { JSApi.JShelp_SetRvalBool(cx, vp, v); }
+    public void returnString(String v) { JSApi.JShelp_SetRvalString(cx, vp, v); }
+    public void returnChar(Char v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnByte(Byte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnSByte(SByte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnUInt16(UInt16 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnInt16(Int16 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnUInt32(UInt32 v) { JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); }
+    public void returnInt32(Int32 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnUInt64(UInt64 v) { JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); }
+    public void returnInt64(Int64 v) { 
+        JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); 
+    }
+    public void returnEnum(Int32 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
+    public void returnFloat(Single v) { JSApi.JShelp_SetRvalDouble(cx, vp, v); }
+    public void returnDouble(Double v) { JSApi.JShelp_SetRvalDouble(cx, vp, v); }
+    public void returnObject(string className, object csObj)
+    {
+        JSApi.JShelp_SetJsvalUndefined(ref this.valReturn);
+        if (csObj == null)
+        {
+            JSApi.JShelp_SetRvalJSVAL(cx, vp, ref this.valReturn);
+            return;
+        }
+        IntPtr jsObj = JSMgr.getJSObj(csObj);
+        if (jsObj == IntPtr.Zero)
+        {
+            jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, className, JSMgr.mjsFinalizer);
+            if (jsObj != IntPtr.Zero)
+                JSMgr.addJSCSRelation(jsObj, csObj);
+        }
+        if (jsObj == IntPtr.Zero)
+            JSApi.JShelp_SetJsvalUndefined(ref this.valReturn);
+        else
+            JSApi.JShelp_SetJsvalObject(ref this.valReturn, jsObj);
+        JSApi.JShelp_SetRvalJSVAL(cx, vp, ref this.valReturn);
+    }
+
+    // ref/out
+    public void updateRefObject(/*object csObj, */object csObjNew)
+    {
+
+    }
+
 
     /*
      * ExtractCSParams
@@ -176,18 +254,30 @@ public class JSVCall
                 if (!arrJSParam[csParamIndex].isArray)
                     return false;
             }
-            else if (!arrJSParam[csParamIndex].isWrap)
-            {
-                if (arrJSParam[csParamIndex].csObj == null || csType != arrJSParam[csParamIndex].csObj.GetType())
-                    return false;
-            }
             else if (arrJSParam[csParamIndex].isWrap)
             {
-                if (csType != arrJSParam[csParamIndex].wrappedObj.GetType())
+                if ((csType != arrJSParam[csParamIndex].wrappedObj.GetType()))
                     return false;
             }
-            else
-                return false;
+            else// if (!arrJSParam[csParamIndex].isWrap)
+            {
+                if (arrJSParam[csParamIndex].csObj != null)
+                {
+                    if (csType != arrJSParam[csParamIndex].csObj.GetType())
+                        return false;
+                }
+                else
+                {
+                    if (csType == typeof(bool))
+                        return JSApi.JShelp_ArgvIsBool(cx, vp, arrJSParam[csParamIndex].index);
+                    else if (csType == typeof(string))
+                        return JSApi.JShelp_ArgvIsString(cx, vp, arrJSParam[csParamIndex].index);
+                    else if (csType.IsEnum || csType.IsPrimitive)
+                        return JSApi.JShelp_ArgvIsNumber(cx, vp, arrJSParam[csParamIndex].index);
+                    else
+                        return false;
+                }
+            }
         }
         else
         {
@@ -587,19 +677,23 @@ public class JSVCall
             case Oper.GET_FIELD:
             case Oper.SET_FIELD:
                 {
+                    currIndex = currentParamCount;
                     this.bGet = (op == Oper.GET_FIELD);
                     JSMgr.CSCallbackField fun = aInfo.fields[index];
                     if (fun == null) return JSApi.JS_FALSE;
                     fun(this);
+			        return JSApi.JS_TRUE;
                 }
                 break;
             case Oper.GET_PROPERTY:
             case Oper.SET_PROPERTY:
                 {
+                    currIndex = currentParamCount;
                     this.bGet = (op == Oper.GET_PROPERTY);
                     JSMgr.CSCallbackProperty fun = aInfo.properties[index];
                     if (fun == null) return JSApi.JS_FALSE;
                     fun(this);
+			        return JSApi.JS_TRUE;
                 }
                 break;
             case Oper.METHOD:
@@ -608,17 +702,28 @@ public class JSVCall
                     bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, currentParamCount);
                     currentParamCount++;
 
-                    if (!this.ExtractJSParams(currentParamCount, (int)argc - currentParamCount))
-                        return JSApi.JS_FALSE;
-
                     JSMgr.MethodCallBackInfo[] arrMethod;
                     if (op == Oper.METHOD)
                         arrMethod = aInfo.methods;
                     else
                         arrMethod = aInfo.constructors;
 
-                    if (overloaded)
+                    // JS传过来的参数个数
+                    // 重载函数的参数个数由 ExtractJSParams 已经计算好了 
+                    int jsParamCount = (int)argc - currentParamCount;
+                    if (!overloaded)
                     {
+                        // 对于无重载函数
+                        // 如果没有可选参数的话 每次也就多一次判断是不是 Undefined
+                        int i = (int)argc;
+                        while (i > 0 && JSApi.JShelp_ArgvIsUndefined(cx, vp, --i))
+                            jsParamCount--;
+                    }
+                    else
+                    {
+                        if (!this.ExtractJSParams(currentParamCount, (int)argc - currentParamCount))
+                            return JSApi.JS_FALSE;
+
                         string methodName = arrMethod[index].methodName;
 
                         int i = index;
@@ -636,22 +741,49 @@ public class JSVCall
                                 return JSApi.JS_FALSE;
                             }
                         }
+
+                        jsParamCount = arrJSParamsLength;
                     }
-
-                    JSMgr.CSCallbackMethod fun;
                     
-                    fun = arrMethod[index].fun;
-                    arrCSParam = arrMethod[index].arrCSParam;
-                    arrCSParamsLength = arrCSParam.Length;
+                    currIndex = currentParamCount;
+                    arrMethod[index].fun(this, currentParamCount, jsParamCount);
+                    return JSApi.JS_TRUE;
 
-                    if (fun == null || arrCSParam == null) 
-                        return JSApi.JS_FALSE;
-
-                    if (!BuildMethodArgs(false))
-                         return JSApi.JS_FALSE;
-                    
-                    if (!fun(this, currentParamCount, (int)argc - currentParamCount))
-                        return JSApi.JS_FALSE;
+//                     if (overloaded)
+//                     {
+//                         string methodName = arrMethod[index].methodName;
+// 
+//                         int i = index;
+//                         while (true)
+//                         {
+//                             if (IsMethodMatch(arrMethod[i].arrCSParam))
+//                             {
+//                                 index = i;
+//                                 break;
+//                             }
+//                             i++;
+//                             if (arrMethod[i].methodName != methodName)
+//                             {
+//                                 Debug.LogError("Overloaded function can't find match: " + methodName);
+//                                 return JSApi.JS_FALSE;
+//                             }
+//                         }
+//                     }
+// 
+//                     JSMgr.CSCallbackMethod fun;
+//                     
+//                     fun = arrMethod[index].fun;
+//                     arrCSParam = arrMethod[index].arrCSParam;
+//                     arrCSParamsLength = arrCSParam.Length;
+// 
+//                     if (fun == null || arrCSParam == null) 
+//                         return JSApi.JS_FALSE;
+// 
+//                     if (!BuildMethodArgs(false))
+//                          return JSApi.JS_FALSE;
+//                     
+//                     if (!fun(this, currentParamCount, (int)argc - currentParamCount))
+//                         return JSApi.JS_FALSE;
                 }
                 break;
         }
