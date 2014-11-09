@@ -99,7 +99,7 @@ public class JSVCall
     public UInt64  getUInt64() { return (UInt64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public Int64   getInt64() { return (Int64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public Int32   getEnum() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Single  getFloat() { return (Single)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
+    public Single  getFloat() { return (float) JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
     public Double  getDouble() { return (Double)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
     public JSValueWrap.Wrap getWrap()
     {

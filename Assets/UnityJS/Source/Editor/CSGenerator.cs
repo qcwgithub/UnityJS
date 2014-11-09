@@ -300,9 +300,20 @@ public static class CSGenerator
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    //sbRefVariable.AppendFormat("        {0} arg{1} = {2};\r\n", GetTypeFullName(p.ParameterType), i, BuildRetriveParam(p.ParameterType));
-                    sbRefVariable.AppendFormat("        JSValueWrap.Wrap wrap{0} = vc.getWrap();\r\n", i);
-                    sbRefVariable.AppendFormat("        {0} arg{1} = ({0})wrap{1}.obj;\r\n", GetTypeFullName(p.ParameterType), i);
+                    if (IsDirectReturn(p.ParameterType))
+                    {
+                        sbRefVariable.AppendFormat("        JSValueWrap.Wrap wrap{0} = vc.getWrap();\r\n", i);
+                        sbRefVariable.AppendFormat("        {0} arg{1} = ({0})wrap{1}.obj;\r\n", GetTypeFullName(p.ParameterType), i);
+                    }
+                    else
+                    {
+                        sbRefVariable.AppendFormat("        object csObj{0} = vc.getObject();\r\n", i);
+                        sbRefVariable.AppendFormat("        {0} arg{1} = ({0})csObj{1};\r\n", GetTypeFullName(p.ParameterType), i);
+                    }
+                }
+                else
+                {
+                    sbRefVariable.AppendFormat("        {0} arg{1} = ({0}){2};\r\n", GetTypeFullName(p.ParameterType), i, BuildRetriveParam(p.ParameterType));
                 }
             }
 
@@ -314,7 +325,7 @@ public static class CSGenerator
                 if (p.ParameterType.IsByRef || p.IsOut)
                     sbP.AppendFormat("{0} arg{1}{2}", p.IsOut ? "out" : "ref", i, (i == ps.Length - 1 ? "" : ", "));
                 else
-                    sbP.AppendFormat("{0}{1}", BuildRetriveParam(p.ParameterType), (i == ps.Length - 1 ? "" : ", "));
+                    sbP.AppendFormat("arg{0}{1}", i, (i == ps.Length - 1 ? "" : ", "));
             }
 
             // ref/out 变量要写回去
@@ -324,7 +335,10 @@ public static class CSGenerator
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    sbSaveRefVariable.AppendFormat("        wrap{0}.obj = arg{0};\r\n", i);
+                    if (IsDirectReturn(p.ParameterType))
+                        sbSaveRefVariable.AppendFormat("        wrap{0}.obj = arg{0};\r\n", i);
+                    else
+                        sbSaveRefVariable.AppendFormat("        JSMgr.changeCSObj(csObj{0}, arg{0});", i);
                 }
             }
 
