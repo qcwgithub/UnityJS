@@ -131,7 +131,7 @@ public static class JSMgr
         }
         else
         {
-            CSharpGenerated.RegisterAll();
+            //CSharpGenerated.RegisterAll();
         }
         JSMgr.EvaluateGeneratedScripts();
     }

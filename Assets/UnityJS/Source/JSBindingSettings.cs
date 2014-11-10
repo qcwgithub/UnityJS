@@ -88,7 +88,7 @@ public class JSBindingSettings
         typeof(UnityEngine.TexGenMode),
         typeof(UnityEngine.AnisotropicFiltering),
         typeof(UnityEngine.BlendWeights),
-        typeof(UnityEngine.TextureCompressionQuality),
+        //typeof(UnityEngine.TextureCompressionQuality),
         typeof(UnityEngine.MeshTopology),
         typeof(UnityEngine.SkinQuality),
         typeof(UnityEngine.ParticleRenderMode),
@@ -103,25 +103,25 @@ public class JSBindingSettings
         typeof(UnityEngine.TextWrapMode),
         typeof(UnityEngine.ImagePosition),
         typeof(UnityEngine.TextClipping),
-        typeof(UnityEngine.FullScreenMovieControlMode),
-        typeof(UnityEngine.FullScreenMovieScalingMode),
-        typeof(UnityEngine.iOSActivityIndicatorStyle),
+        //typeof(UnityEngine.FullScreenMovieControlMode),
+        //typeof(UnityEngine.FullScreenMovieScalingMode),
+        //typeof(UnityEngine.iOSActivityIndicatorStyle),
 //        typeof(UnityEngine.AndroidActivityIndicatorStyle),
-        typeof(UnityEngine.TouchScreenKeyboardType),
-        typeof(UnityEngine.iPhoneGeneration),
+        //typeof(UnityEngine.TouchScreenKeyboardType),
+        //typeof(UnityEngine.iPhoneGeneration),
         typeof(UnityEngine.KeyCode),
         typeof(UnityEngine.EventType),
         typeof(UnityEngine.EventModifiers),
-        typeof(UnityEngine.iPhoneTouchPhase),
-        typeof(UnityEngine.iPhoneOrientation),
-        typeof(UnityEngine.iPhoneScreenOrientation),
-        typeof(UnityEngine.iPhoneKeyboardType),
-        typeof(UnityEngine.iPhoneMovieControlMode),
-        typeof(UnityEngine.iPhoneMovieScalingMode),
-        typeof(UnityEngine.iPhoneNetworkReachability),
-        typeof(UnityEngine.CalendarIdentifier),
-        typeof(UnityEngine.CalendarUnit),
-        typeof(UnityEngine.RemoteNotificationType),
+        //typeof(UnityEngine.iPhoneTouchPhase),
+        //typeof(UnityEngine.iPhoneOrientation),
+        //typeof(UnityEngine.iPhoneScreenOrientation),
+        //typeof(UnityEngine.iPhoneKeyboardType),
+        //typeof(UnityEngine.iPhoneMovieControlMode),
+        //typeof(UnityEngine.iPhoneMovieScalingMode),
+        //typeof(UnityEngine.iPhoneNetworkReachability),
+        //typeof(UnityEngine.CalendarIdentifier),
+        //typeof(UnityEngine.CalendarUnit),
+        //typeof(UnityEngine.RemoteNotificationType),
         typeof(UnityEngine.RPCMode),
         typeof(UnityEngine.ConnectionTesterStatus),
         typeof(UnityEngine.NetworkConnectionError),
@@ -151,7 +151,7 @@ public class JSBindingSettings
         typeof(UnityEngine.DeviceOrientation),
         typeof(UnityEngine.LocationServiceStatus),
     };
-    public static Type[] classes2 = new Type[]
+    public static Type[] classes = new Type[]
     {
          //interface
 
@@ -159,10 +159,11 @@ public class JSBindingSettings
         typeof(UnityEngine.Vector3), 
         typeof(System.Diagnostics.Stopwatch),
         typeof(Transform),
+          typeof(UnityEngine.AnimationClip),
 
 
     };
-    public static Type[] classes = new Type[]
+    public static Type[] classes2 = new Type[]
     {
          //interface
 
@@ -223,7 +224,7 @@ public class JSBindingSettings
 
          typeof(UnityEngine.Internal.DefaultValueAttribute),
          typeof(UnityEngine.Internal.ExcludeFromDocsAttribute),
-         typeof(UnityEngine.iPhone),
+         //typeof(UnityEngine.iPhone),
          //typeof(UnityEngine.ADBannerView),
          //typeof(UnityEngine.ADInterstitialAd),
          typeof(UnityEngine.Serialization.UnitySurrogateSelector),
@@ -387,17 +388,17 @@ public class JSBindingSettings
          typeof(UnityEngine.GUIStyleState),
          typeof(UnityEngine.RectOffset),
         typeof(UnityEngine.GUIStyle),
-         typeof(UnityEngine.Handheld),                                
-         typeof(UnityEngine.TouchScreenKeyboard),                     
+         //typeof(UnityEngine.Handheld),                                
+         //typeof(UnityEngine.TouchScreenKeyboard),                     
          typeof(UnityEngine.Event),                                   
          typeof(UnityEngine.Gizmos),                                  
-         typeof(UnityEngine.iPhoneInput),                             
-         typeof(UnityEngine.iPhoneSettings),                          
-         typeof(UnityEngine.iPhoneKeyboard),                          
-         typeof(UnityEngine.iPhoneUtils),                             
-         typeof(UnityEngine.LocalNotification),                       
-         typeof(UnityEngine.RemoteNotification),                      
-         typeof(UnityEngine.NotificationServices),                    
+         //typeof(UnityEngine.iPhoneInput),                             
+         //typeof(UnityEngine.iPhoneSettings),                          
+         //typeof(UnityEngine.iPhoneKeyboard),                          
+         //typeof(UnityEngine.iPhoneUtils),                             
+         //typeof(UnityEngine.LocalNotification),                       
+         //typeof(UnityEngine.RemoteNotification),                      
+         //typeof(UnityEngine.NotificationServices),                    
          typeof(UnityEngine.LightProbeGroup),                         
          typeof(UnityEngine.Ping),                                    
          typeof(UnityEngine.NetworkView),                             
@@ -452,7 +453,7 @@ public class JSBindingSettings
 //          typeof(UnityEngine.AndroidJNI),                               
 //          typeof(UnityEngine.AndroidInput),                             
          typeof(UnityEngine.Motion),                                   
-         typeof(UnityEngine.SamsungTV),                                
+         //typeof(UnityEngine.SamsungTV),                                
 
          //ValueType
 
@@ -501,8 +502,8 @@ public class JSBindingSettings
          typeof(UnityEngine.LOD),                            
          typeof(UnityEngine.GradientColorKey),               
          typeof(UnityEngine.GradientAlphaKey),               
-         typeof(UnityEngine.iPhoneTouch),                    
-         typeof(UnityEngine.iPhoneAccelerationEvent),        
+         //typeof(UnityEngine.iPhoneTouch),                    
+         //typeof(UnityEngine.iPhoneAccelerationEvent),        
          typeof(UnityEngine.Vector2),                        
           typeof(UnityEngine.Vector3),                    
          typeof(UnityEngine.Color),                       

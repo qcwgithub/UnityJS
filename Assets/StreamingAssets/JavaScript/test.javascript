@@ -8,8 +8,9 @@
 	for (var i=0; 100000>i; i++)
 	{
 		//v.transform.position=Vector3.forward
-//		v.SetActive(false)
-		v.transform.position= new Vector3(0.1, 0.1, 2.1);
+		//v.SetActive(false)
+		//v.isStatic = false
+		var position= new Vector3(0.1, 0.1, 2.1);
 		//v.tag="Player"
 	}
 	watch.Stop();

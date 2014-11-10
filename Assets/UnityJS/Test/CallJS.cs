@@ -12,6 +12,9 @@ public class CallJS : MonoBehaviour
     public bool useReflection = true;
 	void Awake ()
     {
+        AnimationClip ac = new AnimationClip();
+        Debug.Log(ac.averageDuration);
+
 //         string o = "abc";
 //         object oo = o;
 //         Type type = typeof(string);

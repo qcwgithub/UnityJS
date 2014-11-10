@@ -87,8 +87,7 @@ public class JSVCall
         currIndex = 0;
     }
     public Boolean getBool() { return JSApi.JShelp_ArgvBool(cx, vp, currIndex++); }
-    public String  getString() { 
-		return JSApi.JShelp_ArgvString(cx, vp, currIndex++); }
+    public String  getString() { return JSApi.JShelp_ArgvString(cx, vp, currIndex++); }
     public Char    getChar() { return (Char)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public Byte    getByte() { return (Byte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public SByte   getSByte() { return (SByte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
@@ -100,7 +99,9 @@ public class JSVCall
     public Int64   getInt64() { return (Int64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public Int32   getEnum() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
     public Single  getFloat() { return (float) JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
-    public Double  getDouble() { return (Double)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
+    public Double  getDouble() { 
+        return (Double)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); 
+    }
     public JSValueWrap.Wrap getWrap()
     {
         IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, currIndex++);
