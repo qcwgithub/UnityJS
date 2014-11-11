@@ -10,20 +10,16 @@ using System.Text.RegularExpressions;
 using UnityEngine.SocialPlatforms;
 public static class CSGenerator
 {
-    // 输入参数
+    // input
     static StringBuilder sb = null;
     public static Type type = null;
 
-    // 一些配置
-
-    /* 枚举统一输出到同一个地方去 */
     static string enumFile = JSMgr.jsGeneratedDir + "/enum.javascript";
     static string tempFile = JSMgr.jsDir + "/temp.javascript";
 
-    // 开始生成，有一些事情要处理
     public static void OnBegin()
     {
-        // 清除导出的枚举文件
+        // clear generated enum files
         var writer = OpenFile(enumFile, false);
         writer.Close();
 
@@ -280,7 +276,7 @@ public static class CSGenerator
         if (!bConstructor)
             IsDirectReturn(returnType);
 
-        // 最少需要几个参数
+        // minimal params needed
         int minNeedParams = 0;
         for (int i = 0; i < ps.Length; i++)
         {
@@ -294,7 +290,7 @@ public static class CSGenerator
         {
             StringBuilder sbRefVariable = new StringBuilder();
 
-            // ref/out 变量要先接一下
+            // receive ref/out first
             for (int i = 0; i < j; i++)
             {
                 ParameterInfo p = ps[i];
@@ -317,7 +313,7 @@ public static class CSGenerator
                 }
             }
 
-            // sP：实参列表
+            // sP: actual parameters
             StringBuilder sbP = new StringBuilder();
             for (int i = 0; i < j; i++)
             {
@@ -328,7 +324,7 @@ public static class CSGenerator
                     sbP.AppendFormat("arg{0}{1}", i, (i == ps.Length - 1 ? "" : ", "));
             }
 
-            // ref/out 变量要写回去
+            // write ref/out variables back
             StringBuilder sbSaveRefVariable = new StringBuilder();
             for (int i = 0; i < j; i++)
             {
@@ -360,7 +356,7 @@ public static class CSGenerator
         vc.returnObject( '{7}', new {1}{2}({3}) );
 {6}
     ]]
-", j, "", GetTypeFullName(type)/* 这里不能使用methodName，因为methodName是 .ctor*/, sbP.ToString(), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable, type.Name);
+", j, "", GetTypeFullName(type)/* can't use methodName here, it's .ctor*/, sbP.ToString(), (j == minNeedParams) ? "" : "else ", sbRefVariable, sbSaveRefVariable, type.Name);
             }
             else
             {
@@ -430,9 +426,9 @@ public static class CSGenerator
     {
         /*
         * methods
-        * 0 函数名
-        * 1 list<CSParam> 生成
-        * 2 函数调用
+        * 0 function name
+        * 1 list<CSParam> generation
+        * 2 function call
         */
         string fmt = @"
 static bool {0}(JSVCall vc, int start, int count)
@@ -445,10 +441,9 @@ static bool {0}(JSVCall vc, int start, int count)
         for (int i = 0; i < constructors.Length; i++)
         {
             ConstructorInfo cons = constructors[i];
-            // 这里假设实例函数不会和静态函数同名
             ParameterInfo[] paramS = cons.GetParameters();
 
-            int olIndex = i + 1; // 对于 构造函数来说，总是重载
+            int olIndex = i + 1; // for constuctors, they are always overloaded
             bool returnVoid = false;
 
             string functionName = type.Name + "_" + type.Name + (olIndex > 0 ? olIndex.ToString() : "") + (cons.IsStatic ? "_S" : "");
@@ -465,9 +460,9 @@ static bool {0}(JSVCall vc, int start, int count)
     {
         /*
         * methods
-        * 0 函数名
-        * 1 list<CSParam> 生成
-        * 2 函数调用
+        * 0 function name
+        * 1 list<CSParam> generation
+        * 2 function call
         */
         string fmt = @"
 static bool {0}(JSVCall vc, int start, int count)
@@ -480,7 +475,6 @@ static bool {0}(JSVCall vc, int start, int count)
         for (int i = 0; i < methods.Length; i++)
         {
             MethodInfo method = methods[i];
-            // 这里假设实例函数不会和静态函数同名
             ParameterInfo[] paramS = method.GetParameters();
 
             int olIndex = olInfo[i];
@@ -527,19 +521,18 @@ static bool {0}(JSVCall vc, int start, int count)
         return sb;
     }
 
-    // 用于记录生成过程中的信息
+    // used for record information
     public class ClassCallbackNames
     {
-        // 类名
+        // class type
         public Type type;
 
-        // 生成的函数名
         public List<string> fields;
         public List<string> properties;
         public List<string> constructors;
         public List<string> methods;
 
-        // 生成的，生成 CSParam 的代码
+        // genetated, generating CSParam code
         public List<string> constructorsCSParam;
         public List<string> methodsCSParam;
     }
@@ -684,12 +677,12 @@ public class {0}Generated
 
         var sb = new StringBuilder();
 
-        // 先写一句注释
+        // comment line
         string fmtComment = @"// {0}
 ";
         sb.AppendFormat(fmtComment, type.ToString());
 
-        // 把名字空间去掉
+        // remove namespace
         string typeName = type.ToString();
         int lastDot = typeName.LastIndexOf('.');
         if (lastDot >= 0)
@@ -702,10 +695,10 @@ public class {0}Generated
 
         typeName.Replace('+', '.');
 
-        // 处理+号
-        // +号表示类里面的枚举
+        // handle '+'
+        // '+' means an enum inside a class
         //
-        //例如有个枚举是 Hello+World+Flag，要先生成这2行：
+        // for example, Hello+World+Flag, 2 lines will be generated:
         // Hello = Hello || {}
         // Hello.World = Hello.World || {}
         int start = 0;

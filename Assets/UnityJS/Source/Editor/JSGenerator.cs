@@ -10,20 +10,16 @@ using System.Text.RegularExpressions;
 
 public static class JSGenerator
 {
-    // 输入参数
+    // input
     static StringBuilder sb = null;
     public static Type type = null;
 
-    // 一些配置
-
-    /* 枚举统一输出到同一个地方去 */
     static string enumFile = JSMgr.jsGeneratedDir+ "/enum.javascript";
     static string tempFile = JSMgr.jsDir + "/temp.javascript";
 
-    // 开始生成，有一些事情要处理
     public static void OnBegin()
     {
-        // 清除导出的枚举文件
+        // clear generated enum files
         var writer = OpenFile(enumFile, false);
         writer.Close();
 
@@ -205,10 +201,7 @@ Object.defineProperty({0}, '{1}',
         {
             MethodInfo method = methods[i];
 
-            // todo 
-            // 如果最后一个是重载的，可能会有问题
-
-            // 这里假设实例函数不会和静态函数同名
+            // here assumes static functions don't have same name with instance functions
             ParameterInfo[] paramS = method.GetParameters();
             if (i < methods.Length - 1 && method.Name == methods[i + 1].Name)
             {
@@ -317,12 +310,12 @@ Object.defineProperty({0}, '{1}',
 
         var sb = new StringBuilder();
         
-        // 先写一句注释
+        // comment line
         string fmtComment = @"// {0}
 ";
         sb.AppendFormat(fmtComment, type.ToString());
 
-        // 把名字空间去掉
+        // remove name space
         string typeName = type.ToString();
         int lastDot = typeName.LastIndexOf('.');
         if (lastDot >= 0)
@@ -335,10 +328,10 @@ Object.defineProperty({0}, '{1}',
 
         typeName.Replace('+', '.');
 
-        // 处理+号
-        // +号表示类里面的枚举
+        // handle '+'
+        // '+' means an enum inside a class
         //
-        //例如有个枚举是 Hello+World+Flag，要先生成这2行：
+        // for example, Hello+World+Flag, 2 lines will be generated:
         // Hello = Hello || {}
         // Hello.World = Hello.World || {}
         int start = 0;
@@ -404,7 +397,7 @@ using UnityEngine;
         sb.Replace("'", "\"");
     }
 
-    [MenuItem("JSGenerator/Generate Enum Bindings")]
+    [MenuItem("JS for Unity/Generate JS Enum Bindings")]
     public static void GenerateEnumBindings()
     {
         JSGenerator.OnBegin();
@@ -429,7 +422,7 @@ using UnityEngine;
     static string className = string.Empty;
 
 
-    [MenuItem("JSGenerator/Generate Class Bindings")]
+    [MenuItem("JS for Unity/Generate JS Bindings")]
     public static void GenerateClassBindings()
     {
 		if (!typeClassName.ContainsKey(typeof(UnityEngine.Object)))
@@ -452,7 +445,7 @@ using UnityEngine;
         Debug.Log("Generate Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
     }
 
-    [MenuItem("JSGenerator/Output All Types in UnityEngine")]
+    [MenuItem("JS for Unity/Output All Types in UnityEngine")]
     public static void OutputAllTypesInUnityEngine()
     {
         var asm = typeof(GameObject).Assembly;

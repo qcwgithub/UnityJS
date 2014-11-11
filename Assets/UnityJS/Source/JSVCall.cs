@@ -1,4 +1,12 @@
-﻿using UnityEngine;
+﻿/*
+ * JSVCall
+ * 
+ * It's the STACK used when calling cs from js
+ * 
+ */
+
+
+using UnityEngine;
 //using UnityEditor;
 using System;
 using System.Text;
@@ -18,15 +26,14 @@ public class JSVCall
     }
     public class JSParam
     {
-        public int index; // 参数位置
-        public object csObj; //对应的cs对象，对于基础类型，string，枚举，这个为null
+        public int index; // param index
+        public object csObj; // coresponding cs object, for primitive, string, enum, it's null
         public bool isWrap { get { return csObj != null && csObj is JSValueWrap.Wrap; } }
         public object wrappedObj { get { return ((JSValueWrap.Wrap)csObj).obj; } set { ((JSValueWrap.Wrap)csObj).obj = value; } }
         public bool isArray;
         public bool isNull;
     }
-    // CS函数的参数信息
-    // 只存储一些要使用多次的
+    // cs function information
     public class CSParam
     {
         public bool isRef;
@@ -86,31 +93,45 @@ public class JSVCall
         this.vp = vp;
         currIndex = 0;
     }
-    public Boolean getBool() { return JSApi.JShelp_ArgvBool(cx, vp, currIndex++); }
-    public String  getString() { return JSApi.JShelp_ArgvString(cx, vp, currIndex++); }
-    public Char    getChar() { return (Char)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Byte    getByte() { return (Byte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public SByte   getSByte() { return (SByte)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public UInt16  getUInt16() { return (UInt16)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Int16   getInt16() { return (Int16)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public UInt32  getUInt32() { return (UInt32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Int32   getInt32() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public UInt64  getUInt64() { return (UInt64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Int64   getInt64() { return (Int64)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Int32   getEnum() { return (Int32)JSApi.JShelp_ArgvInt(cx, vp, currIndex++); }
-    public Single  getFloat() { return (float) JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); }
-    public Double  getDouble() { 
-        return (Double)JSApi.JShelp_ArgvDouble(cx, vp, currIndex++); 
+    public Boolean getBool() { return JSApi.JSh_ArgvBool(cx, vp, currIndex++); }
+    public String  getString() { return JSApi.JSh_ArgvString(cx, vp, currIndex++); }
+    public Char    getChar() { return (Char)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Byte    getByte() { return (Byte)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public SByte   getSByte() { return (SByte)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public UInt16  getUInt16() { return (UInt16)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Int16   getInt16() { return (Int16)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public UInt32  getUInt32() { return (UInt32)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Int32   getInt32() { return (Int32)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public UInt64  getUInt64() { return (UInt64)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Int64   getInt64() { return (Int64)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Int32   getEnum() { return (Int32)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
+    public Single  getFloat() 
+    {
+        // js has only int32 and double, so...
+        int i = currIndex++;
+        if (JSApi.JSh_ArgvIsDouble(cx, vp, i))
+            return (Single)JSApi.JSh_ArgvDouble(cx, vp, i);
+        else
+            return (Single)JSApi.JSh_ArgvInt(cx, vp, i);
+    }
+    public Double  getDouble() 
+    {
+        // js has only int32 and double, so...
+        int i = currIndex++;
+        if (JSApi.JSh_ArgvIsDouble(cx, vp, i))
+            return (Double)JSApi.JSh_ArgvDouble(cx, vp, i);
+        else
+            return (Double)JSApi.JSh_ArgvInt(cx, vp, i);
     }
     public JSValueWrap.Wrap getWrap()
     {
-        IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, currIndex++);
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
         object csObj = JSMgr.getCSObj(jsObj);
         return (JSValueWrap.Wrap)csObj;
     }
     public object getObject()
     {
-        IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, currIndex++);
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
         object csObj = JSMgr.getCSObj(jsObj);
         if (csObj is JSValueWrap.Wrap)
             return ((JSValueWrap.Wrap)csObj).obj;
@@ -118,57 +139,50 @@ public class JSVCall
             return csObj;
     }
 
-    public void returnBool(bool v) { JSApi.JShelp_SetRvalBool(cx, vp, v); }
-    public void returnString(String v) { JSApi.JShelp_SetRvalString(cx, vp, v); }
-    public void returnChar(Char v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnByte(Byte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnSByte(SByte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnUInt16(UInt16 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnInt16(Int16 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnUInt32(UInt32 v) { JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); }
-    public void returnInt32(Int32 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnUInt64(UInt64 v) { JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); }
+    public void returnBool(bool v) { JSApi.JSh_SetRvalBool(cx, vp, v); }
+    public void returnString(String v) { JSApi.JSh_SetRvalString(cx, vp, v); }
+    public void returnChar(Char v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnByte(Byte v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnSByte(SByte v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnUInt16(UInt16 v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnInt16(Int16 v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnUInt32(UInt32 v) { JSApi.JSh_SetRvalInt(cx, vp, (Int32)v); }
+    public void returnInt32(Int32 v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnUInt64(UInt64 v) { JSApi.JSh_SetRvalInt(cx, vp, (Int32)v); }
     public void returnInt64(Int64 v) { 
-        JSApi.JShelp_SetRvalInt(cx, vp, (Int32)v); 
+        JSApi.JSh_SetRvalInt(cx, vp, (Int32)v); 
     }
-    public void returnEnum(Int32 v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public void returnFloat(Single v) { JSApi.JShelp_SetRvalDouble(cx, vp, v); }
-    public void returnDouble(Double v) { JSApi.JShelp_SetRvalDouble(cx, vp, v); }
+    public void returnEnum(Int32 v) { JSApi.JSh_SetRvalInt(cx, vp, v); }
+    public void returnFloat(Single v) { JSApi.JSh_SetRvalDouble(cx, vp, v); }
+    public void returnDouble(Double v) { JSApi.JSh_SetRvalDouble(cx, vp, v); }
     public void returnObject(string className, object csObj)
     {
-        JSApi.JShelp_SetJsvalUndefined(ref this.valReturn);
+        JSApi.JSh_SetJsvalUndefined(ref this.valReturn);
         if (csObj == null)
         {
-            JSApi.JShelp_SetRvalJSVAL(cx, vp, ref this.valReturn);
+            JSApi.JSh_SetRvalJSVAL(cx, vp, ref this.valReturn);
             return;
         }
         IntPtr jsObj = JSMgr.getJSObj(csObj);
         if (jsObj == IntPtr.Zero)
         {
-            jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, className, JSMgr.mjsFinalizer);
+            jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, className, JSMgr.mjsFinalizer);
             if (jsObj != IntPtr.Zero)
                 JSMgr.addJSCSRelation(jsObj, csObj);
         }
         if (jsObj == IntPtr.Zero)
-            JSApi.JShelp_SetJsvalUndefined(ref this.valReturn);
+            JSApi.JSh_SetJsvalUndefined(ref this.valReturn);
         else
-            JSApi.JShelp_SetJsvalObject(ref this.valReturn, jsObj);
-        JSApi.JShelp_SetRvalJSVAL(cx, vp, ref this.valReturn);
+            JSApi.JSh_SetJsvalObject(ref this.valReturn, jsObj);
+        JSApi.JSh_SetRvalJSVAL(cx, vp, ref this.valReturn);
     }
-
-    // ref/out
-    public void updateRefObject(/*object csObj, */object csObjNew)
-    {
-
-    }
-
 
     /*
      * ExtractCSParams
      *
      * extract some info to use latter
      * write into m_ParamInfo and lstCSParam
-     * 仅反射版本使用
+     * ONLY for Reflection
      */
     public void ExtractCSParams()
     {
@@ -191,13 +205,13 @@ public class JSVCall
     /*
      * ExtractJSParams
      * 
-     * 写入lstJSParam
+     * write into lstJSParam
      * 
      * RETURN
      * false -- fail
      * true  -- success
      * 
-     * 对于枚举类型、基本类型：没有处理
+     * for primitive, enum, string: not handled
      */
     public bool ExtractJSParams(int start, int count)
     {
@@ -205,22 +219,22 @@ public class JSVCall
         for (int i = 0; i < count; i++)
         {
             int index = i + start;
-            bool bUndefined = JSApi.JShelp_ArgvIsUndefined(cx, vp, index);
+            bool bUndefined = JSApi.JSh_ArgvIsUndefined(cx, vp, index);
             if (bUndefined)
                 return true;
 
             JSParam jsParam = arrJSParam[arrJSParamsLength++]; //new JSParam();
             jsParam.index = index;
-            jsParam.isNull = JSApi.JShelp_ArgvIsNull(cx, vp, index);
+            jsParam.isNull = JSApi.JSh_ArgvIsNull(cx, vp, index);
             jsParam.isArray = false;
             jsParam.csObj = null;
 
-            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, index);
+            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, index);
             if (jsObj == IntPtr.Zero)
             {
                 jsParam.csObj = null;
             }
-            else if (JSApi.JS_IsArrayObject(cx, jsObj))
+            else if (JSApi.JSh_IsArrayObject(cx, jsObj))
             {
                 jsParam.isArray = true;
                 Debug.LogError("parse js array to cs is not supported");
@@ -240,9 +254,9 @@ public class JSVCall
         return true;
     }
 
-    // 不牵到 ParamterInfo
-    // 有使用 lstJSParam
-    // 来判断第i个参数类型是否匹配
+    // not to involved with ParamterInfo
+    // use lstJSParam
+    // to determine wether param match or not
     public bool IsParamMatch(int csParamIndex, bool csIsOptional, Type csType)
     {
         if (csParamIndex < arrJSParamsLength)
@@ -250,8 +264,7 @@ public class JSVCall
             if (csType.IsArray)
             {
                 // todo
-                // 重载函数只匹配是否数组
-                // 无法识别2个都是数组参数但是类型不同的重载函数，这种情况只会调用第1个
+                // overloaded functions only matchs wether it's array or not
                 if (!arrJSParam[csParamIndex].isArray)
                     return false;
             }
@@ -270,11 +283,11 @@ public class JSVCall
                 else
                 {
                     if (csType == typeof(bool))
-                        return JSApi.JShelp_ArgvIsBool(cx, vp, arrJSParam[csParamIndex].index);
+                        return JSApi.JSh_ArgvIsBool(cx, vp, arrJSParam[csParamIndex].index);
                     else if (csType == typeof(string))
-                        return JSApi.JShelp_ArgvIsString(cx, vp, arrJSParam[csParamIndex].index);
+                        return JSApi.JSh_ArgvIsString(cx, vp, arrJSParam[csParamIndex].index);
                     else if (csType.IsEnum || csType.IsPrimitive)
-                        return JSApi.JShelp_ArgvIsNumber(cx, vp, arrJSParam[csParamIndex].index);
+                        return JSApi.JSh_ArgvIsNumber(cx, vp, arrJSParam[csParamIndex].index);
                     else
                         return false;
                 }
@@ -293,7 +306,7 @@ public class JSVCall
      * 
      * write into this.method and this.ps
      *
-     * 仅反射方案使用这个函数
+     * ONLY for reflection
      */
     public int MatchOverloadedMethod(MethodBase[] methods, int methodIndex)
     {
@@ -330,7 +343,7 @@ public class JSVCall
     }
 
     /*
-     * 不使用反射的方案使用这个函数
+     * directly-call scheme use this function
      */
     public bool IsMethodMatch(CSParam[] arrCSParam)
     {
@@ -359,14 +372,14 @@ public class JSVCall
             t = t.GetElementType();
 
         if (t == typeof(string))
-            return JSApi.JShelp_ArgvString(cx, vp, paramIndex);
+            return JSApi.JSh_ArgvString(cx, vp, paramIndex);
         else if (t.IsEnum)
-            return JSApi.JShelp_ArgvInt(cx, vp, paramIndex);
+            return JSApi.JSh_ArgvInt(cx, vp, paramIndex);
         else if (t.IsPrimitive)
         {
             if (t == typeof(System.Boolean))
             {
-                return JSApi.JShelp_ArgvBool(cx, vp, paramIndex);
+                return JSApi.JSh_ArgvBool(cx, vp, paramIndex);
             }
             else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
@@ -374,11 +387,11 @@ public class JSVCall
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
-                return JSApi.JShelp_ArgvInt(cx, vp, paramIndex);
+                return JSApi.JSh_ArgvInt(cx, vp, paramIndex);
             }
             else if (t == typeof(System.Single) || t == typeof(System.Double))
             {
-                return JSApi.JShelp_ArgvDouble(cx, vp, paramIndex);
+                return JSApi.JSh_ArgvDouble(cx, vp, paramIndex);
             }
             else
             {
@@ -391,10 +404,10 @@ public class JSVCall
         //         }
         else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsValueType)
         {
-            if (JSApi.JShelp_ArgvIsNull(cx, vp, paramIndex))
+            if (JSApi.JSh_ArgvIsNull(cx, vp, paramIndex))
                 return null;
 
-            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, paramIndex);
+            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, paramIndex);
             if (jsObj == IntPtr.Zero)
                 return null;
 
@@ -505,11 +518,10 @@ public class JSVCall
     }
 
     // CS -> JS
-    // 将 cs 对象转换为 js 对象
     public JSApi.jsval CSObject_2_JSValue(object csObj)
     {
         JSApi.jsval val = new JSApi.jsval();
-        JSApi.JShelp_SetJsvalUndefined(ref val);
+        JSApi.JSh_SetJsvalUndefined(ref val);
 
         if (csObj == null)
         {
@@ -523,17 +535,17 @@ public class JSVCall
         }
         else if (t == typeof(string))
         {
-            JSApi.JShelp_SetJsvalString(cx, ref val, (string)csObj);
+            JSApi.JSh_SetJsvalString(cx, ref val, (string)csObj);
         }
         else if (t.IsEnum)
         {
-            JSApi.JShelp_SetJsvalInt(ref val, (int)csObj);
+            JSApi.JSh_SetJsvalInt(ref val, (int)csObj);
         }
         else if (t.IsPrimitive)
         {
             if (t == typeof(System.Boolean))
             {
-                JSApi.JShelp_SetJsvalBool(ref val, (bool)csObj);
+                JSApi.JSh_SetJsvalBool(ref val, (bool)csObj);
             }
             else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
@@ -541,11 +553,11 @@ public class JSVCall
                 t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
-                JSApi.JShelp_SetJsvalInt(ref val, (Int32)(Int64)csObj);
+                JSApi.JSh_SetJsvalInt(ref val, (Int32)(Int64)csObj);
             }
             else if (t == typeof(System.Single) || t == typeof(System.Double))
             {
-                JSApi.JShelp_SetJsvalDouble(ref val, (double)csObj);
+                JSApi.JSh_SetJsvalDouble(ref val, (double)csObj);
             }
             else
             {
@@ -559,40 +571,40 @@ public class JSVCall
         else if (t.IsArray)
         {
             // todo
-            // 如果返回数组的数组可能会有问题
+            // return [][] may cause problems
             Array arr = csObj as Array;
             if (arr.Length > 0 && arr.GetValue(0).GetType().IsArray)
             {
                 Debug.LogWarning("cs return [][] may cause problems.");
             }
 
-            IntPtr jsArr = JSApi.JS_NewArrayObject(cx, arr.Length);
+            IntPtr jsArr = JSApi.JSh_NewArrayObject(cx, arr.Length);
             
             for (int i = 0; i < arr.Length; i++)
             {
                 JSApi.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
-                JSApi.JS_SetElement(cx, jsArr, (uint)i, ref subVal);
+                JSApi.JSh_SetElement(cx, jsArr, (uint)i, ref subVal);
             }
-            JSApi.JShelp_SetJsvalObject(ref val, jsArr);
+            JSApi.JSh_SetJsvalObject(ref val, jsArr);
         }
         else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass || t.IsValueType)
         {
             IntPtr jsObj = JSMgr.getJSObj(csObj);
             if (jsObj == IntPtr.Zero)
             {
-                jsObj = JSApi.JShelp_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
+                jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
                 if (jsObj != IntPtr.Zero)
                     JSMgr.addJSCSRelation(jsObj, csObj);
             }
             if (jsObj == IntPtr.Zero)
-                JSApi.JShelp_SetJsvalUndefined(ref val);
+                JSApi.JSh_SetJsvalUndefined(ref val);
             else
-                JSApi.JShelp_SetJsvalObject(ref val, jsObj);
+                JSApi.JSh_SetJsvalObject(ref val, jsObj);
         }
 //         else
 //         {
 //             Debug.Log("CS -> JS: Unknown CS type: " + t.ToString());
-//             JSApi.JShelp_SetJsvalUndefined(ref val);
+//             JSApi.JSh_SetJsvalUndefined(ref val);
 //         }
         return val;
     }
@@ -601,7 +613,7 @@ public class JSVCall
     {
         if (/*this.op == Oper.METHOD && */ arrCSParam != null)
         {
-            // 处理 ref/out 参数
+            // handle ref/out parameters
             for (int i = 0; i < arrCSParamsLength; i++)
             {
                 if (arrCSParam[i].isRef)
@@ -612,7 +624,7 @@ public class JSVCall
         }
 
         JSApi.jsval val = CSObject_2_JSValue(csObj);
-        JSApi.JShelp_SetRvalJSVAL(cx, vp, ref val);
+        JSApi.JSh_SetRvalJSVAL(cx, vp, ref val);
     }
 
 
@@ -646,11 +658,11 @@ public class JSVCall
     {
         this.Reset(cx, vp);
 
-        // 前面4个参数是固定的
-        this.op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
-        int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
-        int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
-        bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
+        // first 4 params are fixed
+        this.op = (Oper)JSApi.JSh_ArgvInt(cx, vp, 0);
+        int slot = JSApi.JSh_ArgvInt(cx, vp, 1);
+        int index = JSApi.JSh_ArgvInt(cx, vp, 2);
+        bool isStatic = JSApi.JSh_ArgvBool(cx, vp, 3);
 
         if (slot < 0 || slot >= JSMgr.allCallbackInfo.Count)
         {
@@ -662,7 +674,7 @@ public class JSVCall
         currentParamCount = 4;
         if (!isStatic)
         {
-            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, 4);
+            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 4);
             if (jsObj == IntPtr.Zero)
                 return JSApi.JS_FALSE;
 
@@ -700,7 +712,7 @@ public class JSVCall
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, currentParamCount);
+                    bool overloaded = JSApi.JSh_ArgvBool(cx, vp, currentParamCount);
                     currentParamCount++;
 
                     JSMgr.MethodCallBackInfo[] arrMethod;
@@ -709,15 +721,14 @@ public class JSVCall
                     else
                         arrMethod = aInfo.constructors;
 
-                    // JS传过来的参数个数
-                    // 重载函数的参数个数由 ExtractJSParams 已经计算好了 
+                    // params passed by js
+                    // for overloaded function, it's caculated by ExtractJSParams
                     int jsParamCount = (int)argc - currentParamCount;
                     if (!overloaded)
                     {
-                        // 对于无重载函数
-                        // 如果没有可选参数的话 每次也就多一次判断是不是 Undefined
+                        // for not-overloaded function
                         int i = (int)argc;
-                        while (i > 0 && JSApi.JShelp_ArgvIsUndefined(cx, vp, --i))
+                        while (i > 0 && JSApi.JSh_ArgvIsUndefined(cx, vp, --i))
                             jsParamCount--;
                     }
                     else
@@ -797,11 +808,10 @@ public class JSVCall
     {
         this.Reset(cx, vp);
 
-        // 前面4个参数是固定的
-        this.op = (Oper)JSApi.JShelp_ArgvInt(cx, vp, 0);
-        int slot = JSApi.JShelp_ArgvInt(cx, vp, 1);
-        int index = JSApi.JShelp_ArgvInt(cx, vp, 2);
-        bool isStatic = JSApi.JShelp_ArgvBool(cx, vp, 3);
+        this.op = (Oper)JSApi.JSh_ArgvInt(cx, vp, 0);
+        int slot = JSApi.JSh_ArgvInt(cx, vp, 1);
+        int index = JSApi.JSh_ArgvInt(cx, vp, 2);
+        bool isStatic = JSApi.JSh_ArgvBool(cx, vp, 3);
 
         if (slot < 0 || slot >= JSMgr.allTypeInfo.Count)
         {
@@ -814,7 +824,7 @@ public class JSVCall
         object csObj = null;
         if (!isStatic)
         {
-            IntPtr jsObj = JSApi.JShelp_ArgvObject(cx, vp, 4);
+            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 4);
             if (jsObj == IntPtr.Zero)
                 return JSApi.JS_FALSE;
 
@@ -854,7 +864,7 @@ public class JSVCall
             case Oper.METHOD:
             case Oper.CONSTRUCTOR:
                 {
-                    bool overloaded = JSApi.JShelp_ArgvBool(cx, vp, currentParamCount);
+                    bool overloaded = JSApi.JSh_ArgvBool(cx, vp, currentParamCount);
                     currentParamCount++;
 
                     if (!this.ExtractJSParams(currentParamCount, (int)argc - currentParamCount))

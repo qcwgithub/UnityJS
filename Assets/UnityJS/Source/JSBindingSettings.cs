@@ -528,12 +528,12 @@ public class JSBindingSettings
          typeof(System.Diagnostics.Stopwatch),
 
 //         typeof(UnityEngine.jvalue),
-        // typeof(UnityEngine.SocialPlatforms.GameCenter.GameCenterPlatform), //Action<>..... 哦，懂了 ，可以手动添加一个名字空间就可以了
+        // typeof(UnityEngine.SocialPlatforms.GameCenter.GameCenterPlatform), //Action<>..... oh, manually add a namespace can solve this
          //typeof(UnityEngine.AndroidJavaRunnable),                       // this is a delegate
          //typeof(UnityEngine.Events.UnityAction),                          // this is a delegate
          //typeof(UnityEngineInternal.FastCallExceptionHandler),          // this is a delegate
          //typeof(UnityEngineInternal.GetMethodDelegate),                   // this is a delegate         
-            //typeof(UnityEngine.Types),//静态类！
-        //typeof(UnityEngine.Social),//静态类！
+            //typeof(UnityEngine.Types),//static class
+        //typeof(UnityEngine.Social),//static class
     };
 }

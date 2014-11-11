@@ -1,4 +1,10 @@
-﻿using UnityEngine;
+﻿/*
+ * 
+ * 
+ */
+
+
+using UnityEngine;
 //using UnityEditor;
 using System;
 using System.Text;
@@ -32,7 +38,7 @@ public static class JSMgr
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int printInt(IntPtr cx, UInt32 argc, IntPtr vp)
     {
-        int value = JSApi.JShelp_ArgvInt(cx, vp, 0);
+        int value = JSApi.JSh_ArgvInt(cx, vp, 0);
         Debug.Log(value);
         return 1;
     }
@@ -40,87 +46,47 @@ public static class JSMgr
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int printString(IntPtr cx, UInt32 argc, IntPtr vp)
     {
-        string value = JSApi.JShelp_ArgvString(cx, vp, 0);
+        string value = JSApi.JSh_ArgvString(cx, vp, 0);
         Debug.Log(value);
         return 1;
     }
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int printDouble(IntPtr cx, UInt32 argc, IntPtr vp)
     {
-        double value = JSApi.JShelp_ArgvDouble(cx, vp, 0);
+        double value = JSApi.JSh_ArgvDouble(cx, vp, 0);
         Debug.Log(value);
         return 1;
     }
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
-        string fileName = JSApi.JShelp_GetErroReportFileName(report);
-        int lineno = JSApi.JShelp_GetErroReportLintNo(report);
+        string fileName = JSApi.JSh_GetErroReportFileName(report);
+        int lineno = JSApi.JSh_GetErroReportLintNo(report);
         Debug.Log(fileName + "(" + lineno.ToString() + "): " + message);
         return 1;
     }
 
-    public static void InitJSEngine()
+    public static bool InitJSEngine()
     {
-        rt = JSApi.JS_Init(10 * 1024 * 1024);
-        //Debug.Log("rt: " + rt + "\n");
-        cx = JSApi.JS_NewContext(rt, 8192);
-        //Debug.Log("cx: " + cx + "\n");
+        if (!JSApi.JSh_Init())
+            return false;
 
-        //int sizeofJSClass = Marshal.SizeOf(typeof(JSApi.JSClass));
+        rt = JSApi.JSh_NewRuntime(8 * 1024 * 1024, 0);
+        cx = JSApi.JSh_NewContext(rt, 8192);
 
+        glob = JSApi.JSh_NewGlobalObject(cx, 1);
 
-        // 
-        //         SMDll.JS_SetOptions(cx, SMDll.JS_GetOptions(cx) & ~JSOPTION_METHODJIT);
-        //         JS_SetOptions(cx, JS_GetOptions(cx) & ~JSOPTION_METHODJIT_ALWAYS);
-        //         JS_SetErrorReporter(cx, reportError);
-        // 
+        JSApi.JSh_EnterCompartment(cx, glob);
 
-        JSApi.JSClass global_class = new JSApi.JSClass();
-        {
-            global_class.name = "global";
-            global_class.flags = 168704;
+        if (!JSApi.JSh_InitStandardClasses(cx, glob))
+            return false;
 
-            global_class.addProperty = new JSApi.JSPROPERTYOP(JSApi.JS_PropertyStub);
-            global_class.delProperty = new JSApi.JSPROPERTYOP(JSApi.JS_PropertyStub);
-            global_class.getProperty = new JSApi.JSPROPERTYOP(JSApi.JS_PropertyStub);
-            global_class.setProperty = new JSApi.JS_STRICTPROPERTYSTUB(JSApi.JS_StrictPropertyStub);
-            global_class.enumerate = new JSApi.JS_ENUMERATESTUB(JSApi.JS_EnumerateStub);
-            global_class.resolve = new JSApi.JS_RESOLVESTUB(JSApi.JS_ResolveStub);
-            global_class.convert = new JSApi.JS_CONVERTSTUB(JSApi.JS_ConvertStub);
-            global_class.finalize = new JSApi.SC_FINALIZE(JSApi.sc_finalize);
+        JSApi.JSh_InitReflect(cx, glob);
 
-            global_class.checkAccess = null;
-            global_class.call = null;
-            global_class.hasInstance = null;
-            global_class.construct = null;
-            global_class.trace = null;
-
-            {
-                global_class.reserved = new UInt64[40];
-                for (int i = 0; i < 40; i++)
-                    global_class.reserved[i] = 0;
-            }
-        }
-
-        //IntPtr glob = SMDll.JS_NewGlobalObject(cx, global_class, new IntPtr(0));
-        glob = JSApi.JS_CreateGlobal(cx);
-        //Debug.Log("glob: " + glob + "\n");
-
-        //         var ho = new SMDll.JSHandleObject(); ho._ = new IntPtr(0);
-        //         var hid = new SMDll.JSHandleId(); hid._ = new IntPtr(0);
-        //         var mhv = new SMDll.JSMutableHandleValue(); mhv._ = new IntPtr(0);
-        //         Debug.Log("JS_ResolveStub " + SMDll.JS_ResolveStub(cx, ho, hid));
-
-        //SMDll.JSAutoCompartment(cx, glob);
-
-        /*int b = */JSApi.JS_InitStandardClasses(cx, glob);
-        JSApi.JS_InitReflect(cx, glob);
-
-        JSApi.JS_DefineFunction(cx, glob, "printInt", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printInt)), 1, 0/*4164*/);
-        JSApi.JS_DefineFunction(cx, glob, "printString", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printString)), 1, 0/*4164*/);
-        JSApi.JS_DefineFunction(cx, glob, "printDouble", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printDouble)), 1, 0/*4164*/);
-        JSApi.JS_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
+        JSApi.JSh_DefineFunction(cx, glob, "printInt", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printInt)), 1, 0/*4164*/);
+        JSApi.JSh_DefineFunction(cx, glob, "printString", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printString)), 1, 0/*4164*/);
+        JSApi.JSh_DefineFunction(cx, glob, "printDouble", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printDouble)), 1, 0/*4164*/);
+        JSApi.JSh_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
 
         JSMgr.RegisterCS(cx, glob);
         JSValueWrap.Register(CSOBJ, cx);
@@ -131,38 +97,18 @@ public static class JSMgr
         }
         else
         {
-            //CSharpGenerated.RegisterAll();
+            CSharpGenerated.RegisterAll();
         }
         JSMgr.EvaluateGeneratedScripts();
+        return true;
     }
     public static JSApi.SC_FINALIZE mjsFinalizer = new JSApi.SC_FINALIZE(JSObjectFinalizer);
 
     public static void FinishJSEngine()
     {
-        JSApi.JS_DestroyContext(cx);
-        JSApi.JS_Finish(rt);
+        JSApi.JSh_DestroyContext(cx);
+        JSApi.JSh_Finish(rt);
     }
-
-
-    /*
-    * Push，返回某个类型的对象给JS
-    */
-    /*public static void Push(IntPtr cx, IntPtr vp, bool v) { JSApi.JShelp_SetRvalBool(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, double v) { JSApi.JShelp_SetRvalDouble(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, int v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, UInt32 v) { JSApi.JShelp_SetRvalUInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, string v) { JSApi.JShelp_SetRvalString(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, IntPtr v) { JSApi.JShelp_SetRvalObject(cx, vp, v); }
-
-    public static void Push(IntPtr cx, IntPtr vp, char v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, sbyte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, byte v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, short v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, ushort v) { JSApi.JShelp_SetRvalInt(cx, vp, v); }
-    public static void Push(IntPtr cx, IntPtr vp, long v) { JSApi.JShelp_SetRvalInt(cx, vp, (int)v); } // !!
-    public static void Push(IntPtr cx, IntPtr vp, ulong v) { JSApi.JShelp_SetRvalUInt(cx, vp, (UInt32)v); } // !!
-    public static void Push(IntPtr cx, IntPtr vp, float v) { JSApi.JShelp_SetRvalDouble(cx, vp, (double)v); }
-    public static void Push(IntPtr cx, IntPtr vp, decimal v) { JSApi.JShelp_SetRvalDouble(cx, vp, (double)v); }*/
 
     public static void EvaluateFile(string file)
     {
@@ -170,7 +116,7 @@ public static class JSMgr
         StreamReader r = new StreamReader(file, Encoding.UTF8);
         string s = r.ReadToEnd();
 
-        JSApi.JS_EvaluateScript(cx, glob, s, (uint)s.Length, file, 1, ref val);
+        JSApi.JSh_EvaluateScript(cx, glob, s, (uint)s.Length, file, 1, ref val);
         r.Close();
     }
     public static void EvaluateGeneratedScripts()
@@ -184,44 +130,11 @@ public static class JSMgr
         }
     }
 
-    /*public static void RegisterEnum(string name, JSEnum[] enums)
-    {
-        // 导出到 js 文件中
-        StringBuilder sb = new StringBuilder();
-        string fmt = @"{0} = {0} || [[]];
-";
-        sb.AppendFormat(fmt, name);
-
-        string fmtField = @"{0}.{1} = {2};
-";
-
-        for (int i = 0; i < enums.Length; i++)
-        {
-            sb.AppendFormat(fmtField, name, enums[i].name, enums[i].val);
-        }
-
-        sb.Replace("[[", "{");
-        sb.Replace("]]", "}");
-        sb.Replace("'", "\"");
-
-        string file = Application.dataPath + "/StreamingAssets/" + "Enum.javascript";
-
-        using (StreamWriter textWriter = new StreamWriter(file, false, Encoding.UTF8))
-        {
-            textWriter.Write(sb.ToString());
-            textWriter.Flush();
-            textWriter.Close();
-        } 
-    }*/
-
     /// <summary>
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// callback function list
     /// </summary>
     /// 
-
-    // 对于 field，property，get和set放在同一个函数中
-    // 对于
     public delegate void CSCallbackField(JSVCall vc);
     public delegate void CSCallbackProperty(JSVCall vc);
     public delegate bool CSCallbackMethod(JSVCall vc, int start, int count);
@@ -234,8 +147,8 @@ public static class JSMgr
         public JSVCall.CSParam[] arrCSParam;
     }
 
-    // 用途：
-    // 用于js对cs的非反射调用
+    // usage
+    // 1 use for calling cs from js, by directly-call
     public class CallbackInfo
     {
         public Type type;
@@ -252,10 +165,10 @@ public static class JSMgr
     /// type info list
     /// </summary>
 
-    // 用途：
-    // 用于生成js代码
-    // 用于生成cs代码
-    // 用于js对cs的反射调用
+    // usage
+    // 1 used for generating js code
+    // 2 used for generating cs code
+    // 3 used for calling cs from js, by reflection
     public class ATypeInfo
     {
         public FieldInfo[] fields;
@@ -452,30 +365,20 @@ public static class JSMgr
      */
     public static void RegisterCS(IntPtr cx, IntPtr glob)
     {
-        IntPtr jsClass = JSApi.JShelp_NewClass("CS", 0, null);
+        IntPtr jsClass = JSApi.JSh_NewClass("CS", 0, null);
+        IntPtr obj = JSApi.JSh_InitClass(cx, glob, jsClass);
 
-        IntPtr obj = JSApi.JS_InitClass(cx, glob,
-            IntPtr.Zero, /* parentProto */
-            jsClass, /* JSClass */
-            null, /* constructor */
-            0, /* constructor argument count*/
-            IntPtr.Zero, /* properties */
-            IntPtr.Zero, /* functions */
-            IntPtr.Zero, /* static properties */
-            IntPtr.Zero /* static functions*/
-        );
-
-        JSApi.JS_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 20/* narg */, 0);
+        JSApi.JSh_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 20/* narg */, 0);
         CSOBJ = obj;
     }
 
     public static void JS_GC()
     {
-        JSApi.JS_GC(rt);
+        JSApi.JSh_GC(rt);
     }
 
     /*
-     * 这2个是记录 C#对象和js对象的对应关系
+     * record js/cs relation
      */
     class JS_CS_Relation
     {
@@ -495,7 +398,7 @@ public static class JSMgr
         int index = nextRelationIndex++;
 
 //         JSApi.jsval val = new JSApi.jsval();
-//         JSApi.JShelp_SetJsvalInt(ref val, index);
+//         JSApi.JSh_SetJsvalInt(ref val, index);
 //         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
         mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
         mDict2.Add(csObj, new JS_CS_Relation(jsObj, csObj));
@@ -544,7 +447,7 @@ public static class JSMgr
     }
     
     /*
-     * 记录已注册的类型
+     * record registered types
      */
     public class GlobalType
     {

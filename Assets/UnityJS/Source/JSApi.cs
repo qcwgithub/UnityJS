@@ -29,9 +29,11 @@ public class JSApi
  * Constants & Types & Delegates
  *    
 ************************************************************************/
-
-    const string JSDll = "mozjs";
-    const string JSHelpDll = "dllParseToUnity";
+#if UNITY_IPHONE
+    const string JSDll = "__Internal";
+#else
+    const string JSDll = "mozjswrap";
+#endif
 
     enum JSConstant
     {
@@ -41,24 +43,14 @@ public class JSApi
     public static int JS_TRUE = 1;
     public static int JS_FALSE = 0;
 
-    //     typedef struct { JSObject **_; } JSHandleObject;
     public struct JSHandleObject { public IntPtr _; }
-
-    //     typedef struct { jsval _; } JSHandleValue;
-    //     typedef struct { JSString **_; } JSHandleString;
-    //     typedef struct { JSObject **_; } JSMutableHandleObject;
-    //     typedef struct { jsid *_; } JSHandleId;
     public struct JSHandleId { public IntPtr _; }
     public struct JSMutableHandleValue{ public IntPtr _; }
 
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSPROPERTYOP(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_PropertyStub(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_StrictPropertyStub(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_STRICTPROPERTYSTUB(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
 
@@ -72,36 +64,27 @@ public class JSApi
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_RESOLVESTUB(IntPtr cx, JSHandleObject obj, JSHandleId id);
 
-    // extern JS_PUBLIC_API(JSBool) JS_ConvertStub(JSContext *cx, JSHandleObject obj, JSType type, JSMutableHandleValue vp);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ConvertStub(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JS_CONVERTSTUB(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
 
-    // void sc_finalize(JSFreeOp* freeOp, JSObject* obj)
     public static void sc_finalize(IntPtr freeOp, IntPtr obj) { }
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void SC_FINALIZE(IntPtr freeOp, IntPtr obj);
 
-    //     typedef JSBool
-    // (* JSCheckAccessOp)(JSContext *cx, JSHandleObject obj, JSHandleId id, JSAccessMode mode,
-    //                     jsval *vp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSCheckAccessOp(IntPtr cx, JSHandleObject obj, JSHandleId id, int mode, IntPtr vp);
 
-    // typedef JSBool (* JSNative)(JSContext *cx, unsigned argc, jsval *vp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSNative(IntPtr cx, uint argc, IntPtr vp);
 
-    // typedef void(* JSErrorReporter)(JSContext *cx, const char *message, JSErrorReport *report);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSErrorReporter(IntPtr cx, string message, IntPtr report);
 
-    // typedef JSBool (* JSHasInstanceOp)(JSContext *cx, JSHandleObject obj, const jsval *v, JSBool *bp);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate int JSHasInstanceOp(IntPtr cx, JSHandleObject obj, int v, IntPtr bp);
 
-    //    typedef void(* JSTraceOp)(JSTracer *trc, JSObject *obj);
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public delegate void JSTraceOp(IntPtr trc, IntPtr obj);
 
@@ -140,204 +123,152 @@ public class JSApi
      
 ************************************************************************/
 
-
-    /* 
-     * JSRuntime* JS_NewRuntime(uint32_t maxbytes); 
-     */
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_Init(int maxbytes);
-
-    /* 
-     * JSContext* JS_NewContext(JSRuntime *rt, size_t stackChunkSize); 
-     */
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_NewContext(IntPtr rt, int stackChunkSize);
-
-    /* 
-     * uint32_t JS_SetOptions(JSContext *cx, uint32_t options); 
-     */
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_SetOptions(IntPtr cx, int options);
-
-    /* 
-     * uint32_t JS_GetOptions(JSContext *cx); 
-     */
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern uint JS_GetOptions(IntPtr cx);
-
-    // JSBool JS_InitStandardClasses(JSContext *cx, JSObject *obj);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_InitStandardClasses(IntPtr cx, IntPtr obj);
-
-
-    // JSObject* JS_InitReflect(JSContext *cx, JSObject *global); 
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_InitReflect(IntPtr cx, IntPtr global);
+    [DllImport("mozjs-28", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSBB_Init();
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_GetProperty(IntPtr cx, IntPtr obj, string name, ref jsval vp);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_SetProperty(IntPtr cx, IntPtr obj, string name, ref jsval vp);
-
-    /*
-    * JSObject* JS_NewGlobalObject(JSContext *cx, JSClass *clasp, JSPrincipals *principals);
-    */
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_NewGlobalObject(IntPtr cx, JSClass clasp, IntPtr principals);
-
-    // extern JS_PUBLIC_API(JSObject *) JS_NewObject(JSContext *cx, JSClass *clasp, JSObject *proto, JSObject *parent);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_NewObject(IntPtr cx, IntPtr clasp, IntPtr proto, IntPtr parent);
+    public static extern bool JSh_Init();
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JS_DestroyContext(IntPtr cx);
+    public static extern IntPtr JSh_NewRuntime(UInt32 maxbytes, int useHelperThreads);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JS_Finish(IntPtr rt);
-
-//     JSObject* JS_InitClass(JSContext* cx, JSObject* obj,
-//         JSObject* parent_proto, JSClass* clasp,
-//         JSNative constructor, uintN nargs,
-//         JSPropertySpec* ps, JSFunctionSpec* fs,
-//         JSPropertySpec* static_ps, JSFunctionSpec* static_fs);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_InitClass(IntPtr cx, IntPtr obj,
-        IntPtr parent_proto, IntPtr clasp,
-        JSNative constructor, UInt32 nargs,
-        IntPtr ps, IntPtr fs,
-        IntPtr static_ps, IntPtr static_fs);
-
-//    JSFunction * JS_DefineFunction(JSContext *cx, JSObject *obj,
-//    const char *name, JSNative call, uintN nargs, uintN flags);
+    public static extern IntPtr JSh_NewContext(IntPtr rt, int stackChunkSize);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_DefineFunction(IntPtr cx, IntPtr obj, string name, /*JSNative*/IntPtr call, UInt32 nargs, UInt32 flags);
-
-    // extern JS_PUBLIC_API(JSErrorReporter) JS_SetErrorReporter(JSContext *cx, JSErrorReporter er);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_SetErrorReporter(IntPtr cx, JSErrorReporter er);
-
-//     JSBool JS_DefineProperty(JSContext *cx, JSObject *obj,
-//         const char *name, jsval value, JSPropertyOp getter,
-//         JSStrictPropertyOp setter, unsigned attrs);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_DefineProperty(IntPtr cx, IntPtr obj, string name, jsval value, JSPROPERTYOP getter, JS_STRICTPROPERTYSTUB setter, UInt32 attrs );
-
-    // extern JS_PUBLIC_API(JSObject *) JS_NewArrayObject(JSContext *cx, int length, jsval *vector);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_NewArrayObject", CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_NewArrayObject_(IntPtr cx, int length, IntPtr vector);
-    public static IntPtr JS_NewArrayObject(IntPtr cx, int length) { return JS_NewArrayObject_(cx, length, IntPtr.Zero); }
+    public static extern bool JSh_InitStandardClasses(IntPtr cx, IntPtr obj);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    // extern JS_PUBLIC_API(JSBool)JS_SetElement(JSContext *cx, JSObject *obj, uint32_t index, jsval *vp);
-    public static extern int JS_SetElement(IntPtr cx, IntPtr obj, uint index, ref jsval vp);
+    public static extern IntPtr JSh_InitReflect(IntPtr cx, IntPtr global);
 
-    public delegate IntPtr JS_NewGlobalObject_Del(IntPtr cx, IntPtr clasp, IntPtr principals);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewObject(IntPtr cx, IntPtr clasp, IntPtr proto, IntPtr parent);
 
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JS_IsArrayObject", CharSet = CharSet.Ansi)]
-    public static extern int JS_IsArrayObject_(IntPtr cx, IntPtr obj);
-    public static bool JS_IsArrayObject(IntPtr cx, IntPtr obj) { return (JS_IsArrayObject_(cx, obj) == JSApi.JS_TRUE); }
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_DestroyContext(IntPtr cx);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_CreateGlobal(IntPtr cx);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_Finish(IntPtr rt);
 
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_InitClass(IntPtr cx, IntPtr obj, IntPtr clasp);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_DefineFunction(IntPtr cx, IntPtr obj, string name, /*JSNative*/IntPtr call, UInt32 nargs, UInt32 flags);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_SetErrorReporter(IntPtr cx, JSErrorReporter er);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JSh_NewArrayObject", CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewArrayObject_(IntPtr cx, int length, IntPtr vector);
+    public static IntPtr JSh_NewArrayObject(IntPtr cx, int length) { return JSh_NewArrayObject_(cx, length, IntPtr.Zero); }
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetElement(IntPtr cx, IntPtr obj, uint index, ref jsval vp);
+
+    public delegate IntPtr JSh_NewGlobalObject_Del(IntPtr cx, IntPtr clasp, IntPtr principals);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_IsArrayObject(IntPtr cx, IntPtr obj);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewGlobalObject(IntPtr cx, int hookOption);
     
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_NewClass(string name, UInt32 flag, SC_FINALIZE finalizeOp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewClass(string name, UInt32 flag, SC_FINALIZE finalizeOp);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_InitClass(IntPtr cx, IntPtr jsClass);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_InitClass(IntPtr cx, IntPtr jsClass);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_ThisObject(IntPtr cx, IntPtr vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ThisObject(IntPtr cx, IntPtr vp);
 
 
 
     /*
      * Arguments from JavaScript
      */
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvIsUndefined(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvIsNull(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvIsBool(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvIsString(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvIsNumber(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsUndefined(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsNull(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsBool(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsString(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsNumber(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsDouble(IntPtr cx, IntPtr vp, int i);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_ArgvBool(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern double JShelp_ArgvDouble(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_ArgvInt(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSHelpDll, EntryPoint = "JShelp_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_ArgvString_(IntPtr cx, IntPtr vp, int i);
-    public static string JShelp_ArgvString(IntPtr cx, IntPtr vp, int i)
-    {
-        return Marshal.PtrToStringAnsi(JShelp_ArgvString_(cx, vp, i));
-    }
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_ArgvObject(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvBool(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern double JSh_ArgvDouble(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_ArgvInt(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, EntryPoint = "JSh_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ArgvString_(IntPtr cx, IntPtr vp, int i);
+    public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return Marshal.PtrToStringAnsi(JSh_ArgvString_(cx, vp, i)); }
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ArgvObject(IntPtr cx, IntPtr vp, int i);
 
     /*
      * Return values to JavaScript
      */
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalBool(IntPtr cx, IntPtr vp, bool value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalDouble(IntPtr cx, IntPtr vp, double value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalInt(IntPtr cx, IntPtr vp, int value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalUInt(IntPtr cx, IntPtr vp, UInt32 value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalString(IntPtr cx, IntPtr vp, string value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalObject(IntPtr cx, IntPtr vp, IntPtr value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalUndefined(IntPtr cx, IntPtr vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalBool(IntPtr cx, IntPtr vp, bool value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalDouble(IntPtr cx, IntPtr vp, double value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalInt(IntPtr cx, IntPtr vp, int value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalUInt(IntPtr cx, IntPtr vp, UInt32 value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalString(IntPtr cx, IntPtr vp, string value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalObject(IntPtr cx, IntPtr vp, IntPtr value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalUndefined(IntPtr cx, IntPtr vp);
     /*
      * 生成 jsval，有些函数需要传递 jsval，或者 jsval*
      */
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalBool(ref jsval vp, bool value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalDouble(ref jsval vp, double value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalInt(ref jsval vp, int value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalUInt(ref jsval vp, UInt32 value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalString(IntPtr cx, ref jsval vp, string value);
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern  void JShelp_SetJsvalObject(ref jsval vp, IntPtr value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalBool(ref jsval vp, bool value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalDouble(ref jsval vp, double value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalInt(ref jsval vp, int value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalUInt(ref jsval vp, UInt32 value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalString(IntPtr cx, ref jsval vp, string value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern  void JSh_SetJsvalObject(ref jsval vp, IntPtr value);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void JShelp_SetJsvalUndefined(ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetJsvalUndefined(ref jsval vp);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_SetRvalJSVAL(IntPtr cx, IntPtr vp, ref jsval value);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_SetRvalJSVAL(IntPtr cx, IntPtr vp, ref jsval value);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JShelp_GetErroReportFileName", CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_GetErroReportFileName_(IntPtr report);
-    public static string JShelp_GetErroReportFileName(IntPtr report)
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JSh_GetErroReportFileName", CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_GetErroReportFileName_(IntPtr report);
+    public static string JSh_GetErroReportFileName(IntPtr report)
     {
-        IntPtr str = JShelp_GetErroReportFileName_(report);
+        IntPtr str = JSh_GetErroReportFileName_(report);
         return Marshal.PtrToStringAnsi(str);
     }
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JShelp_GetErroReportLintNo(IntPtr report);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_GetErroReportLintNo(IntPtr report);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JShelp_NewObjectAsClass(IntPtr cx, IntPtr glob, string className, SC_FINALIZE finalizeOp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewObjectAsClass(IntPtr cx, IntPtr glob, string className, SC_FINALIZE finalizeOp);
 
-    [DllImport(JSHelpDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JShelp_SetClassFinalize(IntPtr cx, string className, SC_FINALIZE finalizeOp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_SetClassFinalize(IntPtr cx, string className, SC_FINALIZE finalizeOp);
 
     [StructLayout(LayoutKind.Explicit)]
     public struct jsval
@@ -346,56 +277,29 @@ public class JSApi
         UInt64 asBits;
     }
 
-    //     extern JS_PUBLIC_API(JSBool)
-    //     JS_EvaluateScript(JSContext *cx, JSObject *obj,
-    //                   const char *bytes, unsigned length,
-    //                   const char *filename, unsigned lineno,
-    //                   jsval *rval);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_EvaluateScript(IntPtr cx, IntPtr obj,
+    public static extern int JSh_EvaluateScript(IntPtr cx, IntPtr obj,
                  string bytes, uint length,
                  string filename, uint lineno,
                  ref jsval rval);
 
-//     extern JS_PUBLIC_API(JSScript *)
-// JS_CompileScript(JSContext *cx, JSObject *obj,
-//                  const char *bytes, size_t length,
-//                  const char *filename, unsigned lineno);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_CompileScript(IntPtr cx, IntPtr obj, string bytes, uint length, string filename, uint lineno);
-
-    //     extern JS_PUBLIC_API(JSString *)
-    //     JS_ValueToString(JSContext *cx, jsval v);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_ValueToString(IntPtr cx, jsval v);
-
-    //     JS_PUBLIC_API(char *)
-    // JS_EncodeString(JSContext *cx, JSString *str);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JS_EncodeString(IntPtr cx, IntPtr str);
-
-    //extern JS_PUBLIC_API(JSBool)
-    //JS_ValueToInt32(JSContext *cx, jsval v, int32_t *ip);
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_ValueToInt32(IntPtr cx, jsval v, ref int ip);
+    public static extern IntPtr JSh_CompileScript(IntPtr cx, IntPtr obj, string bytes, uint length, string filename, uint lineno);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JS_GC(IntPtr rt);
+    public static extern IntPtr JSh_ValueToString(IntPtr cx, jsval v);
 
-    
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_EncodeString(IntPtr cx, IntPtr str);
 
-    //     [StructLayout(LayoutKind.Sequential)]
-    //     public class SystemTime
-    //     {
-    //         public ushort year;
-    //         public ushort month;
-    //         public ushort weekday;
-    //         public ushort day;
-    //         public ushort hour;
-    //         public ushort minute;
-    //         public ushort second;
-    //         public ushort millisecond;
-    //     }
-    //     [DllImport("Kernel32.dll")]
-    //     public static extern void GetSystemTime([In, Out] SystemTime st);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_ValueToInt32(IntPtr cx, jsval v, ref int ip);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_GC(IntPtr rt);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_EnterCompartment(IntPtr cx, IntPtr target);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_LeaveCompartment(IntPtr cx, IntPtr oldCompartment);
 }
