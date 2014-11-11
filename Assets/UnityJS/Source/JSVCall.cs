@@ -234,7 +234,7 @@ public class JSVCall
             {
                 jsParam.csObj = null;
             }
-            else if (JSApi.JSh_IsArrayObject(cx, jsObj))
+            else if (false/*JSApi.JSh_IsArrayObject(cx, jsObj)*/)
             {
                 jsParam.isArray = true;
                 Debug.LogError("parse js array to cs is not supported");

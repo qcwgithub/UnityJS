@@ -61,7 +61,7 @@ public static class JSMgr
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
         string fileName = JSApi.JSh_GetErroReportFileName(report);
-        int lineno = JSApi.JSh_GetErroReportLintNo(report);
+        int lineno = JSApi.JSh_GetErroReportLineNo(report);
         Debug.Log(fileName + "(" + lineno.ToString() + "): " + message);
         return 1;
     }
@@ -110,13 +110,13 @@ public static class JSMgr
         JSApi.JSh_Finish(rt);
     }
 
-    public static void EvaluateFile(string file)
+    public static void EvaluateFile(string file, IntPtr obj)
     {
         JSApi.jsval val = new JSApi.jsval();
         StreamReader r = new StreamReader(file, Encoding.UTF8);
         string s = r.ReadToEnd();
 
-        JSApi.JSh_EvaluateScript(cx, glob, s, (uint)s.Length, file, 1, ref val);
+        JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, file, 1, ref val);
         r.Close();
     }
     public static void EvaluateGeneratedScripts()
@@ -126,7 +126,7 @@ public static class JSMgr
         {
             if (files[i].IndexOf(".meta") == files[i].Length - 5)
                 continue;
-            EvaluateFile(files[i]);
+            EvaluateFile(files[i], glob);
         }
     }
 

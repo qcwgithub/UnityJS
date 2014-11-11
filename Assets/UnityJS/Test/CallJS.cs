@@ -9,27 +9,21 @@ using System.Security;
 
 public class CallJS : MonoBehaviour 
 {
-    public bool useReflection = true;
+    public string jsScriptName = string.Empty;
+
+    IntPtr go;
+    IntPtr funUpdate;
+    JSApi.jsval rval = new JSApi.jsval();
 	void Awake ()
     {
-        AnimationClip ac = new AnimationClip();
-        Debug.Log(ac.averageDuration);
-
-//         string o = "abc";
-//         object oo = o;
-//         Type type = typeof(string);
-//         Debug.Log(type == oo.GetType());
-//         return;
-//         Int64 i64 = 121;
-//         Debug.Log((Int32)i64);
-//         return;
-        JSMgr.useReflection = this.useReflection;
-        JSMgr.InitJSEngine();
-        JSMgr.EvaluateFile(Application.dataPath + "/StreamingAssets/JavaScript/test.javascript");
-        JSMgr.JS_GC();
+        go = JSApi.JSh_NewObjectAsClass(JSMgr.cx, JSMgr.glob, "GameObject", JSMgr.mjsFinalizer);
+        JSMgr.addJSCSRelation(go, gameObject);
+        JSMgr.EvaluateFile(Application.dataPath + "/StreamingAssets/JavaScript/" + jsScriptName + ".javascript", go);
+        funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
     }
 
 	void Update () {
-        
+        if (funUpdate != IntPtr.Zero)
+            JSApi.JSh_CallFunction(JSMgr.cx, go, funUpdate, 0, IntPtr.Zero, ref rval);
 	}
 }

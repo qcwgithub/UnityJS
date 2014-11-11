@@ -262,7 +262,7 @@ public class JSApi
     }
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern int JSh_GetErroReportLintNo(IntPtr report);
+    public static extern int JSh_GetErroReportLineNo(IntPtr report);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_NewObjectAsClass(IntPtr cx, IntPtr glob, string className, SC_FINALIZE finalizeOp);
@@ -302,4 +302,11 @@ public class JSApi
     public static extern IntPtr JSh_EnterCompartment(IntPtr cx, IntPtr target);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern void JSh_LeaveCompartment(IntPtr cx, IntPtr oldCompartment);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_GetFunction(IntPtr cx, IntPtr obj, string name);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_CallFunction(IntPtr cx, IntPtr obj, IntPtr fun, UInt32 argc,
+        IntPtr argv, ref jsval rval);
 }
