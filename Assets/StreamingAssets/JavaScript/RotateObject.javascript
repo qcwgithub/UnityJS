@@ -1,14 +1,55 @@
+var mTrans = undefined
+var rotateVar = undefined
+
 function Awake()
 {
 	
 }
 
+function OnEnable()
+{
+}
+
+function Start()
+{
+}
+
+function FixUpdate()
+{
+}
+
 function Update()
 {
-	if (this.mTrans === undefined)
+	if (mTrans === undefined)
 	{
-		this.mTrans = this.transform;
-		this.rotateVar = new Vector3(0.5, 0, 0);
+		mTrans = transform;
+		rotateVar = new Vector3(0.5, 0.5, 0);
 	}
-	this.mTrans.Rotate(this.rotateVar);
+	mTrans.Rotate(rotateVar);
 }
+
+function LateUpdate()
+{
+
+}
+
+function OnGUI()
+{
+}
+
+function OnDisable()
+{
+}
+
+function OnApplicationPause()
+{
+}
+
+function OnDistroy()
+{
+}
+
+function OnApplicationQuit()
+{
+}
+

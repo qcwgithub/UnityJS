@@ -26,6 +26,7 @@ public class JSValueWrap
         public object obj;
     }
 
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetString(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -33,6 +34,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalString(cx, vp, (string)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapString(IntPtr cx, uint argc, IntPtr vp)
     {
         String b = JSApi.JSh_ArgvString(cx, vp, 0);
@@ -43,6 +45,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetBool(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -50,6 +53,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalBool(cx, vp, (bool)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapBool(IntPtr cx, uint argc, IntPtr vp)
     {
         Boolean b = JSApi.JSh_ArgvBool(cx, vp, 0);
@@ -60,6 +64,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetChar(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -67,6 +72,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapChar(IntPtr cx, uint argc, IntPtr vp)
     {
         Char b = (Char)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -77,6 +83,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetByte(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -84,6 +91,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapByte(IntPtr cx, uint argc, IntPtr vp)
     {
         Byte b = (Byte)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -94,6 +102,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetSByte(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -101,6 +110,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapSByte(IntPtr cx, uint argc, IntPtr vp)
     {
         SByte b = (SByte)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -111,6 +121,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetUInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -118,6 +129,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapUInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         UInt16 b = (UInt16)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -128,6 +140,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -135,6 +148,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapInt16(IntPtr cx, uint argc, IntPtr vp)
     {
         Int16 b = (Int16)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -145,6 +159,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetUInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -152,6 +167,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapUInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         UInt32 b = (UInt32)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -162,6 +178,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -169,6 +186,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapInt32(IntPtr cx, uint argc, IntPtr vp)
     {
         Int32 b = (Int32)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -179,6 +197,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetUInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -186,6 +205,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapUInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         UInt64 b = (UInt64)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -197,6 +217,7 @@ public class JSValueWrap
         return JSApi.JS_TRUE;
     }
 
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -204,6 +225,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalInt(cx, vp, (int)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapInt64(IntPtr cx, uint argc, IntPtr vp)
     {
         Int64 b = (Int64)JSApi.JSh_ArgvInt(cx, vp, 0);
@@ -214,6 +236,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetSingle(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -221,6 +244,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalDouble(cx, vp, (double)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapSingle(IntPtr cx, uint argc, IntPtr vp)
     {
         Single b = (Single)JSApi.JSh_ArgvDouble(cx, vp, 0);
@@ -231,6 +255,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetDouble(IntPtr cx, uint argc, IntPtr vp)
     {
         IntPtr jsObj = JSApi.JSh_ThisObject(cx, vp);
@@ -238,6 +263,7 @@ public class JSValueWrap
         JSApi.JSh_SetRvalDouble(cx, vp, (double)csObj.obj);
         return JSApi.JS_TRUE;
     }
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int WrapDouble(IntPtr cx, uint argc, IntPtr vp)
     {
         Double b = (Double)JSApi.JSh_ArgvDouble(cx, vp, 0);

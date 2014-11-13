@@ -11,19 +11,74 @@ public class CallJS : MonoBehaviour
 {
     public string jsScriptName = string.Empty;
 
-    IntPtr go;
-    IntPtr funUpdate;
+    IntPtr go = IntPtr.Zero;
+    IntPtr funUpdate = IntPtr.Zero;
     JSApi.jsval rval = new JSApi.jsval();
+
+
+    Transform mTrans;
+    Vector3 rotateVar = new Vector3(0.5f, 0f, 0f);
+
+    bool inited = false;
 	void Awake ()
     {
+        if (!JSEngine.inited)
+        {
+            JSEngine.log("jsengine not inited!!");
+            return;
+        }
+        else
+            JSEngine.log("jsengine inited!!");
+
+        mTrans = transform;
         go = JSApi.JSh_NewObjectAsClass(JSMgr.cx, JSMgr.glob, "GameObject", JSMgr.mjsFinalizer);
         JSMgr.addJSCSRelation(go, gameObject);
-        JSMgr.EvaluateFile(Application.dataPath + "/StreamingAssets/JavaScript/" + jsScriptName + ".javascript", go);
-        funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
-    }
 
+        IntPtr ptrScript = JSMgr.GetScript(jsScriptName/*, go*/);
+        if (ptrScript == IntPtr.Zero)
+        {
+            enabled = false;
+            return;
+        }
+//         if (ptrScript==IntPtr.Zero)
+//         {
+//             StartCoroutine(dlScript());
+//         }
+//         else
+        {
+            if (!JSMgr.ExecuteScript(ptrScript, go))
+            {
+                enabled = false;
+                return;
+            }
+            funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
+            inited = true;
+        }
+    }
+    bool bbb = false;
+    GameObject goThis;
 	void Update () {
-        if (funUpdate != IntPtr.Zero)
-            JSApi.JSh_CallFunction(JSMgr.cx, go, funUpdate, 0, IntPtr.Zero, ref rval);
+        if (inited && funUpdate != IntPtr.Zero)
+        {
+            if (!JSApi.JSh_CallFunction(JSMgr.cx, go, funUpdate, 0, IntPtr.Zero, ref rval))
+                Debug.Log("call function fail");
+        }
 	}
+    /*public IEnumerator dlScript()
+    {
+        WWW w = new WWW(Application.streamingAssetsPath + "/JavaScript/" + jsScriptName + ".javascript");
+        yield return w;
+        string content = w.text;
+        IntPtr ptrScript = JSMgr.CompileScriptContent(jsScriptName, content, JSMgr.glob);
+
+        if (!JSMgr.ExecuteScript(ptrScript, go))
+        {
+            enabled = false;
+        }
+        else
+        {
+            funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
+            inited = true;
+        }
+    }*/
 }

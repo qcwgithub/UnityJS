@@ -1,4 +1,4 @@
-(function createagameobject()
+﻿(function createagameobject()
 {
 	//var j = new Vector3(0,0,2);
 	//return;

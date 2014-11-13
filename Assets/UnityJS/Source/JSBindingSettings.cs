@@ -106,7 +106,7 @@ public class JSBindingSettings
         //typeof(UnityEngine.FullScreenMovieControlMode),
         //typeof(UnityEngine.FullScreenMovieScalingMode),
         //typeof(UnityEngine.iOSActivityIndicatorStyle),
-//        typeof(UnityEngine.AndroidActivityIndicatorStyle),
+        //typeof(UnityEngine.AndroidActivityIndicatorStyle),
         //typeof(UnityEngine.TouchScreenKeyboardType),
         //typeof(UnityEngine.iPhoneGeneration),
         typeof(UnityEngine.KeyCode),
@@ -162,7 +162,7 @@ public class JSBindingSettings
           typeof(UnityEngine.AnimationClip),
 
 
-    };
+    };/*
     public static Type[] classes2 = new Type[]
     {
          //interface
@@ -535,5 +535,5 @@ public class JSBindingSettings
          //typeof(UnityEngineInternal.GetMethodDelegate),                   // this is a delegate         
             //typeof(UnityEngine.Types),//static class
         //typeof(UnityEngine.Social),//static class
-    };
+    };*/
 }

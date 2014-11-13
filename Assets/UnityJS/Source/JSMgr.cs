@@ -30,7 +30,7 @@ public static class JSMgr
     public static IntPtr glob;
     public static bool useReflection = false;
 
-    public static string jsDir = Application.dataPath + "/StreamingAssets/JavaScript";
+    public static string jsDir = Application.streamingAssetsPath + "/JavaScript";
     public static string jsGeneratedDir = jsDir + "/Generated";
     public static string csDir = Application.dataPath + "/CSharp";
     public static string csGeneratedDir = csDir + "/Generated";
@@ -110,25 +110,96 @@ public static class JSMgr
         JSApi.JSh_Finish(rt);
     }
 
-    public static void EvaluateFile(string file, IntPtr obj)
+
+    public static void EvaluateFile(string fullName, IntPtr obj)
     {
         JSApi.jsval val = new JSApi.jsval();
-        StreamReader r = new StreamReader(file, Encoding.UTF8);
+        StreamReader r = new StreamReader(fullName, Encoding.UTF8);
         string s = r.ReadToEnd();
 
-        JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, file, 1, ref val);
+        JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, fullName, 1, ref val);
         r.Close();
+    }
+    static string calcFullJSFileName(string shortName)
+    {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        string fullName = "file://" + Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
+#else
+        string fullName = Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
+#endif
+        return fullName;
     }
     public static void EvaluateGeneratedScripts()
     {
-        string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
-        for (int i = 0; i < files.Length; i++)
+//         string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
+//         for (int i = 0; i < files.Length; i++)
+//         {
+//             if (files[i].IndexOf(".meta") == files[i].Length - 5)
+//                 continue;
+//             EvaluateFile(files[i], glob);
+//         }
+        IntPtr ptr;
+        ptr = GetScript("Generated/GameObject");
+        JSMgr.ExecuteScript(ptr, glob);
+        ptr = GetScript("Generated/Transform");
+        JSMgr.ExecuteScript(ptr, glob);
+        ptr = GetScript("Generated/Vector3");
+        JSMgr.ExecuteScript(ptr, glob);
+        ptr = GetScript("Generated/GameObject");
+        JSMgr.ExecuteScript(ptr, glob);
+    }
+    public static IntPtr CompileScript(string shortName, IntPtr obj)
+    {
+        string fullName = calcFullJSFileName(shortName);
+
+        StreamReader r = new StreamReader(fullName, Encoding.UTF8);
+        string s = r.ReadToEnd();
+
+        IntPtr ptr = JSApi.JSh_CompileScript(cx, obj, s, (uint)s.Length, shortName, 1);
+        r.Close();
+        return ptr;
+    }
+    public static IntPtr CompileScriptContent(string shortName, string content, IntPtr obj)
+    {
+        if (content.Length == 0)
         {
-            if (files[i].IndexOf(".meta") == files[i].Length - 5)
-                continue;
-            EvaluateFile(files[i], glob);
+            Debug.Log(shortName + " content length = 0");
+            return IntPtr.Zero;
+
+        }
+
+        IntPtr ptr = JSApi.JSh_CompileScript(cx, obj, content, (uint)content.Length, shortName, 1);
+        compiledScript.Add(shortName, ptr.ToInt32());
+        return ptr;
+    }
+    public static bool ExecuteScript(IntPtr ptrScript, IntPtr obj)
+    {
+        JSApi.jsval val = new JSApi.jsval();
+        return JSApi.JSh_ExecuteScript(cx, obj, ptrScript, ref val);
+    }
+    public static IntPtr GetScript(string shortName/*, IntPtr obj*/)
+    {
+        int ptr = 0;
+        if (compiledScript.TryGetValue(shortName, out ptr))
+            return new IntPtr(ptr);
+        else
+        {
+            string fullName = calcFullJSFileName(shortName);
+            WWW w = new WWW(fullName);
+            while (true)
+            {
+                if (w.isDone)
+                    break;
+            }
+            //Debug.Log(w.text);
+            return CompileScriptContent(shortName, w.text, glob);
+//             IntPtr intPtr = CompileScript(shortName, glob);
+//             compiledScript.Add(shortName, intPtr.ToInt32());
+//             return intPtr;
         }
     }
+
+    static Dictionary<string, int> compiledScript = new Dictionary<string, int>();
 
     /// <summary>
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +464,7 @@ public static class JSMgr
 
     public static void addJSCSRelation(IntPtr jsObj, object csObj)
     {
-        Debug.Log("jsObj added: " + jsObj.ToInt32().ToString());
+        Debug.Log("jsObj added: " + csObj.GetType().Name + " / " + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
 
         int index = nextRelationIndex++;
 

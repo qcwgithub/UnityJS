@@ -24,12 +24,14 @@ public class JSApi
 {
 
 /***********************************************************************
- *
- * Part I
- * Constants & Types & Delegates
- *    
+    *
+    * Part I
+    * Constants & Types & Delegates
+    *    
 ************************************************************************/
-#if UNITY_IPHONE
+#if UNITY_EDITOR_WIN
+    const string JSDll = "mozjswrap";
+#elif UNITY_IPHONE
     const string JSDll = "__Internal";
 #else
     const string JSDll = "mozjswrap";
@@ -47,54 +49,60 @@ public class JSApi
     public struct JSHandleId { public IntPtr _; }
     public struct JSMutableHandleValue{ public IntPtr _; }
 
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JSPROPERTYOP(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
+    //[UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    //public delegate int JSPROPERTYOP(IntPtr cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
 
-
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JS_STRICTPROPERTYSTUB(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
+// 
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate int JS_STRICTPROPERTYSTUB(IntPtr cx, JSHandleObject obj, JSHandleId id, int strict, JSMutableHandleValue vp);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_EnumerateStub(IntPtr cx, JSHandleObject obj);
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JS_ENUMERATESTUB(IntPtr cx, JSHandleObject obj);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate int JS_ENUMERATESTUB(IntPtr cx, JSHandleObject obj);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ResolveStub(IntPtr cx, JSHandleObject obj, JSHandleId id);
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JS_RESOLVESTUB(IntPtr cx, JSHandleObject obj, JSHandleId id);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate int JS_RESOLVESTUB(IntPtr cx, JSHandleObject obj, JSHandleId id);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JS_ConvertStub(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JS_CONVERTSTUB(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate int JS_CONVERTSTUB(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
 
     public static void sc_finalize(IntPtr freeOp, IntPtr obj) { }
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+#endif
     public delegate void SC_FINALIZE(IntPtr freeOp, IntPtr obj);
 
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JSCheckAccessOp(IntPtr cx, JSHandleObject obj, JSHandleId id, int mode, IntPtr vp);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    //     public delegate int JSCheckAccessOp(IntPtr cx, JSHandleObject obj, JSHandleId id, int mode, IntPtr vp);
 
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+#endif
     public delegate int JSNative(IntPtr cx, uint argc, IntPtr vp);
 
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+#endif
     public delegate int JSErrorReporter(IntPtr cx, string message, IntPtr report);
 
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate int JSHasInstanceOp(IntPtr cx, JSHandleObject obj, int v, IntPtr bp);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate int JSHasInstanceOp(IntPtr cx, JSHandleObject obj, int v, IntPtr bp);
 
-    [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public delegate void JSTraceOp(IntPtr trc, IntPtr obj);
+//     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public delegate void JSTraceOp(IntPtr trc, IntPtr obj);
 
-    [StructLayout(LayoutKind.Sequential)]
+    /*[StructLayout(LayoutKind.Sequential)]
     public class JSClass
     {
         public string name;
         public uint flags;
 
-        /* Mandatory non-null function pointer members. */
+        // Mandatory non-null function pointer members. 
         public JSPROPERTYOP addProperty;
         public JSPROPERTYOP delProperty;
         public JSPROPERTYOP getProperty;
@@ -104,7 +112,7 @@ public class JSApi
         public JS_CONVERTSTUB convert;
         public SC_FINALIZE finalize;
 
-        /* Optionally non-null members start here. */
+        // Optionally non-null members start here. 
         public JSCheckAccessOp checkAccess;
         public JSNative call;
         public JSHasInstanceOp hasInstance;
@@ -113,7 +121,7 @@ public class JSApi
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public UInt64[] reserved;
-    };
+    };*/
 
 
 /***********************************************************************
@@ -178,8 +186,8 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_NewClass(string name, UInt32 flag, SC_FINALIZE finalizeOp);
 
-    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JSh_InitClass(IntPtr cx, IntPtr jsClass);
+//     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+//     public static extern IntPtr JSh_InitClass(IntPtr cx, IntPtr jsClass);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_ThisObject(IntPtr cx, IntPtr vp);
@@ -285,6 +293,9 @@ public class JSApi
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_CompileScript(IntPtr cx, IntPtr obj, string bytes, uint length, string filename, uint lineno);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ExecuteScript(IntPtr cx, IntPtr obj,IntPtr script, ref jsval rval);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_ValueToString(IntPtr cx, jsval v);

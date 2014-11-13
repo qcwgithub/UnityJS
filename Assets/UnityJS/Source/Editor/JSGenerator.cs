@@ -14,7 +14,7 @@ public static class JSGenerator
     static StringBuilder sb = null;
     public static Type type = null;
 
-    static string enumFile = JSMgr.jsGeneratedDir+ "/enum.javascript";
+    static string enumFile = JSMgr.jsGeneratedDir + "/enum.javascript";
     static string tempFile = JSMgr.jsDir + "/temp.javascript";
 
     public static void OnBegin()
@@ -66,7 +66,7 @@ Object.defineProperty({0}, '{1}',
             FieldInfo field = fields[i];
             if (!field.IsStatic)
                 sb.AppendFormat(fmt, className, field.Name, slot, i, (int)JSVCall.Oper.GET_FIELD, (int)JSVCall.Oper.SET_FIELD, field.FieldType.Name,
-                    (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" :""
+                    (field.IsInitOnly || field.IsLiteral) ? "ReadOnly" : ""
                     );
             else
                 sb.AppendFormat(fmtStatic, className, field.Name, slot, i, (int)JSVCall.Oper.GET_FIELD, (int)JSVCall.Oper.SET_FIELD, field.FieldType.Name,
@@ -114,18 +114,18 @@ Object.defineProperty({0}, '{1}',
 
             MethodInfo[] accessors = property.GetAccessors();
             bool isStatic = accessors[0].IsStatic;
-            
-//             if (property.Name == "Item")
-//             {
-//                 Debug.Log("");
-//             }
-//             if (property.IsSpecialName)
-//             {
-//                 if (!mDictJJ.ContainsKey(property.Name))
-//                     mDictJJ.Add(property.Name, "");
-//             }
 
-            sb.AppendFormat(isStatic?fmtStatic:fmt, className, property.Name, slot, i, (int)JSVCall.Oper.GET_PROPERTY, (int)JSVCall.Oper.SET_PROPERTY, property.PropertyType.Name,
+            //             if (property.Name == "Item")
+            //             {
+            //                 Debug.Log("");
+            //             }
+            //             if (property.IsSpecialName)
+            //             {
+            //                 if (!mDictJJ.ContainsKey(property.Name))
+            //                     mDictJJ.Add(property.Name, "");
+            //             }
+
+            sb.AppendFormat(isStatic ? fmtStatic : fmt, className, property.Name, slot, i, (int)JSVCall.Oper.GET_PROPERTY, (int)JSVCall.Oper.SET_PROPERTY, property.PropertyType.Name,
                 (property.CanRead && property.CanWrite) ? "" : (property.CanRead ? "ReadOnly" : "WriteOnly"), (isStatic ? "true" : "false")
                 );
         }
@@ -225,7 +225,7 @@ Object.defineProperty({0}, '{1}',
                 for (int j = 0; j < overloadedMaxParamCount; j++)
                 {
                     sbFormalParam.AppendFormat("a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "));
-                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount  - 1 ? "" : ", "), (j == 0 ? ", " : ""));
+                    sbActualParam.AppendFormat("{2}a{0}{1}", j, (j == overloadedMaxParamCount - 1 ? "" : ", "), (j == 0 ? ", " : ""));
                 }
                 sb.AppendFormat(@"
 /* overloaded {0} */", overloadedCount);
@@ -237,7 +237,7 @@ Object.defineProperty({0}, '{1}',
             else
             {
                 StringBuilder sbInfo = new StringBuilder();
-                sbInfo.AppendFormat("{0}", method.IsSpecialName?"SPECIAL":"");
+                sbInfo.AppendFormat("{0}", method.IsSpecialName ? "SPECIAL" : "");
 
                 for (int j = 0; j < paramS.Length; j++)
                 {
@@ -309,7 +309,7 @@ Object.defineProperty({0}, '{1}',
         var writer = OpenFile(enumFile, true/* append */);
 
         var sb = new StringBuilder();
-        
+
         // comment line
         string fmtComment = @"// {0}
 ";
@@ -346,7 +346,7 @@ Object.defineProperty({0}, '{1}',
         }
 
         FieldInfo[] fields = type.GetFields(BindingFlags.GetField | BindingFlags.Public | BindingFlags.Static);
-        
+
         sb.AppendFormat(fmt, typeName);
 
         string fmtField = @"{0}.{1} = {2};
@@ -422,19 +422,19 @@ using UnityEngine;
     static string className = string.Empty;
 
 
-    [MenuItem("JS for Unity/Generate JS Bindings")]
+    [MenuItem("JS for Unity/Generate JS class Bindings")]
     public static void GenerateClassBindings()
     {
-		if (!typeClassName.ContainsKey(typeof(UnityEngine.Object)))
-        	typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
+        if (!typeClassName.ContainsKey(typeof(UnityEngine.Object)))
+            typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
 
         JSGenerator.OnBegin();
         for (int i = 0; i < JSBindingSettings.classes.Length; i++)
         {
             JSGenerator.Clear();
             JSGenerator.type = JSBindingSettings.classes[i];
-//             if (type != typeof(Physics))
-//                 continue;
+            //             if (type != typeof(Physics))
+            //                 continue;
             if (!typeClassName.TryGetValue(type, out className))
                 className = type.Name;
             JSGenerator.GenerateClass();
@@ -445,69 +445,69 @@ using UnityEngine;
         Debug.Log("Generate Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
     }
 
-    [MenuItem("JS for Unity/Output All Types in UnityEngine")]
-    public static void OutputAllTypesInUnityEngine()
-    {
-        var asm = typeof(GameObject).Assembly;
-        var alltypes = asm.GetTypes();
-        var writer = new StreamWriter(tempFile, false, Encoding.UTF8);
-
-        writer.WriteLine("// enum");
-        writer.WriteLine("");
-        for (int i = 0; i < alltypes.Length; i++)
-        {
-            if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
-                continue;
-
-            if (alltypes[i].IsEnum)
-                writer.WriteLine(alltypes[i].ToString());
-        }
-
-        writer.WriteLine("");
-        writer.WriteLine("// interface");
-        writer.WriteLine("");
-
-        for (int i = 0; i < alltypes.Length; i++)
-        {
-            if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
-                continue;
-
-            if (alltypes[i].IsInterface)
-                writer.WriteLine(alltypes[i].ToString());
-        }
-
-        writer.WriteLine("");
-        writer.WriteLine("// class");
-        writer.WriteLine("");
-
-        for (int i = 0; i < alltypes.Length; i++)
-        {
-            if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
-                continue;
-
-            if ((!alltypes[i].IsEnum && !alltypes[i].IsInterface) &&
-                alltypes[i].IsClass)
-                writer.WriteLine(alltypes[i].ToString());
-        }
-
-
-        writer.WriteLine("");
-        writer.WriteLine("// ValueType");
-        writer.WriteLine("");
-
-        for (int i = 0; i < alltypes.Length; i++)
-        {
-            if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
-                continue;
-
-            if ((!alltypes[i].IsEnum && !alltypes[i].IsInterface) &&
-                !alltypes[i].IsClass && alltypes[i].IsValueType)
-                writer.WriteLine(alltypes[i].ToString());
-        }
-
-        writer.Close();
-
-        Debug.Log("Output All Types in UnityEngine finish, file: " + tempFile);
-        return;
-    }
+    //     [MenuItem("JS for Unity/Output All Types in UnityEngine")]
+    //     public static void OutputAllTypesInUnityEngine()
+    //     {
+    //         var asm = typeof(GameObject).Assembly;
+    //         var alltypes = asm.GetTypes();
+    //         var writer = new StreamWriter(tempFile, false, Encoding.UTF8);
+    // 
+    //         writer.WriteLine("// enum");
+    //         writer.WriteLine("");
+    //         for (int i = 0; i < alltypes.Length; i++)
+    //         {
+    //             if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
+    //                 continue;
+    // 
+    //             if (alltypes[i].IsEnum)
+    //                 writer.WriteLine(alltypes[i].ToString());
+    //         }
+    // 
+    //         writer.WriteLine("");
+    //         writer.WriteLine("// interface");
+    //         writer.WriteLine("");
+    // 
+    //         for (int i = 0; i < alltypes.Length; i++)
+    //         {
+    //             if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
+    //                 continue;
+    // 
+    //             if (alltypes[i].IsInterface)
+    //                 writer.WriteLine(alltypes[i].ToString());
+    //         }
+    // 
+    //         writer.WriteLine("");
+    //         writer.WriteLine("// class");
+    //         writer.WriteLine("");
+    // 
+    //         for (int i = 0; i < alltypes.Length; i++)
+    //         {
+    //             if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
+    //                 continue;
+    // 
+    //             if ((!alltypes[i].IsEnum && !alltypes[i].IsInterface) &&
+    //                 alltypes[i].IsClass)
+    //                 writer.WriteLine(alltypes[i].ToString());
+    //         }
+    // 
+    // 
+    //         writer.WriteLine("");
+    //         writer.WriteLine("// ValueType");
+    //         writer.WriteLine("");
+    // 
+    //         for (int i = 0; i < alltypes.Length; i++)
+    //         {
+    //             if (!alltypes[i].IsPublic && !alltypes[i].IsNestedPublic)
+    //                 continue;
+    // 
+    //             if ((!alltypes[i].IsEnum && !alltypes[i].IsInterface) &&
+    //                 !alltypes[i].IsClass && alltypes[i].IsValueType)
+    //                 writer.WriteLine(alltypes[i].ToString());
+    //         }
+    // 
+    //         writer.Close();
+    // 
+    //         Debug.Log("Output All Types in UnityEngine finish, file: " + tempFile);
+    //         return;
+    //    }
 }
