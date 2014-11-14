@@ -107,7 +107,7 @@ public static class JSMgr
     public static void FinishJSEngine()
     {
         JSApi.JSh_DestroyContext(cx);
-        JSApi.JSh_Finish(rt);
+        //JSApi.JSh_Finish(rt);
     }
 
 
@@ -192,6 +192,9 @@ public static class JSMgr
                     break;
             }
             //Debug.Log(w.text);
+            string content = w.text;
+            if (content[0] == 0xef && content[1] == 0xbb && content[2] == 0xbf)
+                content = content.Substring(3);
             return CompileScriptContent(shortName, w.text, glob);
 //             IntPtr intPtr = CompileScript(shortName, glob);
 //             compiledScript.Add(shortName, intPtr.ToInt32());
@@ -308,7 +311,7 @@ public static class JSMgr
 
         for (int i = 0; i < ti.fields.Length; i++)
         {
-            if (!IsMemberObsolete(ti.fields[i]))
+            if (!IsMemberObsolete(ti.fields[i]) && !JSBindingSettings.IsDiscard(type, ti.fields[i]))
                 lstField.Add(ti.fields[i]);
         }
 
@@ -329,6 +332,9 @@ public static class JSMgr
 
             // Skip Obsolete
             if (IsMemberObsolete(pro))
+                continue;
+
+            if (JSBindingSettings.IsDiscard(type, pro))
                 continue;
 
             lstPro.Add(pro);
@@ -371,9 +377,12 @@ public static class JSMgr
 
             if (method.IsGenericMethod || method.IsGenericMethodDefinition)
             {
-                Debug.Log(type.Name + "." + method.Name);
+                //Debug.Log(type.Name + "." + method.Name);
                 continue;
             }
+
+            if (JSBindingSettings.IsDiscard(type, method))
+                continue;
 
             lstMethod.Add(method);
         }

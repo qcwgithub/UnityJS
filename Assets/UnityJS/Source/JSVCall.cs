@@ -572,20 +572,20 @@ public class JSVCall
         {
             // todo
             // return [][] may cause problems
-            Array arr = csObj as Array;
-            if (arr.Length > 0 && arr.GetValue(0).GetType().IsArray)
-            {
-                Debug.LogWarning("cs return [][] may cause problems.");
-            }
-
-            IntPtr jsArr = JSApi.JSh_NewArrayObject(cx, arr.Length);
-            
-            for (int i = 0; i < arr.Length; i++)
-            {
-                JSApi.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
-                JSApi.JSh_SetElement(cx, jsArr, (uint)i, ref subVal);
-            }
-            JSApi.JSh_SetJsvalObject(ref val, jsArr);
+//             Array arr = csObj as Array;
+//             if (arr.Length > 0 && arr.GetValue(0).GetType().IsArray)
+//             {
+//                 Debug.LogWarning("cs return [][] may cause problems.");
+//             }
+// 
+//             IntPtr jsArr = JSApi.JSh_NewArrayObject(cx, arr.Length);
+//             
+//             for (int i = 0; i < arr.Length; i++)
+//             {
+//                 JSApi.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
+//                 JSApi.JSh_SetElement(cx, jsArr, (uint)i, ref subVal);
+//             }
+//             JSApi.JSh_SetJsvalObject(ref val, jsArr);
         }
         else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass || t.IsValueType)
         {

@@ -822,6 +822,7 @@ using UnityEngine;
         allClassCallbackNames = null;
         allClassCallbackNames = new List<ClassCallbackNames>(JSBindingSettings.classes.Length);
 
+
         for (int i = 0; i < JSBindingSettings.classes.Length; i++)
         {
             CSGenerator.Clear();
