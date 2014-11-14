@@ -324,6 +324,6 @@ public class JSApi
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_CallFunction(IntPtr cx, IntPtr obj, IntPtr fun, UInt32 argc,
-        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] jsval[] argv, 
+        /*[MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] */jsval[] argv, 
         ref jsval rval);
 }

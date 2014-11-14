@@ -53,10 +53,10 @@ public class CallJS : MonoBehaviour
             }
             funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
 
-//             {
-//                 IntPtr myAdd = JSApi.JSh_GetFunction(JSMgr.cx, go, "myAdd");
-//                 JSMgr.vCall.CallJSFunction(IntPtr.Zero, myAdd, 6, 9);
-//             }
+            {
+                IntPtr myAdd = JSApi.JSh_GetFunction(JSMgr.cx, go, "myAdd");
+                JSMgr.vCall.CallJSFunction(IntPtr.Zero, myAdd, 6, 9);
+            }
             inited = true;
         }
     }

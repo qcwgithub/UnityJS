@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
-
+using System.Runtime.InteropServices;
 
 
 public class JSVCall
@@ -551,10 +551,15 @@ public class JSVCall
             {
                 JSApi.JSh_SetJsvalBool(ref val, (bool)csObj);
             }
+            else if (t == typeof(System.UInt32) || t == typeof(System.Int32))
+            {
+                int v = (Int32)csObj;
+                JSApi.JSh_SetJsvalInt(ref val, v);
+            }
             else if (t == typeof(System.Char) ||
                 t == typeof(System.Byte) || t == typeof(System.SByte) ||
                 t == typeof(System.UInt16) || t == typeof(System.Int16) ||
-                t == typeof(System.UInt32) || t == typeof(System.Int32) ||
+                //t == typeof(System.UInt32) || t == typeof(System.Int32) ||
                 t == typeof(System.UInt64) || t == typeof(System.Int64))
             {
                 JSApi.JSh_SetJsvalInt(ref val, (Int32)(Int64)csObj);
@@ -637,7 +642,7 @@ public class JSVCall
     {
         if (args == null || args.Length == 0)
         {
-            return JSApi.JSh_CallFunction(JSMgr.cx, jsThis, jsFunction, 0, null, ref rvalCallJS);
+            return JSApi.JSh_CallFunction(JSMgr.cx, jsThis, jsFunction, 0, null/*IntPtr.Zero*/, ref rvalCallJS);
         }
 
         JSApi.jsval[] vals = new JSApi.jsval[args.Length];
@@ -645,6 +650,7 @@ public class JSVCall
         {
             vals[i] = CSObject_2_JSValue(args[i]);
         }
+
         return JSApi.JSh_CallFunction(JSMgr.cx, jsThis, jsFunction, (UInt32)args.Length, vals, ref rvalCallJS);
     }
 

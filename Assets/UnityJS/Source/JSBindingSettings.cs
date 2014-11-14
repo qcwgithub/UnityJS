@@ -8,6 +8,13 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 
+public class Kekoukele
+{
+    public delegate void MyFun(int v);
+    public MyFun fun;
+    public int mvalue;
+}
+
 public class JSBindingSettings
 {
     public static Type[] enums = new Type[]
@@ -481,6 +488,8 @@ public class JSBindingSettings
         //////////////////////////////////////////////////////
         // types not from UnityEngine
         typeof(System.Diagnostics.Stopwatch),
+
+        typeof(Kekoukele),
 
 #if (UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN) && (!UNITY_IPHONE && !UNITY_ANDROID)
         typeof(UnityEngine.MovieTexture),
