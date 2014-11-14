@@ -26,8 +26,19 @@ public static class JSGenerator
 
         JSMgr.ClearTypeInfo();
 
-        // 创建dir
-        Directory.CreateDirectory(JSMgr.jsGeneratedDir);
+        if (Directory.Exists(JSMgr.jsGeneratedDir))
+        {
+            string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
+            for (int i = 0; i < files.Length; i++)
+            {
+                File.Delete(files[i]);
+            }
+        }
+        else
+        {
+            // 创建dir
+            Directory.CreateDirectory(JSMgr.jsGeneratedDir);
+        }
     }
     public static void OnEnd()
     {
@@ -401,22 +412,22 @@ using UnityEngine;
         sb.Replace("'", "\"");
     }
 
-    [MenuItem("JS for Unity/Generate JS Enum Bindings")]
-    public static void GenerateEnumBindings()
-    {
-        JSGenerator.OnBegin();
-
-        for (int i = 0; i < JSBindingSettings.enums.Length; i++)
-        {
-            JSGenerator.Clear();
-            JSGenerator.type = JSBindingSettings.enums[i];
-            JSGenerator.GenerateEnum();
-        }
-
-        JSGenerator.OnEnd();
-
-        Debug.Log("Generate JS Enum Bindings finish. total = " + JSBindingSettings.enums.Length.ToString());
-    }
+//     [MenuItem("JS for Unity/Generate JS Enum Bindings")]
+//     public static void GenerateEnumBindings()
+//     {
+//         JSGenerator.OnBegin();
+// 
+//         for (int i = 0; i < JSBindingSettings.enums.Length; i++)
+//         {
+//             JSGenerator.Clear();
+//             JSGenerator.type = JSBindingSettings.enums[i];
+//             JSGenerator.GenerateEnum();
+//         }
+// 
+//         JSGenerator.OnEnd();
+// 
+//         Debug.Log("Generate JS Enum Bindings finish. total = " + JSBindingSettings.enums.Length.ToString());
+//     }
 
     /* 
      * Some classes have another name
@@ -426,19 +437,27 @@ using UnityEngine;
     static string className = string.Empty;
 
 
-    [MenuItem("JS for Unity/Generate JS class Bindings")]
+    [MenuItem("JS for Unity/Generate JS Bindings")]
     public static void GenerateClassBindings()
     {
         if (!typeClassName.ContainsKey(typeof(UnityEngine.Object)))
             typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
 
         JSGenerator.OnBegin();
+
+        // enums
+        for (int i = 0; i < JSBindingSettings.enums.Length; i++)
+        {
+            JSGenerator.Clear();
+            JSGenerator.type = JSBindingSettings.enums[i];
+            JSGenerator.GenerateEnum();
+        }
+
+        // classes
         for (int i = 0; i < JSBindingSettings.classes.Length; i++)
         {
             JSGenerator.Clear();
             JSGenerator.type = JSBindingSettings.classes[i];
-            //             if (type != typeof(Physics))
-            //                 continue;
             if (!typeClassName.TryGetValue(type, out className))
                 className = type.Name;
             JSGenerator.GenerateClass();
@@ -446,7 +465,7 @@ using UnityEngine;
 
         JSGenerator.OnEnd();
 
-        Debug.Log("Generate JS Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
+        Debug.Log("Generate JS Bindings finish. enum " + JSBindingSettings.enums.Length.ToString() + ", class " + JSBindingSettings.classes.Length.ToString());
     }
 
     //     [MenuItem("JS for Unity/Output All Types in UnityEngine")]

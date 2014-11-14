@@ -24,7 +24,19 @@ public static class CSGenerator
         writer.Close();
 
         JSMgr.ClearTypeInfo();
-        Directory.CreateDirectory(JSMgr.csGeneratedDir);
+
+        if (Directory.Exists(JSMgr.csGeneratedDir))
+        {
+            string[] files = Directory.GetFiles(JSMgr.csGeneratedDir);
+            for (int i = 0; i < files.Length; i++)
+            {
+                File.Delete(files[i]);
+            }
+        }
+        else
+        {
+            Directory.CreateDirectory(JSMgr.csGeneratedDir);
+        }
     }
     public static void OnEnd()
     {
@@ -779,7 +791,7 @@ using UnityEngine;
     {
 
     }
-    [MenuItem("JS for Unity/Generate CS Class Bindings")]
+    [MenuItem("JS for Unity/Generate CS Bindings")]
     public static void GenerateClassBindings()
     {
 //         typeClassName.Add(typeof(UnityEngine.Object), "UnityObject");
@@ -832,7 +844,7 @@ using UnityEngine;
 
         CSGenerator.OnEnd();
 
-        Debug.Log("Generate CS Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
+        Debug.Log("Generate CS Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
     }
 
     [MenuItem("JS for Unity/Output All Types in UnityEngine")]
