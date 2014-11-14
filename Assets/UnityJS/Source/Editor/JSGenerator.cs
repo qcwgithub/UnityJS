@@ -26,6 +26,8 @@ public static class JSGenerator
 
         JSMgr.ClearTypeInfo();
 
+        // 创建dir
+        Directory.CreateDirectory(JSMgr.jsGeneratedDir);
     }
     public static void OnEnd()
     {

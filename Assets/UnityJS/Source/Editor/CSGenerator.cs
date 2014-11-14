@@ -24,7 +24,7 @@ public static class CSGenerator
         writer.Close();
 
         JSMgr.ClearTypeInfo();
-
+        Directory.CreateDirectory(JSMgr.csGeneratedDir);
     }
     public static void OnEnd()
     {
