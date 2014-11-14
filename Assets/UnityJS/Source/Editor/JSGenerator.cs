@@ -401,6 +401,8 @@ using UnityEngine;
     }
     static StreamWriter OpenFile(string fileName, bool bAppend = false)
     {
+        // IMPORTANT
+        // Bom (byte order mark) is not needed
         Encoding utf8NoBom = new UTF8Encoding(false);
         return new StreamWriter(fileName, bAppend, utf8NoBom);
     }

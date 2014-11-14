@@ -52,6 +52,11 @@ public class CallJS : MonoBehaviour
                 return;
             }
             funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
+
+//             {
+//                 IntPtr myAdd = JSApi.JSh_GetFunction(JSMgr.cx, go, "myAdd");
+//                 JSMgr.vCall.CallJSFunction(IntPtr.Zero, myAdd, 6, 9);
+//             }
             inited = true;
         }
     }
@@ -60,7 +65,7 @@ public class CallJS : MonoBehaviour
 	void Update () {
         if (inited && funUpdate != IntPtr.Zero)
         {
-            if (!JSApi.JSh_CallFunction(JSMgr.cx, go, funUpdate, 0, IntPtr.Zero, ref rval))
+            if (!JSMgr.vCall.CallJSFunction(go, funUpdate, null))
                 Debug.Log("call function fail");
         }
 	}

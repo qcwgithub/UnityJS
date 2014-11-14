@@ -223,6 +223,8 @@ public class JSApi
     public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return "argv string"; }
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_ArgvObject(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ArgvFunction(IntPtr cx, IntPtr vp, int i);
 
     /*
      * Return values to JavaScript
@@ -322,5 +324,6 @@ public class JSApi
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_CallFunction(IntPtr cx, IntPtr obj, IntPtr fun, UInt32 argc,
-        IntPtr argv, ref jsval rval);
+        [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] jsval[] argv, 
+        ref jsval rval);
 }

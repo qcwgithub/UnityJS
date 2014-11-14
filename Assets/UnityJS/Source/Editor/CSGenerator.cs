@@ -42,7 +42,32 @@ public static class CSGenerator
     {
 
     }
+    public static StringBuilder BuildField_DelegateFunction(Type type, FieldInfo field)
+    {
+        // building a closure
+        // a function having a up-value: jsFunction
 
+        var sb = new StringBuilder();
+        var sbParamList = new StringBuilder();
+        ParameterInfo[] ps = field.FieldType.GetMethod("Invoke").GetParameters();
+        for (int i = 0; i < ps.Length; i++)
+        {
+            sbParamList.AppendFormat("{0}{1}", ps[i].Name, (i == ps.Length - 1 ? "" : ","));
+        }
+
+        // this function name is used in BuildFields, don't change
+        sb.AppendFormat("static {0} {1}_{2}_GetDelegate(IntPtr jsFunction)\r\n[[\r\n", GetTypeFullName(field.FieldType), type.Name, field.Name);
+        sb.Append("    if (jsFunction == IntPtr.Zero)\r\n        return null;\r\n");
+        sb.AppendFormat("    {0} action = ({1}) => \r\n", GetTypeFullName(field.FieldType), sbParamList);
+        sb.AppendFormat("    [[\r\n");
+        sb.AppendFormat("        JSMgr.vCall.CallJSFunction(IntPtr.Zero, jsFunction, {0});\r\n", sbParamList);
+        
+        sb.AppendFormat("    ]];\r\n");
+        sb.Append("    return action;\r\n");
+        sb.AppendFormat("]]\r\n");
+
+        return sb;
+    }
     public static StringBuilder BuildFields(Type type, FieldInfo[] fields, ClassCallbackNames ccbn)
     {
         var sb = new StringBuilder();
@@ -51,6 +76,12 @@ public static class CSGenerator
             var sbCall = new StringBuilder();
 
             FieldInfo field = fields[i];
+            bool isDelegate = (typeof(System.Delegate).IsAssignableFrom(field.FieldType));
+            if (isDelegate)
+            {
+                sb.Append(BuildField_DelegateFunction(type, field));
+            }
+
 
             sb.AppendFormat("static void {0}_{1}(JSVCall vc)\r\n[[\r\n", type.Name, field.Name);
 
@@ -72,20 +103,47 @@ public static class CSGenerator
             // set 部分
             if (!bReadOnly)
             {
-                sb.Append("else\r\n");
-                if (field.IsStatic)
-                    sb.AppendFormat("{0}.{1} = ({2}){3};", type.Name, field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
+                if (!isDelegate)
+                {
+                    sb.Append("else\r\n");
+                    if (field.IsStatic)
+                        sb.AppendFormat("{0}.{1} = ({2}){3};\r\n", type.Name, field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
+                    else
+                    {
+                        if (type.IsValueType)
+                        {
+                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
+                            sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                        }
+                        else
+                        {
+                            sb.AppendFormat("(({0})vc.csObj).{1} = ({2});\r\n", GetTypeFullName(type), field.Name, BuildRetriveParam(field.FieldType));
+                        }
+                    }
+                }
                 else
                 {
-                    if (type.IsValueType)
+                    var getDelegateFuncitonName = new StringBuilder();
+                    getDelegateFuncitonName.AppendFormat("{0}_{1}_GetDelegate", type.Name, field.Name);
+
+                    sb.Append("else\r\n");
+                    if (field.IsStatic)
                     {
-                        sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
-                        sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
-                        sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                        sb.AppendFormat("{0}.{1} = {2}(vc.getJSFunction());\r\n", type.Name, field.Name, getDelegateFuncitonName);
                     }
                     else
                     {
-                        sb.AppendFormat("(({0})vc.csObj).{1} = ({2});", GetTypeFullName(type), field.Name, BuildRetriveParam(field.FieldType));
+                        if (type.IsValueType)
+                        {
+                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("    argThis.{0} = {1}(vc.getJSFunction());\r\n", field.Name, getDelegateFuncitonName);
+                            sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                        }
+                        else
+                        {
+                            sb.AppendFormat("(({0})vc.csObj).{1} = {2}(vc.getJSFunction());\r\n", GetTypeFullName(type), field.Name, getDelegateFuncitonName);
+                        }
                     }
                 }
             }
@@ -829,6 +887,21 @@ using UnityEngine;
 //         }
         //return;
 // 
+
+        /*Type t = typeof(Kekoukele);
+        FieldInfo[] fields = t.GetFields(BindingFlags.Public | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.Instance | BindingFlags.Static);
+		for (int i = 0; i < fields.Length; i++)
+		{
+			// if ( typeof(System.Delegate).IsAssignableFrom(fields[i].FieldType))
+            if (fields[i].FieldType.BaseType == typeof(System.MulticastDelegate))
+			{
+				Debug.Log (fields[i].FieldType.ToString () + " is delegate!"); 
+			}
+		}
+        return;*/
+
+
+
         CSGenerator.OnBegin();
 
         allClassCallbackNames = null;

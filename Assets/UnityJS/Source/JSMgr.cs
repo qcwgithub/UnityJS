@@ -302,9 +302,13 @@ public static class JSMgr
         Dictionary<string, int> proAccessors = new Dictionary<string, int>();
         List<MethodInfo> lstMethod = new List<MethodInfo>();
 
-
         for (int i = 0; i < ti.fields.Length; i++)
         {
+            if (typeof(System.Delegate).IsAssignableFrom(ti.fields[i].FieldType.BaseType))
+            {
+                Debug.Log("[field]" + type.ToString() + "." + ti.fields[i].Name + "is delegate!");
+            }
+
             if (!IsMemberObsolete(ti.fields[i]) && !JSBindingSettings.IsDiscard(type, ti.fields[i]))
                 lstField.Add(ti.fields[i]);
         }
@@ -313,6 +317,11 @@ public static class JSMgr
         for (int i = 0; i < ti.properties.Length; i++)
         {
             PropertyInfo pro = ti.properties[i];
+
+            if (typeof(System.Delegate).IsAssignableFrom(pro.PropertyType.BaseType))
+            {
+                Debug.Log("[property]" + type.ToString() + "." + pro.Name + "is delegate!");
+            }
 
             MethodInfo[] accessors = pro.GetAccessors();
             foreach (var v in accessors)
@@ -424,7 +433,7 @@ public static class JSMgr
     }
 
     public static IntPtr CSOBJ = IntPtr.Zero;
-    static JSVCall vCall = new JSVCall();
+    public static JSVCall vCall = new JSVCall();
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int Call(IntPtr cx, uint argc, IntPtr vp)
     {

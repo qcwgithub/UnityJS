@@ -53,3 +53,7 @@ function OnApplicationQuit()
 {
 }
 
+function myAdd(a,b)
+{
+Debug.Log(a+b);
+}

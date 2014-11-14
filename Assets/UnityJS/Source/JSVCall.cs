@@ -138,6 +138,10 @@ public class JSVCall
         else
             return csObj;
     }
+    public IntPtr getJSFunction()
+    {
+        return JSApi.JSh_ArgvFunction(cx, vp, currIndex++);
+    }
 
     public void returnBool(bool v) { JSApi.JSh_SetRvalBool(cx, vp, v); }
     public void returnString(String v) { JSApi.JSh_SetRvalString(cx, vp, v); }
@@ -627,6 +631,22 @@ public class JSVCall
         JSApi.JSh_SetRvalJSVAL(cx, vp, ref val);
     }
 
+    JSApi.jsval rvalCallJS = new JSApi.jsval();
+    // no returns for now
+    public bool CallJSFunction(IntPtr jsThis, IntPtr/* JSFunction* */ jsFunction, params object[] args)
+    {
+        if (args == null || args.Length == 0)
+        {
+            return JSApi.JSh_CallFunction(JSMgr.cx, jsThis, jsFunction, 0, null, ref rvalCallJS);
+        }
+
+        JSApi.jsval[] vals = new JSApi.jsval[args.Length];
+        for (int i = 0; i < args.Length; i++)
+        {
+            vals[i] = CSObject_2_JSValue(args[i]);
+        }
+        return JSApi.JSh_CallFunction(JSMgr.cx, jsThis, jsFunction, (UInt32)args.Length, vals, ref rvalCallJS);
+    }
 
     public enum Oper
     {
