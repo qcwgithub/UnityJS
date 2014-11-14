@@ -72,7 +72,7 @@ public class JSApi
 //     public delegate int JS_CONVERTSTUB(IntPtr cx, JSHandleObject obj, int type, JSMutableHandleValue vp);
 
     public static void sc_finalize(IntPtr freeOp, IntPtr obj) { }
-#if !UNITY_ANDROID && !UNITY_IPHONE
+#if (UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN)
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 #endif
     public delegate void SC_FINALIZE(IntPtr freeOp, IntPtr obj);
@@ -80,12 +80,12 @@ public class JSApi
 //     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     //     public delegate int JSCheckAccessOp(IntPtr cx, JSHandleObject obj, JSHandleId id, int mode, IntPtr vp);
 
-#if !UNITY_ANDROID && !UNITY_IPHONE
+#if (UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN)
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 #endif
     public delegate int JSNative(IntPtr cx, uint argc, IntPtr vp);
 
-#if !UNITY_ANDROID && !UNITY_IPHONE
+#if (UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN)
     [UnmanagedFunctionPointerAttribute(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 #endif
     public delegate int JSErrorReporter(IntPtr cx, string message, IntPtr report);
