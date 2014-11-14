@@ -666,7 +666,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using {2};
+{2}
 
 public class {0}Generated
 [[
@@ -674,7 +674,7 @@ public class {0}Generated
 ]]
 ";
         var sbFile = new StringBuilder();
-        sbFile.AppendFormat(fmtFile, type.Name, sbClass, type.Namespace.ToString());
+        sbFile.AppendFormat(fmtFile, type.Name, sbClass, type.Namespace != null ? "using " + type.Namespace.ToString() + ";" : "");
         HandleStringFormat(sbFile);
 
         string fileName = JSMgr.csGeneratedDir + "/" + type.Name + "Generated.cs";
