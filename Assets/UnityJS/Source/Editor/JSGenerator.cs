@@ -388,7 +388,8 @@ using UnityEngine;
     }
     static StreamWriter OpenFile(string fileName, bool bAppend = false)
     {
-        return new StreamWriter(fileName, bAppend, Encoding.UTF8);
+        Encoding utf8NoBom = new UTF8Encoding(false);
+        return new StreamWriter(fileName, bAppend, utf8NoBom);
     }
 
     static void HandleStringFormat(StringBuilder sb)
@@ -412,7 +413,7 @@ using UnityEngine;
 
         JSGenerator.OnEnd();
 
-        Debug.Log("Generate Enum Bindings finish. total = " + JSBindingSettings.enums.Length.ToString());
+        Debug.Log("Generate JS Enum Bindings finish. total = " + JSBindingSettings.enums.Length.ToString());
     }
 
     /* 
@@ -443,7 +444,7 @@ using UnityEngine;
 
         JSGenerator.OnEnd();
 
-        Debug.Log("Generate Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
+        Debug.Log("Generate JS Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
     }
 
     //     [MenuItem("JS for Unity/Output All Types in UnityEngine")]

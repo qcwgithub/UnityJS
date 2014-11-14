@@ -191,14 +191,8 @@ public static class JSMgr
                 if (w.isDone)
                     break;
             }
-            //Debug.Log(w.text);
             string content = w.text;
-            if (content[0] == 0xef && content[1] == 0xbb && content[2] == 0xbf)
-                content = content.Substring(3);
             return CompileScriptContent(shortName, w.text, glob);
-//             IntPtr intPtr = CompileScript(shortName, glob);
-//             compiledScript.Add(shortName, intPtr.ToInt32());
-//             return intPtr;
         }
     }
 

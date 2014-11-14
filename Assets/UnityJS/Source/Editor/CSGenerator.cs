@@ -822,7 +822,6 @@ using UnityEngine;
         allClassCallbackNames = null;
         allClassCallbackNames = new List<ClassCallbackNames>(JSBindingSettings.classes.Length);
 
-
         for (int i = 0; i < JSBindingSettings.classes.Length; i++)
         {
             CSGenerator.Clear();
@@ -833,7 +832,7 @@ using UnityEngine;
 
         CSGenerator.OnEnd();
 
-        Debug.Log("Generate Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
+        Debug.Log("Generate CS Class Bindings finish. total = " + JSBindingSettings.classes.Length.ToString());
     }
 
     [MenuItem("JS for Unity/Output All Types in UnityEngine")]
