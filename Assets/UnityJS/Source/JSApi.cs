@@ -131,9 +131,6 @@ public class JSApi
      
 ************************************************************************/
 
-    [DllImport("mozjs-28", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JSBB_Init();
-
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_Init();
 
@@ -217,10 +214,9 @@ public class JSApi
     public static extern double JSh_ArgvDouble(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JSh_ArgvInt(IntPtr cx, IntPtr vp, int i);
-//     [DllImport(JSDll, EntryPoint = "JSh_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-//     public static extern IntPtr JSh_ArgvString_(IntPtr cx, IntPtr vp, int i);
-//     public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return Marshal.PtrToStringAnsi(JSh_ArgvString_(cx, vp, i)); }
-    public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return "argv string"; }
+    [DllImport(JSDll, EntryPoint = "JSh_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ArgvString_(IntPtr cx, IntPtr vp, int i);
+    public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return Marshal.PtrToStringAnsi(JSh_ArgvString_(cx, vp, i)); }
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_ArgvObject(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]

@@ -55,5 +55,5 @@ function OnApplicationQuit()
 
 function myAdd(a,b)
 {
-	printInt(a+b);
+	Debug.Log(a+b);
 }

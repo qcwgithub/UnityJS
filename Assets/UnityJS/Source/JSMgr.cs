@@ -131,22 +131,22 @@ public static class JSMgr
     }
     public static void EvaluateGeneratedScripts()
     {
-//         string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
-//         for (int i = 0; i < files.Length; i++)
-//         {
-//             if (files[i].IndexOf(".meta") == files[i].Length - 5)
-//                 continue;
-//             EvaluateFile(files[i], glob);
-//         }
-        IntPtr ptr;
-        ptr = GetScript("Generated/GameObject");
-        JSMgr.ExecuteScript(ptr, glob);
-        ptr = GetScript("Generated/Transform");
-        JSMgr.ExecuteScript(ptr, glob);
-        ptr = GetScript("Generated/Vector3");
-        JSMgr.ExecuteScript(ptr, glob);
-        ptr = GetScript("Generated/GameObject");
-        JSMgr.ExecuteScript(ptr, glob);
+        string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
+        for (int i = 0; i < files.Length; i++)
+        {
+            if (files[i].IndexOf(".meta") == files[i].Length - 5)
+                continue;
+            EvaluateFile(files[i], glob);
+        }
+//         IntPtr ptr;
+//         ptr = GetScript("Generated/GameObject");
+//         JSMgr.ExecuteScript(ptr, glob);
+//         ptr = GetScript("Generated/Transform");
+//         JSMgr.ExecuteScript(ptr, glob);
+//         ptr = GetScript("Generated/Vector3");
+//         JSMgr.ExecuteScript(ptr, glob);
+//         ptr = GetScript("Generated/GameObject");
+//         JSMgr.ExecuteScript(ptr, glob);
     }
     public static IntPtr CompileScript(string shortName, IntPtr obj)
     {
