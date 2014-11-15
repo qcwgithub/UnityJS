@@ -285,7 +285,8 @@ public static class CSGenerator
     // 取得：获取参数并转换为相应类型的表达式
     public static string BuildRetriveParam(Type paramType)
     {
-        if (paramType == typeof(Boolean)) return "vc.getBool()";
+        if (paramType == typeof(object)) return "vc.getWhatever()";
+        else if (paramType == typeof(Boolean)) return "vc.getBool()";
         else if (paramType == typeof(String)) return "vc.getString()";
         else if (paramType == typeof(Char)) return "vc.getChar()";
         else if (paramType == typeof(Byte)) return "vc.getByte()";
@@ -344,7 +345,7 @@ public static class CSGenerator
     {
         bool directReturn = true;
         if (!bConstructor)
-            IsDirectReturn(returnType);
+            directReturn = IsDirectReturn(returnType);
 
         // minimal params needed
         int minNeedParams = 0;

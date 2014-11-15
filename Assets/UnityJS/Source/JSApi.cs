@@ -200,13 +200,20 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_ArgvIsNull(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsNullOrUndefined(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsInt32(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_ArgvIsDouble(IntPtr cx, IntPtr vp, int i);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_ArgvIsBool(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_ArgvIsString(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_ArgvIsNumber(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern bool JSh_ArgvIsDouble(IntPtr cx, IntPtr vp, int i);
+    public static extern bool JSh_ArgvIsObject(IntPtr cx, IntPtr vp, int i);
+    
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_ArgvBool(IntPtr cx, IntPtr vp, int i);

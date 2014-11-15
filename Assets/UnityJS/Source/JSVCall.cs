@@ -142,6 +142,23 @@ public class JSVCall
     {
         return JSApi.JSh_ArgvFunction(cx, vp, currIndex++);
     }
+    public object getWhatever()
+    {
+        int i = currIndex++;
+        if (JSApi.JSh_ArgvIsBool(cx, vp, i))
+            return JSApi.JSh_ArgvBool(cx, vp, i);
+        else if (JSApi.JSh_ArgvIsInt32(cx, vp, i))
+            return JSApi.JSh_ArgvInt(cx, vp, i);
+        else if (JSApi.JSh_ArgvIsDouble(cx, vp, i))
+            return JSApi.JSh_ArgvDouble(cx, vp, i);
+        else if (JSApi.JSh_ArgvIsString(cx, vp, i))
+            return JSApi.JSh_ArgvString(cx, vp, i);
+        else if (JSApi.JSh_ArgvIsObject(cx, vp, i))
+            return JSApi.JSh_ArgvObject(cx, vp, i);
+        else if (JSApi.JSh_ArgvIsNullOrUndefined(cx, vp, i))
+            return null;
+        return null;
+    }
 
     public void returnBool(bool v) { JSApi.JSh_SetRvalBool(cx, vp, v); }
     public void returnString(String v) { JSApi.JSh_SetRvalString(cx, vp, v); }
@@ -265,7 +282,11 @@ public class JSVCall
     {
         if (csParamIndex < arrJSParamsLength)
         {
-            if (csType.IsArray)
+            if (csType == typeof(object))
+            {
+                return true;
+            }
+            else if (csType.IsArray)
             {
                 // todo
                 // overloaded functions only matchs wether it's array or not
