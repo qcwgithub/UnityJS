@@ -3,16 +3,28 @@ using UnityEngine;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using System.Security;
 
 
+/*
+ * CallJS
+ * A class simply transfer callbacks to js
+ * 
+ * This usage might cost much cpu times. Especially when there are a lot of GameObjects in the scene
+ * One likely solution is call Awake, Start, Update only once per frame
+ * 
+ */
 public class CallJS : MonoBehaviour 
 {
     public string jsScriptName = string.Empty;
 
     IntPtr go = IntPtr.Zero;
+    IntPtr funAwake = IntPtr.Zero;
+    IntPtr funStart = IntPtr.Zero;
     IntPtr funUpdate = IntPtr.Zero;
+    IntPtr funDestroy = IntPtr.Zero;
     JSApi.jsval rval = new JSApi.jsval();
 
 
@@ -28,62 +40,88 @@ public class CallJS : MonoBehaviour
             return;
         }
         else
+        {
             JSEngine.log("jsengine inited!!");
+        }
 
         mTrans = transform;
         go = JSApi.JSh_NewObjectAsClass(JSMgr.cx, JSMgr.glob, "GameObject", JSMgr.mjsFinalizer);
+        JSApi.JSh_AddObjectRoot(JSMgr.cx, ref go);
+
+
         JSMgr.addJSCSRelation(go, gameObject);
 
-        IntPtr ptrScript = JSMgr.GetScript(jsScriptName/*, go*/);
+        IntPtr ptrScript = JSMgr.GetScript(jsScriptName);
         if (ptrScript == IntPtr.Zero)
         {
+            Debug.Log("ptrScript is null)");
             enabled = false;
             return;
         }
-//         if (ptrScript==IntPtr.Zero)
-//         {
-//             StartCoroutine(dlScript());
-//         }
-//         else
-        {
-            if (!JSMgr.ExecuteScript(ptrScript, go))
-            {
-                enabled = false;
-                return;
-            }
-            funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
-
-            {
-                IntPtr myAdd = JSApi.JSh_GetFunction(JSMgr.cx, go, "myAdd");
-                JSMgr.vCall.CallJSFunction(IntPtr.Zero, myAdd, 6, 9);
-            }
-            inited = true;
-        }
-    }
-    bool bbb = false;
-    GameObject goThis;
-	void Update () {
-        if (inited && funUpdate != IntPtr.Zero)
-        {
-            if (!JSMgr.vCall.CallJSFunction(go, funUpdate, null))
-                Debug.Log("call function fail");
-        }
-	}
-    /*public IEnumerator dlScript()
-    {
-        WWW w = new WWW(Application.streamingAssetsPath + "/JavaScript/" + jsScriptName + ".javascript");
-        yield return w;
-        string content = w.text;
-        IntPtr ptrScript = JSMgr.CompileScriptContent(jsScriptName, content, JSMgr.glob);
-
         if (!JSMgr.ExecuteScript(ptrScript, go))
         {
+            Debug.Log("---------- ExecuteScript fail");
             enabled = false;
+            return;
         }
-        else
+        
+        
+        funAwake = JSApi.JSh_GetFunction(JSMgr.cx, go, "Awake");
+        funStart = JSApi.JSh_GetFunction(JSMgr.cx, go, "Start");
+        funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
+        funDestroy = JSApi.JSh_GetFunction(JSMgr.cx, go, "Destroy");
+
+        if (funAwake != IntPtr.Zero)
         {
-            funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
-            inited = true;
+            JSMgr.vCall.CallJSFunction(go, funAwake, null);
         }
-    }*/
+        JSMgr.JS_GC();
+        inited = true;
+    }
+
+    void Start()
+    {
+        if (inited && funStart != IntPtr.Zero)
+        {
+            JSMgr.vCall.CallJSFunction(go, funStart, null);
+        }
+
+        dict.Add(GameObject.Find("Cafe"),0);
+    }
+
+//    float accum = 0f;
+    Dictionary<object, int> dict = new Dictionary<object, int>();
+    
+	void Update () 
+    {
+//         accum += Time.deltaTime;
+//         if (accum > 1f) 
+//         {
+//             accum = 0f;
+//             JSApi.JSh_GC(JSMgr.rt);
+//         }
+        Debug.Log("dict count:"+dict.Count.ToString());
+        foreach (var v in dict)
+        {
+            Debug.Log(dict.Count.ToString() + v.Key.ToString());
+        }
+        dict.Remove((object)null);
+
+        if (inited && funUpdate != IntPtr.Zero)
+        {
+            JSMgr.vCall.CallJSFunction(go, funUpdate, null);
+        }
+	}
+
+    void OnDestroy()
+    {
+        if (inited && funDestroy != IntPtr.Zero)
+        {
+            JSMgr.vCall.CallJSFunction(go, funDestroy, null);
+        }
+        //Destroy();
+
+        JSApi.JSh_RemoveObjectRoot(JSMgr.cx, ref go);
+        //JSApi.JSh_GC(JSMgr.rt);
+    }
 }

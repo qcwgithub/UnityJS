@@ -28,6 +28,7 @@ public static class JSGenerator
 
         if (Directory.Exists(JSMgr.jsGeneratedDir))
         {
+            // delete all last generated files
             string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
             for (int i = 0; i < files.Length; i++)
             {
@@ -36,7 +37,7 @@ public static class JSGenerator
         }
         else
         {
-            // 创建dir
+            // create directory
             Directory.CreateDirectory(JSMgr.jsGeneratedDir);
         }
     }
@@ -164,6 +165,11 @@ Object.defineProperty({0}, '{1}',
 ]]";
         bool bOverload = constructors.Length > 0;
         int overloadedMaxParamCount = 0;
+        if (constructors.Length == 0)
+        {
+            Debug.Log("&&&&&&&  [" + type.Name + "] has no constructor!");
+        }
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < constructors.Length; i++)
         {

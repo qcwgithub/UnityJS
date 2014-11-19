@@ -46,7 +46,7 @@ public static class JSMgr
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int printString(IntPtr cx, UInt32 argc, IntPtr vp)
     {
-        string value = JSApi.JSh_ArgvString(cx, vp, 0);
+        string value = JSApi.JSh_ArgvStringS(cx, vp, 0);
         Debug.Log(value);
         return 1;
     }
@@ -57,7 +57,7 @@ public static class JSMgr
         Debug.Log(value);
         return 1;
     }
-    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSErrorReporter))]
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
         string fileName = JSApi.JSh_GetErroReportFileName(report);
@@ -113,10 +113,12 @@ public static class JSMgr
 
     public static void EvaluateFile(string fullName, IntPtr obj)
     {
+        
+
         JSApi.jsval val = new JSApi.jsval();
         StreamReader r = new StreamReader(fullName, Encoding.UTF8);
         string s = r.ReadToEnd();
-
+        // Debug.Log("evaluate file : " + fullName + "| Length=" + s.Length);
         JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, fullName, 1, ref val);
         r.Close();
     }
@@ -184,15 +186,32 @@ public static class JSMgr
             return new IntPtr(ptr);
         else
         {
-            string fullName = calcFullJSFileName(shortName);
-            WWW w = new WWW(fullName);
-            while (true)
-            {
-                if (w.isDone)
-                    break;
-            }
-            string content = w.text;
-            return CompileScriptContent(shortName, w.text, glob);
+            string fullName = Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
+
+            StreamReader r = new StreamReader(fullName, Encoding.UTF8);
+            string s = r.ReadToEnd();
+
+            IntPtr intPtr = JSApi.JSh_CompileScript(cx, glob, s, (uint)s.Length, shortName, 1);
+            r.Close();
+            return intPtr;
+
+//             string fullName = calcFullJSFileName(shortName);
+//             Debug.Log("-----calcFullJSFileName: " + fullName);
+//             WWW w = new WWW(fullName);
+//             while (true)
+//             {
+//                 if (w.error != null && w.error.Length > 0)
+//                 {
+//                     Debug.Log("ERROR: /// " + w.error);
+//                     break;
+//                 }
+// 
+//                 if (w.isDone)
+//                     break;
+//             }
+//             Debug.Log("======= WWW OK");
+//             string content = w.text;
+//             return CompileScriptContent(shortName, w.text, glob);
         }
     }
 
@@ -293,7 +312,32 @@ public static class JSMgr
             return -1;
         if (m1.IsStatic && !m2.IsStatic)
             return 1;
-        return string.Compare(m1.Name, m2.Name);
+        if (m1.Name != m2.Name)
+            return string.Compare(m1.Name, m2.Name);
+        int max1 = 0;
+        {
+            ParameterInfo[] ps = m1.GetParameters();
+            if (ps.Length > 0) max1 = ps.Length;
+            for (int i = ps.Length - 1; i >= 0; i--) {
+                if (!ps[i].IsOptional) 
+                    break;
+                max1--;
+            }
+        }
+        int max2 = 0;
+        {
+            ParameterInfo[] ps = m2.GetParameters();
+            if (ps.Length > 0) max2 = ps.Length;
+            for (int i = ps.Length - 1; i >= 0; i--)
+            {
+                if (!ps[i].IsOptional) 
+                    break;
+                max2--;
+            }
+        }
+        if (max1 > max2) return -1;
+        if (max2 > max1) return 1;
+        return 0;
     }
     public static void FilterTypeInfo(Type type, ATypeInfo ti)
     {
@@ -467,16 +511,18 @@ public static class JSMgr
     {
         public IntPtr jsObj;
         public object csObj;
+        //public int csHashCode;
         public JS_CS_Relation(IntPtr a, object b)
         {
             jsObj = a;
             csObj = b;
+            //csHashCode = csObj.GetHashCode();
         }
     }
 
     public static void addJSCSRelation(IntPtr jsObj, object csObj)
     {
-        Debug.Log("jsObj added: " + csObj.GetType().Name + " / " + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
+        Debug.Log("+jsObj " + (mDict1.Count+1).ToString() + " "+csObj.GetType().Name + " / " + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
 
         int index = nextRelationIndex++;
 
@@ -485,6 +531,9 @@ public static class JSMgr
 //         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
         mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
         mDict2.Add(csObj, new JS_CS_Relation(jsObj, csObj));
+
+        if (mDict1.Count != mDict2.Count)
+            Debug.LogError("addJSCSRelation / mDict1.Count != mDict2.Count");
     }
     public static object getCSObj(IntPtr jsObj)
     {
@@ -508,25 +557,31 @@ public static class JSMgr
 
         mDict1.Remove(jsObj.ToInt64());
         mDict2.Remove(csObj);
-        addJSCSRelation(jsObj, csObj);
+        addJSCSRelation(jsObj, csObjNew);
     }
     static Dictionary<long, JS_CS_Relation> mDict1 = new Dictionary<long, JS_CS_Relation>(); // key = jsObj.hashCode()
     static Dictionary<object, JS_CS_Relation> mDict2 = new Dictionary<object, JS_CS_Relation>(); // key = nativeObj.hashCode()
     static int nextRelationIndex = 0;
 
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.SC_FINALIZE))]
     static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
     {
         JS_CS_Relation obj;
         if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
         {
             string name = obj.csObj.GetType().Name;
+            string objName = typeof(UnityEngine.Object).IsAssignableFrom(obj.csObj.GetType()) ? ((UnityEngine.Object)obj.csObj).name : "";
             mDict1.Remove(jsObj.ToInt64());
-            Debug.Log(name + " finalized, left " + mDict1.Count.ToString());
+            mDict2.Remove(obj.csObj);
+            Debug.Log("-jsObj " + mDict1.Count.ToString() + " " + name + " / " + objName);
         }
         else
         {
             Debug.Log("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
         }
+
+        if (mDict1.Count != mDict2.Count)
+            Debug.LogError("JSObjectFinalizer / mDict1.Count != mDict2.Count");
     }
     
     /*

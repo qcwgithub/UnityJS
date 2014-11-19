@@ -25,24 +25,35 @@ public class JSEngine : MonoBehaviour
 //         return;
 // #endif
 
-        inited = true;
+        
         DontDestroyOnLoad(gameObject);
 
         JSMgr.useReflection = this.useReflection;
-        JSMgr.InitJSEngine();
-        inst = this;
-	}
-	
-	void Update () {
-	
+        if (JSMgr.InitJSEngine())
+        {
+            inited = true;
+            inst = this;
+            Debug.Log("----------InitJSEngine OK ---");
+        }
+        else
+            Debug.Log("----------InitJSEngine FAIL ---");
+    }
+
+    float accum = 0f;
+	void Update () 
+    {
+        accum += Time.deltaTime;
+        if (accum > 1f)
+        {
+            accum = 0f;
+            JSApi.JSh_GC(JSMgr.rt);
+        }
 	}
 
     void OnGUI()
     {
         foreach (var v in lstLog)
             GUILayout.TextArea(v);
-        //GUILayout.TextArea("hhhhhhhh");
-        //GUI.TextArea(new Rect(0,0,50,30), "jjjjjjjjjjjjjjjjjjjjjj");
     }
     public static void log(string s)
     {

@@ -187,8 +187,8 @@ public class JSApi
 //     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 //     public static extern IntPtr JSh_InitClass(IntPtr cx, IntPtr jsClass);
 
-//     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-//     public static extern IntPtr JSh_ThisObject(IntPtr cx, IntPtr vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ThisObject(IntPtr cx, IntPtr vp);
 
 
 
@@ -221,9 +221,9 @@ public class JSApi
     public static extern double JSh_ArgvDouble(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JSh_ArgvInt(IntPtr cx, IntPtr vp, int i);
-    [DllImport(JSDll, EntryPoint = "JSh_ArgvString", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern IntPtr JSh_ArgvString_(IntPtr cx, IntPtr vp, int i);
-    public static string JSh_ArgvString(IntPtr cx, IntPtr vp, int i) { return Marshal.PtrToStringAnsi(JSh_ArgvString_(cx, vp, i)); }
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_ArgvString(IntPtr cx, IntPtr vp, int i);
+    public static string JSh_ArgvStringS(IntPtr cx, IntPtr vp, int i) { return Marshal.PtrToStringAnsi(JSh_ArgvString(cx, vp, i)); }
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_ArgvObject(IntPtr cx, IntPtr vp, int i);
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -329,4 +329,12 @@ public class JSApi
     public static extern bool JSh_CallFunction(IntPtr cx, IntPtr obj, IntPtr fun, UInt32 argc,
         /*[MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] */jsval[] argv, 
         ref jsval rval);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_AddObjectRoot(IntPtr cx, ref IntPtr/*JSObject***/ rp);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_RemoveObjectRoot(IntPtr cx, ref IntPtr/*JSObject***/ rp);
+
+    
 }

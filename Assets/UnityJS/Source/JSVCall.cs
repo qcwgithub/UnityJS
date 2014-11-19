@@ -94,7 +94,7 @@ public class JSVCall
         currIndex = 0;
     }
     public Boolean getBool() { return JSApi.JSh_ArgvBool(cx, vp, currIndex++); }
-    public String  getString() { return JSApi.JSh_ArgvString(cx, vp, currIndex++); }
+    public String  getString() { return JSApi.JSh_ArgvStringS(cx, vp, currIndex++); }
     public Char    getChar() { return (Char)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
     public Byte    getByte() { return (Byte)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
     public SByte   getSByte() { return (SByte)JSApi.JSh_ArgvInt(cx, vp, currIndex++); }
@@ -152,9 +152,16 @@ public class JSVCall
         else if (JSApi.JSh_ArgvIsDouble(cx, vp, i))
             return JSApi.JSh_ArgvDouble(cx, vp, i);
         else if (JSApi.JSh_ArgvIsString(cx, vp, i))
-            return JSApi.JSh_ArgvString(cx, vp, i);
+            return JSApi.JSh_ArgvStringS(cx, vp, i);
         else if (JSApi.JSh_ArgvIsObject(cx, vp, i))
-            return JSApi.JSh_ArgvObject(cx, vp, i);
+        {
+            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, i);
+            object csObj = JSMgr.getCSObj(jsObj);
+            if (csObj is JSValueWrap.Wrap)
+                return ((JSValueWrap.Wrap)csObj).obj;
+            else
+                return csObj;
+        }
         else if (JSApi.JSh_ArgvIsNullOrUndefined(cx, vp, i))
             return null;
         return null;
@@ -295,15 +302,44 @@ public class JSVCall
             }
             else if (arrJSParam[csParamIndex].isWrap)
             {
-                if ((csType != arrJSParam[csParamIndex].wrappedObj.GetType()))
-                    return false;
+                Type jsType = arrJSParam[csParamIndex].wrappedObj.GetType();
+
+                if (!csType.IsByRef)
+                {
+                    if (csType != jsType && !csType.IsAssignableFrom(jsType))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    Type csElementType = csType.GetElementType();
+                    if (csElementType != jsType && !csElementType.IsAssignableFrom(jsType))
+                    {
+                        return false;
+                    }
+                }
             }
             else// if (!arrJSParam[csParamIndex].isWrap)
             {
                 if (arrJSParam[csParamIndex].csObj != null)
                 {
-                    if (csType != arrJSParam[csParamIndex].csObj.GetType())
-                        return false;
+                    Type jsType = arrJSParam[csParamIndex].csObj.GetType();
+                    if (!csType.IsByRef)
+                    {
+                        if (csType != jsType && !csType.IsAssignableFrom(jsType))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Type csElementType = csType.GetElementType();
+                        if (csElementType != jsType && !csElementType.IsAssignableFrom(jsType))
+                        {
+                            return false;
+                        }
+                    }
                 }
                 else
                 {
@@ -397,7 +433,7 @@ public class JSVCall
             t = t.GetElementType();
 
         if (t == typeof(string))
-            return JSApi.JSh_ArgvString(cx, vp, paramIndex);
+            return JSApi.JSh_ArgvStringS(cx, vp, paramIndex);
         else if (t.IsEnum)
             return JSApi.JSh_ArgvInt(cx, vp, paramIndex);
         else if (t.IsPrimitive)
@@ -806,6 +842,7 @@ public class JSVCall
                     
                     currIndex = currentParamCount;
                     arrMethod[index].fun(this, currentParamCount, jsParamCount);
+                    //Debug.Log(slot.ToString()+"/"+index.ToString()+"Call OK");
                     return JSApi.JS_TRUE;
 
 //                     if (overloaded)

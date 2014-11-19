@@ -93,14 +93,14 @@ public static class CSGenerator
             //if (type.IsValueType && !field.IsStatic)
             //    sb.AppendFormat("{0} argThis = ({0})vc.csObj;", type.Name);
 
-            // get 部分
+            // get
             if (field.IsStatic)
                 sbCall.AppendFormat("{0}.{1}", type.Name, field.Name);
             else
                 sbCall.AppendFormat("(({0})vc.csObj).{1}", type.Name, field.Name);
             sb.AppendFormat("    {0};\r\n", BuildReturnObject(field.FieldType, sbCall.ToString()));
 
-            // set 部分
+            // set
             if (!bReadOnly)
             {
                 if (!isDelegate)
@@ -186,14 +186,14 @@ public static class CSGenerator
             //if (type.IsValueType && !field.IsStatic)
             //    sb.AppendFormat("{0} argThis = ({0})vc.csObj;", type.Name);
 
-            // get 部分
+            // get
             if (isStatic)
                 sbCall.AppendFormat("{0}.{1}", GetTypeFullName(type), property.Name);
             else
                 sbCall.AppendFormat("(({0})vc.csObj).{1}", GetTypeFullName(type), property.Name);
             sb.AppendFormat("    {0};\r\n", BuildReturnObject(property.PropertyType, sbCall.ToString()));
 
-            // set 部分
+            // set
             if (!bReadOnly)
             {
                 sb.Append("else\r\n");
@@ -253,36 +253,42 @@ public static class CSGenerator
         sbX.AppendFormat(fmt, sb);
         return sbX;
     }
-    public static StringBuilder BuildSpecialFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid)
+    public static StringBuilder BuildSpecialFunctionCall(ParameterInfo[] ps, string className, string methodName, bool bStatic, bool returnVoid, Type returnType)
     {
         List<string> lstParam = new List<string>();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ps.Length; i++)
         {
-            sb.AppendFormat("({0})vc.callParams[{1}]", GetTypeFullName(ps[i].ParameterType), i);
+            sb.AppendFormat("{0}", BuildRetriveParam(ps[i].ParameterType));
             lstParam.Add(sb.ToString());
             sb.Remove(0, sb.Length);
         }
 
-        // 一定是 static
-        if (methodName == "op_Addition")
-            sb.AppendFormat("    {0}{1} + {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
-        else if (methodName == "op_Subtraction")
-            sb.AppendFormat("    {0}{1} - {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
-        else if (methodName == "op_UnaryNegation")
-            sb.AppendFormat("    {0}-{1};", returnVoid ? "" : "vc.result = ", lstParam[0]);
-        else if (methodName == "op_Multiply")
-            sb.AppendFormat("    {0}{1} * {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
-        else if (methodName == "op_Division")
-            sb.AppendFormat("    {0}{1} / {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
-        else if (methodName == "op_Equality")
-            sb.AppendFormat("    {0}{1} == {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
-        else if (methodName == "op_Inequality")
-            sb.AppendFormat("    {0}{1} != {2};", returnVoid ? "" : "vc.result = ", lstParam[0], lstParam[1]);
+        StringBuilder sbCall = new StringBuilder();
 
+        string strCall = string.Empty;
+
+        // must be static
+        if (methodName == "op_Addition")
+            strCall = lstParam[0] + " + " + lstParam[1];
+        else if (methodName == "op_Subtraction")
+            strCall = lstParam[0] + " - " + lstParam[1];
+        else if (methodName == "op_Multiply")
+            strCall = lstParam[0] + " * " + lstParam[1];
+        else if (methodName == "op_Division")
+            strCall = lstParam[0] + " / " + lstParam[1];
+        else if (methodName == "op_Equality")
+            strCall = lstParam[0] + " == " + lstParam[1];
+        else if (methodName == "op_Inequality")
+            strCall = lstParam[0] + " != " + lstParam[1];
+
+        else if (methodName == "op_UnaryNegation")
+            strCall = "-" + lstParam[0];
+
+        sb.Append("    " + BuildReturnObject(returnType, strCall) + ";");
         return sb;
     }
-    // 取得：获取参数并转换为相应类型的表达式
+    // expression getting parameter
     public static string BuildRetriveParam(Type paramType)
     {
         if (paramType == typeof(object)) return "vc.getWhatever()";
@@ -320,9 +326,9 @@ public static class CSGenerator
         else if (paramType == typeof(Double)) return "vc.returnDouble(" + callString + ")";
         else return "vc.returnObject(\"" + paramType.Name + "\", " + callString + ")";
     }
-    // 是否直接返回
-    // 如果是  就是直接return 扣号里是调用语句
-    // 如果不是  就是先用 object 接一下  再 return
+    // is directly return
+    // if true -> 'return Call();'
+    // else    -> 'var v = Call(); return v;'
     public static bool IsDirectReturn(Type paramType)
     {
         if (paramType == typeof(Boolean)) return true;
@@ -410,14 +416,10 @@ public static class CSGenerator
             }
 
             /*
-             * 0 参数个数
-             * 1 类名
-             * 2 函数名
-             * 3 实参数列表
-             * 4 vc.result = (如果有的话)
-             * 5 可能要加 else
-             * 6 对于ref/out 参数，需要先接一下，再使用
-             * 7 对于ref/out 参数，调用完后，要保存到 vc.callParams 中去
+             * 0 parameters count
+             * 1 class name
+             * 2 function name
+             * 3 actual parameters
              */
             if (bConstructor)
             {
@@ -509,6 +511,20 @@ static bool {0}(JSVCall vc, int start, int count)
 ]]
 ";
         StringBuilder sb = new StringBuilder();
+        if (constructors.Length == 0 && JSBindingSettings.IsGeneratedDefaultConstructor(type) &&
+            (type.IsValueType || (type.IsClass && !type.IsAbstract && !type.IsInterface)))
+        {
+            int olIndex = 1;
+            bool returnVoid = false;
+            string functionName = type.Name + "_" + type.Name +
+                (olIndex > 0 ? olIndex.ToString() : "") + "";// (cons.IsStatic ? "_S" : "");
+            sb.AppendFormat(fmt, functionName,
+                BuildNormalFunctionCall(new ParameterInfo[0], type.Name, type.Name, false, returnVoid, null, true));
+
+            ccbn.constructors.Add(functionName);
+            ccbn.constructorsCSParam.Add(GenListCSParam2(new ParameterInfo[0]).ToString());        
+        }
+
         for (int i = 0; i < constructors.Length; i++)
         {
             ConstructorInfo cons = constructors[i];
@@ -555,7 +571,7 @@ static bool {0}(JSVCall vc, int start, int count)
 
             sb.AppendFormat(fmt, functionName,
                 
-                method.IsSpecialName ? BuildSpecialFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid)
+                method.IsSpecialName ? BuildSpecialFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid, method.ReturnType)
                 : BuildNormalFunctionCall(paramS, type.Name, method.Name, method.IsStatic, returnVoid, method.ReturnType, false));
 
             ccbn.methods.Add(functionName);
@@ -646,7 +662,12 @@ public static void __Register()
         for (int i = 0; i < ccbn.properties.Count; i++)
             sbProperty.AppendFormat("        {0},\r\n", ccbn.properties[i]);
         for (int i = 0; i < ccbn.constructors.Count; i++)
-            sbCons.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.constructors[i], ccbn.constructorsCSParam[i], ti.constructors[i].Name);
+        {
+            if (ccbn.constructors.Count == 1 && ti.constructors.Length == 0) // no constructors   add a default  so ...
+                sbCons.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.constructors[i], ccbn.constructorsCSParam[i], type.Name);
+            else
+                sbCons.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.constructors[i], ccbn.constructorsCSParam[i], ti.constructors[i].Name);
+        }
         for (int i = 0; i < ccbn.methods.Count; i++)
             sbMethod.AppendFormat("        new JSMgr.MethodCallBackInfo({0}, '{2}', {1}),\r\n", ccbn.methods[i], ccbn.methodsCSParam[i], ti.methods[i].Name);
 

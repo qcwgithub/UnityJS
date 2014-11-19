@@ -162,13 +162,19 @@ public class JSBindingSettings
     {
          //interface
 
-//         typeof(UnityEngine.GameObject), 
-//         typeof(UnityEngine.Vector3), 
-//         typeof(System.Diagnostics.Stopwatch),
-//         typeof(Transform),
-//         typeof(UnityEngine.AnimationClip),
+        typeof(UnityEngine.GameObject), 
+        typeof(UnityEngine.Object), 
+        typeof(UnityEngine.Vector3), 
+        typeof(System.Diagnostics.Stopwatch),
+        typeof(Transform),
+        typeof(UnityEngine.AnimationClip),
+        typeof(Debug),
 
-
+        typeof(Input),
+        typeof(Camera),
+        typeof(Physics),
+        typeof(RaycastHit),
+        typeof(Ray),
     };
     public static Type[] classes = new Type[]
     {
@@ -606,6 +612,19 @@ public class JSBindingSettings
             return true;
 #endif
         return false;
+    }
+    public static bool IsGeneratedDefaultConstructor(Type type)
+    {
+        if (type == typeof(Coroutine) ||
+            type == typeof(CrashReport) ||
+            type == typeof(Display) ||
+            type == typeof(GUILayoutOption) ||
+            type == typeof(Gyroscope) ||
+            type == typeof(RemoteNotification) ||
+            type == typeof(TrackedReference) ||
+            type == typeof(Transform))
+            return false;
+        return true;
     }
 }
 
