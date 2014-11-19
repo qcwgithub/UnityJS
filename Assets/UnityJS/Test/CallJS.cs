@@ -85,13 +85,9 @@ public class CallJS : MonoBehaviour
         {
             JSMgr.vCall.CallJSFunction(go, funStart, null);
         }
-
-        dict.Add(GameObject.Find("Cafe"),0);
     }
 
 //    float accum = 0f;
-    Dictionary<object, int> dict = new Dictionary<object, int>();
-    
 	void Update () 
     {
 //         accum += Time.deltaTime;
@@ -100,12 +96,6 @@ public class CallJS : MonoBehaviour
 //             accum = 0f;
 //             JSApi.JSh_GC(JSMgr.rt);
 //         }
-        Debug.Log("dict count:"+dict.Count.ToString());
-        foreach (var v in dict)
-        {
-            Debug.Log(dict.Count.ToString() + v.Key.ToString());
-        }
-        dict.Remove((object)null);
 
         if (inited && funUpdate != IntPtr.Zero)
         {

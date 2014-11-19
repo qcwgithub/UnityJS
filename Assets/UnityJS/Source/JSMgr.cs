@@ -511,12 +511,14 @@ public static class JSMgr
     {
         public IntPtr jsObj;
         public object csObj;
-        //public int csHashCode;
+        public int csHashCode;
+        public string name;
         public JS_CS_Relation(IntPtr a, object b)
         {
             jsObj = a;
             csObj = b;
-            //csHashCode = csObj.GetHashCode();
+            csHashCode = csObj.GetHashCode();
+            name = csObj.ToString();
         }
     }
 
@@ -530,10 +532,10 @@ public static class JSMgr
 //         JSApi.JSh_SetJsvalInt(ref val, index);
 //         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
         mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
-        mDict2.Add(csObj, new JS_CS_Relation(jsObj, csObj));
+        mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
 
         if (mDict1.Count != mDict2.Count)
-            Debug.LogError("addJSCSRelation / mDict1.Count != mDict2.Count");
+            Debug.LogError("JSMgr.addJSCSRelation() / mDict1.Count != mDict2.Count");
     }
     public static object getCSObj(IntPtr jsObj)
     {
@@ -545,7 +547,7 @@ public static class JSMgr
     public static IntPtr getJSObj(object csObj)
     {
         JS_CS_Relation obj;
-        if (mDict2.TryGetValue(csObj, out obj))
+        if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
             return obj.jsObj;
         return IntPtr.Zero;
     }
@@ -556,11 +558,11 @@ public static class JSMgr
             return;
 
         mDict1.Remove(jsObj.ToInt64());
-        mDict2.Remove(csObj);
+        mDict2.Remove(csObj.GetHashCode());
         addJSCSRelation(jsObj, csObjNew);
     }
     static Dictionary<long, JS_CS_Relation> mDict1 = new Dictionary<long, JS_CS_Relation>(); // key = jsObj.hashCode()
-    static Dictionary<object, JS_CS_Relation> mDict2 = new Dictionary<object, JS_CS_Relation>(); // key = nativeObj.hashCode()
+    static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
     static int nextRelationIndex = 0;
 
     [MonoPInvokeCallbackAttribute(typeof(JSApi.SC_FINALIZE))]
@@ -569,11 +571,9 @@ public static class JSMgr
         JS_CS_Relation obj;
         if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
         {
-            string name = obj.csObj.GetType().Name;
-            string objName = typeof(UnityEngine.Object).IsAssignableFrom(obj.csObj.GetType()) ? ((UnityEngine.Object)obj.csObj).name : "";
+            Debug.Log("-jsObj " + (mDict1.Count - 1).ToString() + " / " + obj.name);
             mDict1.Remove(jsObj.ToInt64());
-            mDict2.Remove(obj.csObj);
-            Debug.Log("-jsObj " + mDict1.Count.ToString() + " " + name + " / " + objName);
+            mDict2.Remove(obj.csHashCode);
         }
         else
         {
