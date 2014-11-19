@@ -145,6 +145,7 @@ public class JSVCall
         public object csObj;
         public stJSCS(IntPtr j, object c) { jsObj = j; csObj = c; }
     }
+    // only for parameters
     public stJSCS getValueTypeObject()
     {
         IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
@@ -735,7 +736,7 @@ public class JSVCall
     }
 
     public bool bGet = false, bStatic = false;
-    //public IntPtr jsObj;
+    public IntPtr jsObj = IntPtr.Zero;
     public object csObj, result, arg;
     public object[] args;
     public int currentParamCount = 0;
@@ -771,8 +772,8 @@ public class JSVCall
         currentParamCount = 4;
         if (!isStatic)
         {
-            IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 4);
-            if (jsObj == IntPtr.Zero)
+            this.jsObj = JSApi.JSh_ArgvObject(cx, vp, 4);
+            if (this.jsObj == IntPtr.Zero)
                 return JSApi.JS_FALSE;
 
             this.csObj = JSMgr.getCSObj(jsObj);

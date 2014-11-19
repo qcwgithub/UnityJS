@@ -18,6 +18,12 @@ function Awake()
     //mTrans = transform;
 
     //Debug.Log('Awake called');
+	var v1 = Vector3.one
+	var v2 = Vector3.one
+	v1.x = 100
+	v2.x = 66666
+	Debug.Log(v1.x);
+	Debug.Log(v2.x);
 }
 function Start()
 {

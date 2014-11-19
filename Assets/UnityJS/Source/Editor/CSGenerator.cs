@@ -112,10 +112,9 @@ public static class CSGenerator
                     {
                         if (type.IsValueType)
                         {
-                            sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n", type.Name);
-                            sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
                             sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
-                            sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
+                            sb.Append("    JSMgr.changeJSObj(vc.jsObj, argThis);\r\n]]\r\n");
                         }
                         else
                         {
@@ -137,10 +136,9 @@ public static class CSGenerator
                     {
                         if (type.IsValueType)
                         {
-                            sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n", type.Name);
-                            sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
                             sb.AppendFormat("    argThis.{0} = {1}(vc.getJSFunction());\r\n", field.Name, getDelegateFuncitonName);
-                            sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
+                            sb.Append("    JSMgr.changeJSObj(vc.jsObj, argThis);\r\n]]\r\n");
                         }
                         else
                         {
@@ -205,10 +203,9 @@ public static class CSGenerator
                 {
                     if (type.IsValueType)
                     {
-                        sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n");
-                        sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", GetTypeFullName(type));
+                        sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", GetTypeFullName(type));
                         sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", property.Name, GetTypeFullName(property.PropertyType), BuildRetriveParam(property.PropertyType));
-                        sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
+                        sb.Append("    JSMgr.changeJSObj(vc.jsObj, argThis);\r\n]]\r\n");
                     }
                     else
                     {
