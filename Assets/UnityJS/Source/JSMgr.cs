@@ -524,18 +524,18 @@ public static class JSMgr
 
     public static void addJSCSRelation(IntPtr jsObj, object csObj)
     {
-        Debug.Log("+jsObj " + (mDict1.Count+1).ToString() + " "+csObj.GetType().Name + " / " + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
 
-        int index = nextRelationIndex++;
 
 //         JSApi.jsval val = new JSApi.jsval();
 //         JSApi.JSh_SetJsvalInt(ref val, index);
 //         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
         mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
-        mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
 
-        if (mDict1.Count != mDict2.Count)
-            Debug.LogError("JSMgr.addJSCSRelation() / mDict1.Count != mDict2.Count");
+        if (!csObj.GetType().IsValueType)
+        {
+            mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
+        }
+        Debug.Log("+jsObj " + (mDict1.Count).ToString() + "/" + (mDict2.Count).ToString() + " " + csObj.GetType().Name + "/" + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
     }
     public static object getCSObj(IntPtr jsObj)
     {
@@ -546,10 +546,18 @@ public static class JSMgr
     }
     public static IntPtr getJSObj(object csObj)
     {
+        if (csObj.GetType().IsValueType)
+            return IntPtr.Zero;
+
         JS_CS_Relation obj;
         if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
             return obj.jsObj;
         return IntPtr.Zero;
+    }
+    public static void changeJSObj(IntPtr jsObj, object csObjNew)
+    {
+        mDict1.Remove(jsObj.ToInt64());
+        addJSCSRelation(jsObj, csObjNew);
     }
     public static void changeCSObj(object csObj, object csObjNew)
     {
@@ -562,8 +570,11 @@ public static class JSMgr
         addJSCSRelation(jsObj, csObjNew);
     }
     static Dictionary<long, JS_CS_Relation> mDict1 = new Dictionary<long, JS_CS_Relation>(); // key = jsObj.hashCode()
+
+    // dict2 stores hashCode as key, may cause problems (2 object may share same hashCode)
+    // but if use object as key, after calling 'UnityObject.Destroy(this)' in js, 
+    // can't remove element from mDict2 due to csObj is null (JSObjectFinalizer)
     static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
-    static int nextRelationIndex = 0;
 
     [MonoPInvokeCallbackAttribute(typeof(JSApi.SC_FINALIZE))]
     static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
@@ -571,17 +582,17 @@ public static class JSMgr
         JS_CS_Relation obj;
         if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
         {
-            Debug.Log("-jsObj " + (mDict1.Count - 1).ToString() + " / " + obj.name);
             mDict1.Remove(jsObj.ToInt64());
             mDict2.Remove(obj.csHashCode);
         }
         else
         {
-            Debug.Log("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
+            Debug.LogError("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
         }
+        Debug.Log("-jsObj " + (mDict1.Count).ToString() + "/" + (mDict2.Count).ToString() + " " + obj.name);
 
-        if (mDict1.Count != mDict2.Count)
-            Debug.LogError("JSObjectFinalizer / mDict1.Count != mDict2.Count");
+        //if (mDict1.Count != mDict2.Count)
+        //    Debug.LogError("JSObjectFinalizer / mDict1.Count != mDict2.Count");
     }
     
     /*

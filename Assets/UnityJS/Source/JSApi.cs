@@ -283,6 +283,9 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_NewObjectAsClass(IntPtr cx, IntPtr glob, string className, SC_FINALIZE finalizeOp);
 
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewMyClass(IntPtr cx, SC_FINALIZE finalizeOp);
+
 //     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 //     public static extern bool JSh_SetClassFinalize(IntPtr cx, string className, SC_FINALIZE finalizeOp);
 

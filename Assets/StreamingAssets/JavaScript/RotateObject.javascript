@@ -21,6 +21,10 @@ function Awake()
 }
 function Start()
 {
+    var k = new Kekoukele();
+    var v = CS.int32(0);
+    k.getValue(v);
+    Debug.Log(v.Value())
 }
 
 function Update()
@@ -38,6 +42,9 @@ function Update()
 
     if (Input.GetMouseButtonDown(0) === true)
     {
+		var v2 = new Vector3(0.5,0.5,0)
+		var k1 = new Kekoukele();
+		var k2 = new Kekoukele();
         var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         var hit = new RaycastHit();
         Physics.Raycast(ray, hit);
@@ -53,7 +60,7 @@ function Update()
     }
 
     fAccum += Time.deltaTime
-    if (fAccum > 5)
+    if (fAccum > 10)
     {
        UnityObject.Destroy(this);
     }

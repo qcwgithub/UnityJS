@@ -112,9 +112,10 @@ public static class CSGenerator
                     {
                         if (type.IsValueType)
                         {
-                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n", type.Name);
+                            sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", type.Name);
                             sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", field.Name, field.FieldType, BuildRetriveParam(field.FieldType));
-                            sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                            sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
                         }
                         else
                         {
@@ -136,9 +137,10 @@ public static class CSGenerator
                     {
                         if (type.IsValueType)
                         {
-                            sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", type.Name);
+                            sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n", type.Name);
+                            sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", type.Name);
                             sb.AppendFormat("    argThis.{0} = {1}(vc.getJSFunction());\r\n", field.Name, getDelegateFuncitonName);
-                            sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                            sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
                         }
                         else
                         {
@@ -203,9 +205,10 @@ public static class CSGenerator
                 {
                     if (type.IsValueType)
                     {
-                        sb.AppendFormat("[[\r\n    {0} argThis = ({0})vc.csObj;\r\n", GetTypeFullName(type));
+                        sb.AppendFormat("[[\r\n    JSVCall.stJSCS jc = vc.getValueTypeObject();\r\n");
+                        sb.AppendFormat("\r\n    {0} argThis = ({0})jc.csObj;\r\n", GetTypeFullName(type));
                         sb.AppendFormat("    argThis.{0} = ({1}){2};\r\n", property.Name, GetTypeFullName(property.PropertyType), BuildRetriveParam(property.PropertyType));
-                        sb.Append("    JSMgr.changeCSObj(vc.csObj, argThis);\r\n]]\r\n");
+                        sb.Append("    JSMgr.changeJSObj(jc.jsObj, argThis);\r\n]]\r\n");
                     }
                     else
                     {
@@ -327,8 +330,8 @@ public static class CSGenerator
         else return "vc.returnObject(\"" + paramType.Name + "\", " + callString + ")";
     }
     // is directly return
-    // if true -> 'return Call();'
-    // else    -> 'var v = Call(); return v;'
+    // true -> 'returnBool(...)' or 'returnInt(...)'
+    // false -> a name must be specified for 'returnObject(name, ...)'
     public static bool IsDirectReturn(Type paramType)
     {
         if (paramType == typeof(Boolean)) return true;
@@ -373,13 +376,18 @@ public static class CSGenerator
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    if (IsDirectReturn(p.ParameterType))
+                    if (IsDirectReturn(p.ParameterType.GetElementType()))
                     {
                         sbRefVariable.AppendFormat("        JSValueWrap.Wrap wrap{0} = vc.getWrap();\r\n", i);
                         sbRefVariable.AppendFormat("        {0} arg{1} = ({0})wrap{1}.obj;\r\n", GetTypeFullName(p.ParameterType), i);
                     }
-                    else
+                    else if (p.ParameterType.GetElementType().IsValueType)
                     {
+                        sbRefVariable.AppendFormat("        JSVCall.stJSCS jc{0} = vc.getValueTypeObject();\r\n", i);
+                        sbRefVariable.AppendFormat("        {0} arg{1} = ({0})jc{1}.csObj;\r\n", GetTypeFullName(p.ParameterType), i);
+                    }
+                    else
+                    {   // this branch will never enter
                         sbRefVariable.AppendFormat("        object csObj{0} = vc.getObject();\r\n", i);
                         sbRefVariable.AppendFormat("        {0} arg{1} = ({0})csObj{1};\r\n", GetTypeFullName(p.ParameterType), i);
                     }
@@ -408,10 +416,16 @@ public static class CSGenerator
                 ParameterInfo p = ps[i];
                 if (p.ParameterType.IsByRef || p.IsOut)
                 {
-                    if (IsDirectReturn(p.ParameterType))
+                    if (IsDirectReturn(p.ParameterType.GetElementType()))
                         sbSaveRefVariable.AppendFormat("        wrap{0}.obj = arg{0};\r\n", i);
+                    else if (p.ParameterType.GetElementType().IsValueType)
+                    {
+                        sbSaveRefVariable.AppendFormat("        JSMgr.changeJSObj(jc{0}.jsObj, arg{0});", i);
+                    }
                     else
+                    {   // this branch will never enter
                         sbSaveRefVariable.AppendFormat("        JSMgr.changeCSObj(csObj{0}, arg{0});", i);
+                    }
                 }
             }
 

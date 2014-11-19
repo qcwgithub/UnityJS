@@ -138,6 +138,19 @@ public class JSVCall
         else
             return csObj;
     }
+
+    public struct stJSCS
+    {
+        public IntPtr jsObj;
+        public object csObj;
+        public stJSCS(IntPtr j, object c) { jsObj = j; csObj = c; }
+    }
+    public stJSCS getValueTypeObject()
+    {
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
+        object csObj = JSMgr.getCSObj(jsObj);
+        return new stJSCS(jsObj, csObj);
+    }
     public IntPtr getJSFunction()
     {
         return JSApi.JSh_ArgvFunction(cx, vp, currIndex++);
@@ -722,6 +735,7 @@ public class JSVCall
     }
 
     public bool bGet = false, bStatic = false;
+    //public IntPtr jsObj;
     public object csObj, result, arg;
     public object[] args;
     public int currentParamCount = 0;
@@ -884,8 +898,9 @@ public class JSVCall
                 break;
         }
 
-        this.PushResult(result);
-        return JSApi.JS_TRUE;
+//         this.PushResult(result);
+//         return JSApi.JS_TRUE;
+        return JSApi.JS_FALSE;
     }
 
     public int CallReflection(IntPtr cx, uint argc, IntPtr vp)

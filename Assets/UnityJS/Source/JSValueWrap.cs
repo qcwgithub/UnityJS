@@ -39,7 +39,7 @@ public class JSValueWrap
     {
         String b = JSApi.JSh_ArgvStringS(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetString)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -58,7 +58,7 @@ public class JSValueWrap
     {
         Boolean b = JSApi.JSh_ArgvBool(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetBool)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -77,7 +77,7 @@ public class JSValueWrap
     {
         Char b = (Char)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetChar)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -96,7 +96,7 @@ public class JSValueWrap
     {
         Byte b = (Byte)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetByte)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -115,7 +115,7 @@ public class JSValueWrap
     {
         SByte b = (SByte)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetSByte)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -134,7 +134,7 @@ public class JSValueWrap
     {
         UInt16 b = (UInt16)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetUInt16)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -153,7 +153,7 @@ public class JSValueWrap
     {
         Int16 b = (Int16)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetInt16)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -172,7 +172,7 @@ public class JSValueWrap
     {
         UInt32 b = (UInt32)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetUInt32)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -191,7 +191,7 @@ public class JSValueWrap
     {
         Int32 b = (Int32)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetInt32)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -210,7 +210,7 @@ public class JSValueWrap
     {
         UInt64 b = (UInt64)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetUInt64)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -230,7 +230,7 @@ public class JSValueWrap
     {
         Int64 b = (Int64)JSApi.JSh_ArgvInt(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetInt64)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -249,7 +249,7 @@ public class JSValueWrap
     {
         Single b = (Single)JSApi.JSh_ArgvDouble(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetSingle)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);
@@ -268,7 +268,7 @@ public class JSValueWrap
     {
         Double b = (Double)JSApi.JSh_ArgvDouble(cx, vp, 0);
         var w = new Wrap(b);
-        IntPtr jsObj = JSApi.JSh_NewObject(cx, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+        IntPtr jsObj = JSApi.JSh_NewMyClass(cx, JSMgr.mjsFinalizer);
         JSApi.JSh_DefineFunction(cx, jsObj, "Value", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetDouble)), 0/* narg */, 0);
         JSMgr.addJSCSRelation(jsObj, w);
         JSApi.JSh_SetRvalObject(cx, vp, jsObj);

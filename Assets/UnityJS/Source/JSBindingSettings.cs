@@ -13,6 +13,7 @@ public class Kekoukele
     public delegate void MyFun(int v);
     public MyFun fun;
     public int mvalue;
+    public void getValue(out int v) { v = 899; }
 }
 
 public class JSBindingSettings
