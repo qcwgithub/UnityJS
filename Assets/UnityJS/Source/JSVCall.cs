@@ -211,18 +211,41 @@ public class JSVCall
             JSApi.JSh_SetRvalJSVAL(cx, vp, ref this.valReturn);
             return;
         }
-        IntPtr jsObj;
-        //jsObj = JSMgr.getJSObj(csObj);
-        //if (jsObj == IntPtr.Zero)
-        { // always add a new jsObj
-            jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, /*className*/csObj.GetType().Name, JSMgr.mjsFinalizer);
-            if (jsObj != IntPtr.Zero)
-                JSMgr.addJSCSRelation(jsObj, csObj);
+        
+        if (!csObj.GetType().IsArray)
+        {
+            IntPtr jsObj;
+            //jsObj = JSMgr.getJSObj(csObj);
+            //if (jsObj == IntPtr.Zero)
+            { // always add a new jsObj
+                jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, /*className*/csObj.GetType().Name, JSMgr.mjsFinalizer);
+                if (jsObj != IntPtr.Zero)
+                    JSMgr.addJSCSRelation(jsObj, csObj);
+            }
+
+            if (jsObj == IntPtr.Zero)
+                JSApi.JSh_SetJsvalUndefined(ref this.valReturn);
+            else
+                JSApi.JSh_SetJsvalObject(ref this.valReturn, jsObj);
         }
-        if (jsObj == IntPtr.Zero)
-            JSApi.JSh_SetJsvalUndefined(ref this.valReturn);
         else
-            JSApi.JSh_SetJsvalObject(ref this.valReturn, jsObj);
+        {
+            Array arr = csObj as Array;
+            if (arr.Length > 0 && arr.GetValue(0).GetType().IsArray)
+            {
+                Debug.LogWarning("cs return [][] may cause problems.");
+            }
+
+            IntPtr jsArr = JSApi.JSh_NewArrayObjectS(cx, arr.Length);
+            
+            for (int i = 0; i < arr.Length; i++)
+            {
+                JSApi.jsval subVal = CSObject_2_JSValue(arr.GetValue(i));
+                JSApi.JSh_SetElement(cx, jsArr, (uint)i, ref subVal);
+            }
+            JSApi.JSh_SetJsvalObject(ref this.valReturn, jsArr);
+        }
+
         JSApi.JSh_SetRvalJSVAL(cx, vp, ref this.valReturn);
     }
 
@@ -318,8 +341,9 @@ public class JSVCall
             {
                 // todo
                 // overloaded functions only matchs wether it's array or not
-                if (!arrJSParam[csParamIndex].isArray)
-                    return false;
+//                 if (!arrJSParam[csParamIndex].isArray)
+//                     return false;
+                return true;
             }
             else if (arrJSParam[csParamIndex].isWrap)
             {
@@ -370,6 +394,8 @@ public class JSVCall
                         return JSApi.JSh_ArgvIsString(cx, vp, arrJSParam[csParamIndex].index);
                     else if (csType.IsEnum || csType.IsPrimitive)
                         return JSApi.JSh_ArgvIsNumber(cx, vp, arrJSParam[csParamIndex].index);
+                    else if (csType.IsArray)
+                        return true;
                     else
                         return false;
                 }
@@ -657,6 +683,8 @@ public class JSVCall
         //         }
         else if (t.IsArray)
         {
+            Debug.LogError("CSObject_2_JSValue: Cannot handle array here");
+
             // todo
             // return [][] may cause problems
 //             Array arr = csObj as Array;
@@ -665,7 +693,7 @@ public class JSVCall
 //                 Debug.LogWarning("cs return [][] may cause problems.");
 //             }
 // 
-//             IntPtr jsArr = JSApi.JSh_NewArrayObject(cx, arr.Length);
+//             IntPtr jsArr = JSApi.JSh_NewArrayObjectS(cx, arr.Length);
 //             
 //             for (int i = 0; i < arr.Length; i++)
 //             {
