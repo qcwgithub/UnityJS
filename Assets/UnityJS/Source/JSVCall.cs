@@ -215,7 +215,7 @@ public class JSVCall
         //jsObj = JSMgr.getJSObj(csObj);
         //if (jsObj == IntPtr.Zero)
         { // always add a new jsObj
-            jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, className, JSMgr.mjsFinalizer);
+            jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, /*className*/csObj.GetType().Name, JSMgr.mjsFinalizer);
             if (jsObj != IntPtr.Zero)
                 JSMgr.addJSCSRelation(jsObj, csObj);
         }
