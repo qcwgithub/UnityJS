@@ -3,30 +3,29 @@
 * functions (except delegate function) are called with 'this' set to a GameObject
 */
 
-// these 2 variables belongs to 'this' object
+// these variables belongs to 'this' object
 // 
-
-//globalObj = new GameObject('JZYX')
-
 var mTrans = undefined
 var rotateVar = undefined
 var fAccum = 0
 
 function Awake()
-{
-    // var v = new GameObject('Micheal Jackson');
-    //mTrans = transform;
-
-    //Debug.Log('Awake called');
-	var v1 = Vector3.one
-	var v2 = Vector3.one
-	v1.x = 100
-	v2.x = 66666
-	Debug.Log(v1.x);
-	Debug.Log(v2.x);
+{   
+    // example to test value type
+    // expected output is 100,66666
+    // also demostrate to call function with object parameter
+    var v1 = Vector3.one
+    var v2 = Vector3.one
+    v1.x = 100
+    v2.x = 66666
+    Debug.Log(v1.x);
+    Debug.Log(v2.x);
 }
 function Start()
 {
+    // expample to call out parameter by wrapping it
+    // expected output is 899
+    // 'CS' is defined in c#
     var k = new Kekoukele();
     var v = CS.int32(0);
     k.getValue(v);
@@ -48,13 +47,13 @@ function Update()
 
     if (Input.GetMouseButtonDown(0) === true)
     {
-		var v2 = new Vector3(0.5,0.5,0)
-		var k1 = new Kekoukele();
-		var k2 = new Kekoukele();
         var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        // call function with out struct
+        // must call new to create object at first
         var hit = new RaycastHit();
         Physics.Raycast(ray, hit);
         var t = hit.transform;
+
         if (t === undefined)
         {
             Debug.Log('Hit nothing')
@@ -62,13 +61,19 @@ function Update()
         else
         {
             Debug.Log('Hit ' + t.name);
+
+            var newGo = new GameObject("Flower");
+            CS.AddJSComponent(newGo, "RotateObject2");
         }
     }
 
+    // destroy this GameObject after 10 seconds
     fAccum += Time.deltaTime
     if (fAccum > 10)
     {
-       UnityObject.Destroy(this);
+        // JavaScript has 'Object' as key word
+        // so UnityEngine.Object is renamed to 'UnityObject'
+        UnityObject.Destroy(this);
     }
 }
 

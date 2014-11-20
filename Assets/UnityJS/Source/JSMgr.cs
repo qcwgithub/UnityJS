@@ -481,21 +481,88 @@ public static class JSMgr
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int Call(IntPtr cx, uint argc, IntPtr vp)
     {
-        if (useReflection)
-            return vCall.CallReflection(cx, argc, vp);
-        else
+//         if (useReflection)
+//             return vCall.CallReflection(cx, argc, vp);
+//         else
             return vCall.CallCallback(cx, argc, vp);
     }
 
+    static int AddJSComponent(IntPtr cx, uint argc, IntPtr vp)
+    {
+        if (argc != 2) 
+            return 0;
+
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 0);
+        object csObj = JSMgr.getCSObj(jsObj);
+        if (csObj == null || !(csObj is GameObject))
+            return 0;
+
+        GameObject go = (GameObject)csObj;
+
+        if (!JSApi.JSh_ArgvIsString(cx, vp, 1))
+            return 0;
+
+        string jsScriptName = JSApi.JSh_ArgvStringS(cx, vp, 1);
+
+        JSComponent jsComp = go.AddComponent<JSComponent>();
+        jsComp.jsScriptName = jsScriptName;
+        jsComp.InitScript();
+        JSApi.JSh_SetRvalObject(cx, vp, jsComp.go);
+        return 1;
+    }
+
+    static int GetJSComponent(IntPtr cx, uint argc, IntPtr vp)
+    {
+        if (argc != 1 && argc != 2)
+            return 0;
+
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 0);
+        object csObj = JSMgr.getCSObj(jsObj);
+        if (csObj == null || !(csObj is GameObject))
+            return 0;
+
+        GameObject go = (GameObject)csObj;
+
+        if (argc == 1)
+        {
+            JSComponent jsComp = go.GetComponent<JSComponent>();
+            if (jsComp == null)
+                JSApi.JSh_SetRvalUndefined(cx, vp);
+            else
+                JSApi.JSh_SetRvalObject(cx, vp, jsComp.go);
+            return 1;
+        }
+        else
+        {            
+            if (!JSApi.JSh_ArgvIsString(cx, vp, 1))
+                return 0;
+
+            string jsScriptName = JSApi.JSh_ArgvStringS(cx, vp, 1);
+            JSComponent[] jsComps = go.GetComponents<JSComponent>();
+            foreach (var v in jsComps)
+            {
+                if (v.jsScriptName == jsScriptName)
+                {
+                    JSApi.JSh_SetRvalObject(cx, vp, v.go);
+                    return 1;
+                }
+            }
+            JSApi.JSh_SetRvalUndefined(cx, vp);
+            return 1;
+        }
+    }
+
     /*
-     * Create a 'CS' global object to use in JS
+     * Create a 'CS' global object
      */
     public static void RegisterCS(IntPtr cx, IntPtr glob)
     {
         IntPtr jsClass = JSApi.JSh_NewClass("CS", 0, null);
         IntPtr obj = JSApi.JSh_InitClass(cx, glob, jsClass);
 
-        JSApi.JSh_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 20/* narg */, 0);
+        JSApi.JSh_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 0/* narg */, 0);
+        JSApi.JSh_DefineFunction(cx, obj, "AddJSComponent", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(AddJSComponent)), 0/* narg */, 0);
+        JSApi.JSh_DefineFunction(cx, obj, "GetJSComponent", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetJSComponent)), 0/* narg */, 0);
         CSOBJ = obj;
     }
 
@@ -529,13 +596,16 @@ public static class JSMgr
 //         JSApi.jsval val = new JSApi.jsval();
 //         JSApi.JSh_SetJsvalInt(ref val, index);
 //         JSApi.JS_SetProperty(cx, jsObj, "__resourceID", ref val);
+        if (mDict1.ContainsKey(jsObj.ToInt64()))
+            Debug.LogError("mDict1 already contains key for: " + csObj.ToString());
+
         mDict1.Add(jsObj.ToInt64(), new JS_CS_Relation(jsObj, csObj));
 
-        if (!csObj.GetType().IsValueType)
-        {
-            mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
-        }
-        Debug.Log("+jsObj " + (mDict1.Count).ToString() + "/" + (mDict2.Count).ToString() + " " + csObj.GetType().Name + "/" + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
+//         if (!csObj.GetType().IsValueType)
+//         {
+//             mDict2.Add(csObj.GetHashCode(), new JS_CS_Relation(jsObj, csObj));
+//         }
+        Debug.Log("+jsObj " + (mDict1.Count).ToString() + " " + csObj.GetType().Name + "/" + (typeof(UnityEngine.Object).IsAssignableFrom(csObj.GetType()) ? ((UnityEngine.Object)csObj).name : ""));
     }
     public static object getCSObj(IntPtr jsObj)
     {
@@ -544,37 +614,37 @@ public static class JSMgr
             return obj.csObj;
         return null;
     }
-    public static IntPtr getJSObj(object csObj)
-    {
-        if (csObj.GetType().IsValueType)
-            return IntPtr.Zero;
-
-        JS_CS_Relation obj;
-        if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
-            return obj.jsObj;
-        return IntPtr.Zero;
-    }
+//     public static IntPtr getJSObj(object csObj)
+//     {
+//         if (csObj.GetType().IsValueType)
+//             return IntPtr.Zero;
+// 
+//         JS_CS_Relation obj;
+//         if (mDict2.TryGetValue(csObj.GetHashCode(), out obj))
+//             return obj.jsObj;
+//         return IntPtr.Zero;
+//     }
     public static void changeJSObj(IntPtr jsObj, object csObjNew)
     {
         mDict1.Remove(jsObj.ToInt64());
         addJSCSRelation(jsObj, csObjNew);
     }
-    public static void changeCSObj(object csObj, object csObjNew)
-    {
-        IntPtr jsObj = getJSObj(csObj);
-        if (jsObj == IntPtr.Zero)
-            return;
-
-        mDict1.Remove(jsObj.ToInt64());
-        mDict2.Remove(csObj.GetHashCode());
-        addJSCSRelation(jsObj, csObjNew);
-    }
+//     public static void changeCSObj(object csObj, object csObjNew)
+//     {
+//         IntPtr jsObj = getJSObj(csObj);
+//         if (jsObj == IntPtr.Zero)
+//             return;
+// 
+//         mDict1.Remove(jsObj.ToInt64());
+//         mDict2.Remove(csObj.GetHashCode());
+//         addJSCSRelation(jsObj, csObjNew);
+//     }
     static Dictionary<long, JS_CS_Relation> mDict1 = new Dictionary<long, JS_CS_Relation>(); // key = jsObj.hashCode()
 
     // dict2 stores hashCode as key, may cause problems (2 object may share same hashCode)
     // but if use object as key, after calling 'UnityObject.Destroy(this)' in js, 
     // can't remove element from mDict2 due to csObj is null (JSObjectFinalizer)
-    static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
+    //static Dictionary<int, JS_CS_Relation> mDict2 = new Dictionary<int, JS_CS_Relation>(); // key = nativeObj.hashCode()
 
     [MonoPInvokeCallbackAttribute(typeof(JSApi.SC_FINALIZE))]
     static void JSObjectFinalizer(IntPtr freeOp, IntPtr jsObj)
@@ -583,13 +653,13 @@ public static class JSMgr
         if (mDict1.TryGetValue(jsObj.ToInt64(), out obj))
         {
             mDict1.Remove(jsObj.ToInt64());
-            mDict2.Remove(obj.csHashCode);
+            //mDict2.Remove(obj.csHashCode);
         }
         else
         {
             Debug.LogError("Finalizer: csObj not found: " + jsObj.ToInt32().ToString());
         }
-        Debug.Log("-jsObj " + (mDict1.Count).ToString() + "/" + (mDict2.Count).ToString() + " " + obj.name);
+        Debug.Log("-jsObj " + (mDict1.Count).ToString() + " " + obj.name);
 
         //if (mDict1.Count != mDict2.Count)
         //    Debug.LogError("JSObjectFinalizer / mDict1.Count != mDict2.Count");

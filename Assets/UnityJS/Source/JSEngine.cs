@@ -4,11 +4,12 @@ using System.Collections.Generic;
 
 public class JSEngine : MonoBehaviour 
 {
-    public bool useReflection = false;
+    //public bool useReflection = false;
     List<string> lstLog = new List<string>();
 
     static JSEngine inst;
     public static bool inited = false;
+    public float GCInterval = 1f;
 	void Awake () 
     {
 //         string path = "file://"+Application.streamingAssetsPath + "/JavaScript/RotateObject.javascript";
@@ -28,7 +29,7 @@ public class JSEngine : MonoBehaviour
         
         DontDestroyOnLoad(gameObject);
 
-        JSMgr.useReflection = this.useReflection;
+        JSMgr.useReflection = false;// this.useReflection;
         if (JSMgr.InitJSEngine())
         {
             inited = true;
@@ -43,7 +44,7 @@ public class JSEngine : MonoBehaviour
 	void Update () 
     {
         accum += Time.deltaTime;
-        if (accum > 1f)
+        if (accum > GCInterval)
         {
             accum = 0f;
             JSApi.JSh_GC(JSMgr.rt);

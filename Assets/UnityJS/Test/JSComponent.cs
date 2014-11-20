@@ -9,42 +9,29 @@ using System.Security;
 
 
 /*
- * CallJS
+ * JSComponent
  * A class simply transfer callbacks to js
  * 
  * This usage might cost much cpu times. Especially when there are a lot of GameObjects in the scene
  * One likely solution is call Awake, Start, Update only once per frame
  * 
  */
-public class CallJS : MonoBehaviour 
+public class JSComponent : MonoBehaviour 
 {
     public string jsScriptName = string.Empty;
 
-    IntPtr go = IntPtr.Zero;
+    [HideInInspector][NonSerialized]
+    public IntPtr go = IntPtr.Zero;
     IntPtr funAwake = IntPtr.Zero;
     IntPtr funStart = IntPtr.Zero;
     IntPtr funUpdate = IntPtr.Zero;
     IntPtr funDestroy = IntPtr.Zero;
     JSApi.jsval rval = new JSApi.jsval();
 
-
-    Transform mTrans;
-    Vector3 rotateVar = new Vector3(0.5f, 0f, 0f);
-
     bool inited = false;
-	void Awake ()
-    {
-        if (!JSEngine.inited)
-        {
-            JSEngine.log("jsengine not inited!!");
-            return;
-        }
-        else
-        {
-            JSEngine.log("jsengine inited!!");
-        }
 
-        mTrans = transform;
+    public void InitScript()
+    {
         go = JSApi.JSh_NewObjectAsClass(JSMgr.cx, JSMgr.glob, "GameObject", JSMgr.mjsFinalizer);
         JSApi.JSh_AddObjectRoot(JSMgr.cx, ref go);
 
@@ -64,8 +51,8 @@ public class CallJS : MonoBehaviour
             enabled = false;
             return;
         }
-        
-        
+
+
         funAwake = JSApi.JSh_GetFunction(JSMgr.cx, go, "Awake");
         funStart = JSApi.JSh_GetFunction(JSMgr.cx, go, "Start");
         funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
@@ -75,8 +62,22 @@ public class CallJS : MonoBehaviour
         {
             JSMgr.vCall.CallJSFunction(go, funAwake, null);
         }
-        JSMgr.JS_GC();
         inited = true;
+    }
+
+	void Awake ()
+    {
+//         if (!JSEngine.inited)
+//         {
+//             JSEngine.log("jsengine not inited!!");
+//             return;
+//         }
+//         else
+//         {
+//             JSEngine.log("jsengine inited!!");
+//         }
+        if (jsScriptName.Length > 0)
+            InitScript();
     }
 
     void Start()

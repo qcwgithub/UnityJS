@@ -146,7 +146,13 @@ public class JSVCall
         public stJSCS(IntPtr j, object c) { jsObj = j; csObj = c; }
     }
     // only for parameters
-    public stJSCS getValueTypeObject()
+//     public stJSCS getValueTypeObject()
+//     {
+//         IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
+//         object csObj = JSMgr.getCSObj(jsObj);
+//         return new stJSCS(jsObj, csObj);
+//     }
+    public stJSCS getJSCSObject()
     {
         IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, currIndex++);
         object csObj = JSMgr.getCSObj(jsObj);
@@ -205,9 +211,10 @@ public class JSVCall
             JSApi.JSh_SetRvalJSVAL(cx, vp, ref this.valReturn);
             return;
         }
-        IntPtr jsObj = JSMgr.getJSObj(csObj);
-        if (jsObj == IntPtr.Zero)
-        {
+        IntPtr jsObj;
+        //jsObj = JSMgr.getJSObj(csObj);
+        //if (jsObj == IntPtr.Zero)
+        { // always add a new jsObj
             jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, className, JSMgr.mjsFinalizer);
             if (jsObj != IntPtr.Zero)
                 JSMgr.addJSCSRelation(jsObj, csObj);
@@ -669,9 +676,11 @@ public class JSVCall
         }
         else// if (typeof(UnityEngine.Object).IsAssignableFrom(t) || t.IsClass || t.IsValueType)
         {
-            IntPtr jsObj = JSMgr.getJSObj(csObj);
-            if (jsObj == IntPtr.Zero)
+            IntPtr jsObj;
+//             jsObj = JSMgr.getJSObj(csObj);
+//             if (jsObj == IntPtr.Zero)
             {
+                // always add a new jsObj
                 jsObj = JSApi.JSh_NewObjectAsClass(cx, JSMgr.glob, t.Name, JSMgr.mjsFinalizer);
                 if (jsObj != IntPtr.Zero)
                     JSMgr.addJSCSRelation(jsObj, csObj);
@@ -819,7 +828,7 @@ public class JSVCall
                     else
                         arrMethod = aInfo.constructors;
 
-                    // params passed by js
+                    // params count
                     // for overloaded function, it's caculated by ExtractJSParams
                     int jsParamCount = (int)argc - currentParamCount;
                     if (!overloaded)

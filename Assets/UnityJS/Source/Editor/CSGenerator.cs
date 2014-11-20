@@ -380,13 +380,13 @@ public static class CSGenerator
                     }
                     else if (p.ParameterType.GetElementType().IsValueType)
                     {
-                        sbRefVariable.AppendFormat("        JSVCall.stJSCS jc{0} = vc.getValueTypeObject();\r\n", i);
+                        sbRefVariable.AppendFormat("        JSVCall.stJSCS jc{0} = vc.getJSCSObject();\r\n", i);
                         sbRefVariable.AppendFormat("        {0} arg{1} = ({0})jc{1}.csObj;\r\n", GetTypeFullName(p.ParameterType), i);
                     }
                     else
-                    {   // this branch will never enter
-                        sbRefVariable.AppendFormat("        object csObj{0} = vc.getObject();\r\n", i);
-                        sbRefVariable.AppendFormat("        {0} arg{1} = ({0})csObj{1};\r\n", GetTypeFullName(p.ParameterType), i);
+                    {   // this branch will never enter   yes  once! UnitySorrogateSelector.GetSurrogate
+                        sbRefVariable.AppendFormat("        JSVCall.stJSCS jc{0} = vc.getJSCSObject();\r\n", i);
+                        sbRefVariable.AppendFormat("        {0} arg{1} = ({0})jc{1}.csObj;\r\n", GetTypeFullName(p.ParameterType), i);
                     }
                 }
                 else
@@ -420,8 +420,8 @@ public static class CSGenerator
                         sbSaveRefVariable.AppendFormat("        JSMgr.changeJSObj(jc{0}.jsObj, arg{0});", i);
                     }
                     else
-                    {   // this branch will never enter
-                        sbSaveRefVariable.AppendFormat("        JSMgr.changeCSObj(csObj{0}, arg{0});", i);
+                    {   // this branch will never enter   yes  once! UnitySorrogateSelector.GetSurrogate
+                        sbSaveRefVariable.AppendFormat("        JSMgr.changeJSObj(jc{0}.jsObj, arg{0});", i);
                     }
                 }
             }
@@ -457,7 +457,7 @@ public static class CSGenerator
                 else sbFullCall.AppendFormat("object ret = {0};\r\n{1};", sbCall, BuildReturnObject(returnType, "ret"));
 
                 StringBuilder sbStruct = null;
-                if (type.IsValueType)
+                if (type.IsValueType && !bStatic)
                 {
                     sbStruct = new StringBuilder();
                     sbStruct.AppendFormat("{0} argThis = ({0})vc.csObj;", GetTypeFullName(type));
@@ -471,7 +471,7 @@ public static class CSGenerator
         {4}
 {6}
     ]]
-", j, (j == minNeedParams) ? "" : "else ", sbFullCall, type.IsValueType?sbStruct.ToString():"", type.IsValueType?"JSMgr.changeCSObj(vc.csObj, argThis);":"", sbRefVariable, sbSaveRefVariable);
+", j, (j == minNeedParams) ? "" : "else ", sbFullCall, (type.IsValueType && !bStatic) ? sbStruct.ToString() : "", (type.IsValueType && !bStatic) ? "JSMgr.changeJSObj(vc.jsObj, argThis);" : "", sbRefVariable, sbSaveRefVariable);
 
             }
 
