@@ -60,9 +60,9 @@ public static class JSMgr
     [MonoPInvokeCallbackAttribute(typeof(JSApi.JSErrorReporter))]
     static int errorReporter(IntPtr cx, string message, IntPtr report)
     {
-        string fileName = JSApi.JSh_GetErroReportFileName(report);
+        string fileName = JSApi.JSh_GetErroReportFileNameS(report);
         int lineno = JSApi.JSh_GetErroReportLineNo(report);
-        Debug.Log(fileName + "(" + lineno.ToString() + "): " + message);
+        Debug.LogWarning(fileName + "(" + lineno.ToString() + "): " + message);
         return 1;
     }
 
@@ -99,8 +99,7 @@ public static class JSMgr
         {
             CSharpGenerated.RegisterAll();
         }
-        JSMgr.EvaluateGeneratedScripts();
-        return true;
+        return JSMgr.EvaluateGeneratedScripts(JSGeneratedFileNames.names);
     }
     public static JSApi.SC_FINALIZE mjsFinalizer = new JSApi.SC_FINALIZE(JSObjectFinalizer);
 
@@ -113,53 +112,82 @@ public static class JSMgr
 
     public static void EvaluateFile(string fullName, IntPtr obj)
     {
-        
-
         JSApi.jsval val = new JSApi.jsval();
         StreamReader r = new StreamReader(fullName, Encoding.UTF8);
         string s = r.ReadToEnd();
-        // Debug.Log("evaluate file : " + fullName + "| Length=" + s.Length);
         JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, fullName, 1, ref val);
         r.Close();
     }
-    static string calcFullJSFileName(string shortName)
+    public static void EvaluateString(string name, string s, IntPtr obj)
     {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
-        string fullName = "file://" + Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
+        JSApi.jsval val = new JSApi.jsval();
+        JSApi.JSh_EvaluateScript(cx, obj, s, (uint)s.Length, name, 1, ref val);
+    }
+    static string calcFullJSFileName(string shortName, bool bGenerated)
+    {
+        string baseDir = bGenerated ? JSMgr.jsGeneratedDir : JSMgr.jsDir;
+
+#if UNITY_ANDROID && !UNITY_EDITOR_WIN
+        string fullName = baseDir + "/" + shortName + ".javascript";
 #else
-        string fullName = Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
+        string fullName = baseDir + "/" + shortName + ".javascript";
 #endif
         return fullName;
     }
-    public static void EvaluateGeneratedScripts()
+    public static string ReadFileString(string fullName)
     {
-        string[] files = Directory.GetFiles(JSMgr.jsGeneratedDir);
-        for (int i = 0; i < files.Length; i++)
+        //Debug.Log("-----calcFullJSFileName: " + fullName);
+
+#if UNITY_ANDROID && !UNITY_EDITOR_WIN
+        WWW w = new WWW(fullName);
+        while (true)
         {
-            if (files[i].IndexOf(".meta") == files[i].Length - 5)
-                continue;
-            EvaluateFile(files[i], glob);
+            if (w.error != null && w.error.Length > 0)
+            {
+                Debug.Log("ERROR: /// " + w.error);
+                return "";
+            }
+
+            if (w.isDone)
+                break;
+
+            //SleepTimeout()
         }
-//         IntPtr ptr;
-//         ptr = GetScript("Generated/GameObject");
-//         JSMgr.ExecuteScript(ptr, glob);
-//         ptr = GetScript("Generated/Transform");
-//         JSMgr.ExecuteScript(ptr, glob);
-//         ptr = GetScript("Generated/Vector3");
-//         JSMgr.ExecuteScript(ptr, glob);
-//         ptr = GetScript("Generated/GameObject");
-//         JSMgr.ExecuteScript(ptr, glob);
-    }
-    public static IntPtr CompileScript(string shortName, IntPtr obj)
-    {
-        string fullName = calcFullJSFileName(shortName);
-
+        //Debug.Log("======= WWW OK");
+        string content = w.text;
+        return content;
+#else
         StreamReader r = new StreamReader(fullName, Encoding.UTF8);
-        string s = r.ReadToEnd();
-
-        IntPtr ptr = JSApi.JSh_CompileScript(cx, obj, s, (uint)s.Length, shortName, 1);
-        r.Close();
-        return ptr;
+        string content = r.ReadToEnd();
+        return content;
+#endif
+    }
+    public static bool EvaluateGeneratedScripts(string[] shortNames)
+    {
+        for (int i = 0; i < shortNames.Length; i++)
+        {
+            string content = ReadFileString(calcFullJSFileName(shortNames[i], true));
+            if (content.Length == 0)
+                return false;
+            EvaluateString(shortNames[i], content, glob);
+        }
+        return true;
+    }
+//     public static IntPtr CompileScript(string shortName, IntPtr obj)
+//     {
+//         string fullName = calcFullJSFileName(shortName);
+// 
+//         StreamReader r = new StreamReader(fullName, Encoding.UTF8);
+//         string s = r.ReadToEnd();
+// 
+//         IntPtr ptr = JSApi.JSh_CompileScript(cx, obj, s, (uint)s.Length, shortName, 1);
+//         r.Close();
+//         return ptr;
+//     }
+    class IntPtrClass
+    {
+        public IntPtrClass(IntPtr p) { this.ptr = p; }
+        public IntPtr ptr;
     }
     public static IntPtr CompileScriptContent(string shortName, string content, IntPtr obj)
     {
@@ -171,7 +199,10 @@ public static class JSMgr
         }
 
         IntPtr ptr = JSApi.JSh_CompileScript(cx, obj, content, (uint)content.Length, shortName, 1);
-        compiledScript.Add(shortName, ptr.ToInt32());
+        IntPtrClass ptrClass = new IntPtrClass(ptr);
+        bool b = JSApi.JSh_AddNamedScriptRoot(JSMgr.cx, ref ptrClass.ptr, shortName);
+        if (!b) Debug.LogWarning("JSh_AddNamedScriptRoot fail!!");
+        compiledScript.Add(shortName, ptrClass);
         return ptr;
     }
     public static bool ExecuteScript(IntPtr ptrScript, IntPtr obj)
@@ -181,41 +212,28 @@ public static class JSMgr
     }
     public static IntPtr GetScript(string shortName/*, IntPtr obj*/)
     {
-        int ptr = 0;
-        if (compiledScript.TryGetValue(shortName, out ptr))
-            return new IntPtr(ptr);
+        IntPtrClass ptrClass = null;
+        if (compiledScript.TryGetValue(shortName, out ptrClass))
+            return ptrClass.ptr;
         else
         {
-            string fullName = Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
-
-            StreamReader r = new StreamReader(fullName, Encoding.UTF8);
-            string s = r.ReadToEnd();
-
-            IntPtr intPtr = JSApi.JSh_CompileScript(cx, glob, s, (uint)s.Length, shortName, 1);
-            r.Close();
-            return intPtr;
-
-//             string fullName = calcFullJSFileName(shortName);
-//             Debug.Log("-----calcFullJSFileName: " + fullName);
-//             WWW w = new WWW(fullName);
-//             while (true)
-//             {
-//                 if (w.error != null && w.error.Length > 0)
-//                 {
-//                     Debug.Log("ERROR: /// " + w.error);
-//                     break;
-//                 }
+//             string fullName = Application.streamingAssetsPath + "/JavaScript/" + shortName + ".javascript";
 // 
-//                 if (w.isDone)
-//                     break;
-//             }
-//             Debug.Log("======= WWW OK");
-//             string content = w.text;
-//             return CompileScriptContent(shortName, w.text, glob);
+//             StreamReader r = new StreamReader(fullName, Encoding.UTF8);
+//             string s = r.ReadToEnd();
+// 
+//             IntPtr intPtr = JSApi.JSh_CompileScript(cx, glob, s, (uint)s.Length, shortName, 1);
+//             r.Close();
+//             return intPtr;
+
+            string content = ReadFileString(calcFullJSFileName(shortName, false));
+            if (content.Length == 0)
+                return IntPtr.Zero;
+            return CompileScriptContent(shortName, content, glob);
         }
     }
 
-    static Dictionary<string, int> compiledScript = new Dictionary<string, int>();
+    static Dictionary<string, IntPtrClass> compiledScript = new Dictionary<string, IntPtrClass>();
 
     /// <summary>
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,16 +359,23 @@ public static class JSMgr
     }
     public static void FilterTypeInfo(Type type, ATypeInfo ti)
     {
+        List<ConstructorInfo> lstCons = new List<ConstructorInfo>();
         List<FieldInfo> lstField = new List<FieldInfo>();
         List<PropertyInfo> lstPro = new List<PropertyInfo>();
         Dictionary<string, int> proAccessors = new Dictionary<string, int>();
         List<MethodInfo> lstMethod = new List<MethodInfo>();
 
+        for (int i = 0; i < ti.constructors.Length; i++)
+        {
+            if (!IsMemberObsolete(ti.constructors[i]))
+                lstCons.Add(ti.constructors[i]);
+        }
+
         for (int i = 0; i < ti.fields.Length; i++)
         {
             if (typeof(System.Delegate).IsAssignableFrom(ti.fields[i].FieldType.BaseType))
             {
-                Debug.Log("[field]" + type.ToString() + "." + ti.fields[i].Name + "is delegate!");
+                //Debug.Log("[field]" + type.ToString() + "." + ti.fields[i].Name + "is delegate!");
             }
 
             if (!IsMemberObsolete(ti.fields[i]) && !JSBindingSettings.IsDiscard(type, ti.fields[i]))
@@ -364,7 +389,7 @@ public static class JSMgr
 
             if (typeof(System.Delegate).IsAssignableFrom(pro.PropertyType.BaseType))
             {
-                Debug.Log("[property]" + type.ToString() + "." + pro.Name + "is delegate!");
+                // Debug.Log("[property]" + type.ToString() + "." + pro.Name + "is delegate!");
             }
 
             MethodInfo[] accessors = pro.GetAccessors();
@@ -407,13 +432,13 @@ public static class JSMgr
                 {
                     if (!method.IsStatic)
                     {
-                        Debug.LogWarning("IGNORE not-static special-name function: " + type.Name + "." + method.Name);
+                        // Debug.LogWarning("IGNORE not-static special-name function: " + type.Name + "." + method.Name);
                         continue;
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("IGNORE special-name function:" + type.Name + "." + method.Name);
+                    // Debug.LogWarning("IGNORE special-name function:" + type.Name + "." + method.Name);
                     continue;
                 }
             }
@@ -471,6 +496,7 @@ public static class JSMgr
             }
         }
 
+        ti.constructors = lstCons.ToArray();
         ti.fields = lstField.ToArray();
         ti.properties = lstPro.ToArray();
         ti.methods = lstMethod.ToArray();
@@ -487,6 +513,7 @@ public static class JSMgr
             return vCall.CallCallback(cx, argc, vp);
     }
 
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int AddJSComponent(IntPtr cx, uint argc, IntPtr vp)
     {
         if (argc != 2) 
@@ -511,6 +538,46 @@ public static class JSMgr
         return 1;
     }
 
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
+    static int RemoveJSComponent(IntPtr cx, uint argc, IntPtr vp)
+    {
+        if (argc != 1 && argc != 2)
+            return 0;
+
+        IntPtr jsObj = JSApi.JSh_ArgvObject(cx, vp, 0);
+        object csObj = JSMgr.getCSObj(jsObj);
+        if (csObj == null || !(csObj is GameObject))
+            return 0;
+
+        GameObject go = (GameObject)csObj;
+
+        if (argc == 1)
+        {
+            JSComponent jsComp = go.GetComponent<JSComponent>();
+            if (jsComp != null)
+                UnityEngine.Object.Destroy(jsComp);
+            return 1;
+        }
+        else
+        {
+            if (!JSApi.JSh_ArgvIsString(cx, vp, 1))
+                return 0;
+
+            string jsScriptName = JSApi.JSh_ArgvStringS(cx, vp, 1);
+            JSComponent[] jsComps = go.GetComponents<JSComponent>();
+            foreach (JSComponent v in jsComps)
+            {
+                if (v.jsScriptName == jsScriptName)
+                {
+                    UnityEngine.Object.Destroy(v);
+                    return 1;
+                }
+            }
+            return 1;
+        }
+    }
+
+    [MonoPInvokeCallbackAttribute(typeof(JSApi.JSNative))]
     static int GetJSComponent(IntPtr cx, uint argc, IntPtr vp)
     {
         if (argc != 1 && argc != 2)
@@ -563,6 +630,8 @@ public static class JSMgr
         JSApi.JSh_DefineFunction(cx, obj, "Call", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(Call)), 0/* narg */, 0);
         JSApi.JSh_DefineFunction(cx, obj, "AddJSComponent", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(AddJSComponent)), 0/* narg */, 0);
         JSApi.JSh_DefineFunction(cx, obj, "GetJSComponent", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(GetJSComponent)), 0/* narg */, 0);
+        JSApi.JSh_DefineFunction(cx, obj, "RemoveJSComponent", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(RemoveJSComponent)), 0/* narg */, 0);
+
         CSOBJ = obj;
     }
 

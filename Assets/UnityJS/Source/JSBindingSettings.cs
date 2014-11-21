@@ -14,6 +14,42 @@ public class Kekoukele
     public MyFun fun;
     public int mvalue;
     public void getValue(out int v) { v = 899; }
+    public int[] getArr()
+    {
+        return new int[] { 5,6,8};
+    }
+    public void inputIntArr(int[] a)
+    {
+        if (a == null)
+        {
+            Debug.Log("a is null");
+        }
+        else
+        {
+            string s = string.Empty;
+            foreach (var v in a)
+            {
+                s += v.ToString() + " ";
+            }
+            Debug.Log(s);
+        }
+    }
+    public void inputGameObjectArr(GameObject[] a)
+    {
+        if (a == null)
+        {
+            Debug.Log("a is null");
+        }
+        else
+        {
+            string s = string.Empty;
+            foreach (var v in a)
+            {
+                s += v.ToString() + " ";
+            }
+            Debug.Log(s);
+        }
+    }
 }
 
 public class JSBindingSettings
@@ -89,7 +125,7 @@ public class JSBindingSettings
         typeof(UnityEngine.LightRenderMode),
         typeof(UnityEngine.LightShadows),
         typeof(UnityEngine.FogMode),
-        typeof(UnityEngine.QualityLevel),
+        
         typeof(UnityEngine.ShadowProjection),
         typeof(UnityEngine.CameraClearFlags),
         typeof(UnityEngine.DepthTextureMode),
@@ -158,6 +194,9 @@ public class JSBindingSettings
         typeof(UnityEngine.IMECompositionMode),
         typeof(UnityEngine.DeviceOrientation),
         typeof(UnityEngine.LocationServiceStatus),
+
+        // Obsolete
+        // typeof(UnityEngine.QualityLevel),
     };
     public static Type[] classes2 = new Type[]
     {
@@ -231,7 +270,7 @@ public class JSBindingSettings
         typeof(UnityEngine.SphereCollider),
         typeof(UnityEngine.MeshCollider),
         typeof(UnityEngine.CapsuleCollider),
-        typeof(UnityEngine.RaycastCollider),
+        
         typeof(UnityEngine.WheelCollider),
         typeof(UnityEngine.PhysicMaterial),
         typeof(UnityEngine.Collision),
@@ -387,7 +426,7 @@ public class JSBindingSettings
         typeof(UnityEngine.ParticleSystem),                          
         typeof(UnityEngine.ParticleSystemRenderer),                  
         typeof(UnityEngine.TextAsset),                               
-        typeof(UnityEngine.SerializePrivateVariables),               
+                    
         typeof(UnityEngine.SerializeField),                          
         typeof(UnityEngine.Shader),                                  
         typeof(UnityEngine.Material),                                
@@ -487,7 +526,7 @@ public class JSBindingSettings
         typeof(UnityEngine.NetworkPlayer),               
         typeof(UnityEngine.NetworkViewID),               
         typeof(UnityEngine.NetworkMessageInfo),          
-        typeof(UnityEngine.CacheIndex),                  
+        
         typeof(UnityEngine.Touch),                       
         typeof(UnityEngine.AccelerationEvent),           
         typeof(UnityEngine.LocationInfo), 
@@ -505,11 +544,11 @@ public class JSBindingSettings
         //////////////////////////////////////////////////////
         // iPhone only
 #if UNITY_IPHONE
-        typeof(UnityEngine.iPhoneTouch),                    
-        typeof(UnityEngine.iPhoneAccelerationEvent),                                   
+                         
+                                          
         typeof(UnityEngine.iPhoneInput),                             
         typeof(UnityEngine.iPhoneSettings),                          
-        typeof(UnityEngine.iPhoneKeyboard),                          
+                                  
         typeof(UnityEngine.iPhoneUtils),                             
         typeof(UnityEngine.LocalNotification),                       
         typeof(UnityEngine.RemoteNotification),                      
@@ -535,6 +574,18 @@ public class JSBindingSettings
 #if UNITY_ANDROID || UNITY_IPHONE
         typeof(UnityEngine.TouchScreenKeyboard),
 #endif
+        //////////////////////////////////////////////////////
+        //
+        // Obsolete!!
+        //
+//         typeof(UnityEngine.RaycastCollider),
+//         typeof(UnityEngine.SerializePrivateVariables),   
+//         typeof(UnityEngine.CacheIndex),                  
+//         typeof(UnityEngine.iPhoneTouch),   
+//         typeof(UnityEngine.iPhoneAccelerationEvent), 
+//         typeof(UnityEngine.iPhoneKeyboard),
+
+
 
         //////////////////////////////////////////////////////
         // attributes
@@ -616,14 +667,24 @@ public class JSBindingSettings
     }
     public static bool IsGeneratedDefaultConstructor(Type type)
     {
-        if (type == typeof(Coroutine) ||
-            type == typeof(CrashReport) ||
-            type == typeof(Display) ||
-            type == typeof(GUILayoutOption) ||
-            type == typeof(Gyroscope) ||
-            type == typeof(RemoteNotification) ||
-            type == typeof(TrackedReference) ||
-            type == typeof(Transform))
+        if (type == typeof(Coroutine)
+            || type == typeof(CrashReport) 
+            || type == typeof(Display) 
+            || type == typeof(GUILayoutOption) 
+            || type == typeof(Gyroscope) 
+            
+            || type == typeof(TrackedReference)
+            || type == typeof(Transform)
+#if UNITY_IPHONE
+            || type == typeof(RemoteNotification) 
+#endif
+#if UNITY_ANDROID
+            ||  type == typeof(AndroidInput)
+            || type == typeof(AndroidJNI)
+            || type == typeof(AndroidJNIHelper)
+            || type == typeof(AndroidJavaException)
+#endif            
+            )
             return false;
         return true;
     }

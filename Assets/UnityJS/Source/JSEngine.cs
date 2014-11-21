@@ -1,6 +1,8 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 public class JSEngine : MonoBehaviour 
 {
@@ -10,6 +12,8 @@ public class JSEngine : MonoBehaviour
     static JSEngine inst;
     public static bool inited = false;
     public float GCInterval = 1f;
+
+
 	void Awake () 
     {
 //         string path = "file://"+Application.streamingAssetsPath + "/JavaScript/RotateObject.javascript";
@@ -43,11 +47,14 @@ public class JSEngine : MonoBehaviour
     float accum = 0f;
 	void Update () 
     {
-        accum += Time.deltaTime;
-        if (accum > GCInterval)
+        if (inited)
         {
-            accum = 0f;
-            JSApi.JSh_GC(JSMgr.rt);
+            accum += Time.deltaTime;
+            if (accum > GCInterval)
+            {
+                accum = 0f;
+                JSApi.JSh_GC(JSMgr.rt);
+            }
         }
 	}
 

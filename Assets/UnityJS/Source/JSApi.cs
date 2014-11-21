@@ -164,10 +164,19 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern IntPtr JSh_SetErrorReporter(IntPtr cx, JSErrorReporter er);
 
-    /*[DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JSh_NewArrayObject", CharSet = CharSet.Ansi)]
-    public static extern IntPtr JSh_NewArrayObject_(IntPtr cx, int length, IntPtr vector);
-    public static IntPtr JSh_NewArrayObject(IntPtr cx, int length) { return JSh_NewArrayObject_(cx, length, IntPtr.Zero); }
-*/
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_NewArrayObject(IntPtr cx, int length, IntPtr vector);
+    public static IntPtr JSh_NewArrayObjectS(IntPtr cx, int length) { return JSh_NewArrayObject(cx, length, IntPtr.Zero); }
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_IsArrayObject(IntPtr cx, IntPtr obj);
+
+    // return -1: fail
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_GetArrayLength(IntPtr cx, IntPtr obj);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_GetElement(IntPtr cx, IntPtr obj, UInt32 index, ref jsval val);
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JSh_SetElement(IntPtr cx, IntPtr obj, uint index, ref jsval vp);
@@ -265,16 +274,33 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern void JSh_SetJsvalUndefined(ref jsval vp);
 
+
+    /*
+     * get from jsval
+     */
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_GetJsvalBool(ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern double JSh_GetJsvalDouble(ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int JSh_GetJsvalInt(ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern UInt32 JSh_GetJsvalUInt(ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern string JSh_GetJsvalString(IntPtr cx, ref jsval vp);
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_GetJsvalObject(ref jsval vp);
+
+
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int JSh_SetRvalJSVAL(IntPtr cx, IntPtr vp, ref jsval value);
 
-//     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "JSh_GetErroReportFileName", CharSet = CharSet.Ansi)]
-//     public static extern IntPtr JSh_GetErroReportFileName_(IntPtr report);
-    public static string JSh_GetErroReportFileName(IntPtr report)
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr JSh_GetErroReportFileName(IntPtr report);
+    public static string JSh_GetErroReportFileNameS(IntPtr report)
     {
-//         IntPtr str = JSh_GetErroReportFileName_(report);
-//         return Marshal.PtrToStringAnsi(str);
-        return "noname";
+        IntPtr str = JSh_GetErroReportFileName(report);
+        return Marshal.PtrToStringAnsi(str);
     }
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -339,5 +365,6 @@ public class JSApi
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern void JSh_RemoveObjectRoot(IntPtr cx, ref IntPtr/*JSObject***/ rp);
 
-    
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern bool JSh_AddNamedScriptRoot(IntPtr cx, ref IntPtr rp, string name);
 }

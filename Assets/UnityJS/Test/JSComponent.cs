@@ -26,13 +26,20 @@ public class JSComponent : MonoBehaviour
     IntPtr funStart = IntPtr.Zero;
     IntPtr funUpdate = IntPtr.Zero;
     IntPtr funDestroy = IntPtr.Zero;
-    JSApi.jsval rval = new JSApi.jsval();
+    IntPtr funOnGUI = IntPtr.Zero;
+    //JSApi.jsval rval = new JSApi.jsval();
 
     bool inited = false;
 
     public void InitScript()
     {
+        if (!JSEngine.inited)
+            return;
+
         go = JSApi.JSh_NewObjectAsClass(JSMgr.cx, JSMgr.glob, "GameObject", JSMgr.mjsFinalizer);
+        if (go == IntPtr.Zero)
+            return;
+
         JSApi.JSh_AddObjectRoot(JSMgr.cx, ref go);
 
 
@@ -57,6 +64,7 @@ public class JSComponent : MonoBehaviour
         funStart = JSApi.JSh_GetFunction(JSMgr.cx, go, "Start");
         funUpdate = JSApi.JSh_GetFunction(JSMgr.cx, go, "Update");
         funDestroy = JSApi.JSh_GetFunction(JSMgr.cx, go, "Destroy");
+        funOnGUI = JSApi.JSh_GetFunction(JSMgr.cx, go, "OnGUI");
 
         if (funAwake != IntPtr.Zero)
         {
@@ -114,5 +122,13 @@ public class JSComponent : MonoBehaviour
 
         JSApi.JSh_RemoveObjectRoot(JSMgr.cx, ref go);
         //JSApi.JSh_GC(JSMgr.rt);
+    }
+
+    void OnGUI()
+    {
+        if (inited && funOnGUI != IntPtr.Zero)
+        {
+            JSMgr.vCall.CallJSFunction(go, funOnGUI, null);
+        }
     }
 }

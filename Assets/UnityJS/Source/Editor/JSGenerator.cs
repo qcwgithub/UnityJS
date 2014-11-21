@@ -16,7 +16,7 @@ public static class JSGenerator
     public static Type type = null;
 
     static string enumFile = JSMgr.jsGeneratedDir + "/enum.javascript";
-    static string tempFile = JSMgr.jsDir + "/temp.javascript";
+    //static string tempFile = JSMgr.jsDir + "/temp.javascript";
 
     public static void OnBegin()
     {
@@ -167,7 +167,7 @@ Object.defineProperty({0}, '{1}',
         int overloadedMaxParamCount = 0;
         if (constructors.Length == 0)
         {
-            Debug.Log("&&&&&&&  [" + type.Name + "] has no constructor!");
+            //Debug.Log("&&&&&&&  [" + type.Name + "] has no constructor!");
         }
 
         StringBuilder sb = new StringBuilder();
@@ -441,7 +441,7 @@ using UnityEngine;
      * Some classes have another name
      * for example: js has 'Object'
      */
-    static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
+    public static Dictionary<Type, string> typeClassName = new Dictionary<Type, string>();
     static string className = string.Empty;
 
 

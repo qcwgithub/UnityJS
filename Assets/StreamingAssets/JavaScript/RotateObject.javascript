@@ -20,6 +20,14 @@ function Awake()
     v2.x = 66666
     Debug.Log(v1.x);
     Debug.Log(v2.x);
+
+    //
+    var arrObjs = GameObject.FindGameObjectsWithTag('Respawn')
+    for (var i = 0; i < arrObjs.length; i++)
+        Debug.Log("Respawn: " + arrObjs[i].name);
+
+
+
 }
 function Start()
 {
@@ -30,6 +38,12 @@ function Start()
     var v = CS.int32(0);
     k.getValue(v);
     Debug.Log(v.Value())
+    var arr = k.getArr();
+    for(var i = 0; i < arr.length; i++)
+        Debug.Log(arr[i]);
+
+    // not supported now.
+    // k.inputIntArr([999,888,777,666,555])
 }
 
 function Update()
@@ -53,17 +67,28 @@ function Update()
         var hit = new RaycastHit();
         Physics.Raycast(ray, hit);
         var t = hit.transform;
-
-        if (t === undefined)
-        {
-            Debug.Log('Hit nothing')
-        }
-        else
+        
+        //if (t !== undefined)
+        //{
+        //    Debug.Log('Hit ' + t.name);
+        //}
+        if (t.Equals(mTrans))
         {
             Debug.Log('Hit ' + t.name);
 
-            var newGo = new GameObject("Flower");
+            var prefab = GameObject.Find('CubeInit');
+            if (prefab === undefined)
+            {
+                Debug.Log('prefab is undefined!');
+                return;
+            }
+            var newGo = UnityObject.Instantiate(prefab);
+            newGo.SetActive(true);
+            var tn = newGo.transform;
+            tn.localScale = new Vector3(0.3,0.3,0.3);
+            tn.position = new Vector3(Random.Range(-2.1,2.1), Random.Range(-1.1,1.1), -7.24)
             CS.AddJSComponent(newGo, "RotateObject2");
+
         }
     }
 
@@ -73,11 +98,16 @@ function Update()
     {
         // JavaScript has 'Object' as key word
         // so UnityEngine.Object is renamed to 'UnityObject'
-        UnityObject.Destroy(this);
+        //UnityObject.Destroy(this);
     }
 }
 
 function Destroy()
 {
     Debug.Log('js Destroy Called!')
+}
+
+function OnGUI()
+{
+    GUILayout.TextArea('Click the big cube!', null)
 }
