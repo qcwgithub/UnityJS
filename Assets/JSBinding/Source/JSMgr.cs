@@ -72,21 +72,28 @@ public static class JSMgr
             return false;
 
         rt = JSApi.JSh_NewRuntime(8 * 1024 * 1024, 0);
+        JSApi.JSh_SetNativeStackQuota(rt, 500000, 0, 0);
+
         cx = JSApi.JSh_NewContext(rt, 8192);
+
+        // Set error reporter
+        JSApi.JSh_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
 
         glob = JSApi.JSh_NewGlobalObject(cx, 1);
 
         JSApi.JSh_EnterCompartment(cx, glob);
 
         if (!JSApi.JSh_InitStandardClasses(cx, glob))
+        {
+            Debug.LogError("JSh_InitStandardClasses fail. Make sure JSh_SetNativeStackQuota was called.");
             return false;
+        }
 
         JSApi.JSh_InitReflect(cx, glob);
 
         JSApi.JSh_DefineFunction(cx, glob, "printInt", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printInt)), 1, 0/*4164*/);
         JSApi.JSh_DefineFunction(cx, glob, "printString", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printString)), 1, 0/*4164*/);
         JSApi.JSh_DefineFunction(cx, glob, "printDouble", Marshal.GetFunctionPointerForDelegate(new JSApi.JSNative(printDouble)), 1, 0/*4164*/);
-        JSApi.JSh_SetErrorReporter(cx, new JSApi.JSErrorReporter(errorReporter));
         // Resources.Load
         JSMgr.RegisterCS(cx, glob);
         JSValueWrap.Register(CSOBJ, cx);
@@ -96,16 +103,20 @@ public static class JSMgr
 //                 JSMgr.AddTypeInfo(JSBindingSettings.classes[i]);
 //         }
 
-        bool ret = false;
+        bool jsRegistered = false;
 
         /*
          * Uncomment these 2 lines after generating bindings!!
          */
         
         //CSharpGenerated.RegisterAll(); // register cs function
-        //ret = JSMgr.EvaluateGeneratedScripts(JSGeneratedFileNames.names); // register js functions
+        //jsRegistered = JSMgr.EvaluateGeneratedScripts(JSGeneratedFileNames.names); // register js functions
 
-        return ret;
+        if (!jsRegistered)
+        {
+            Debug.LogWarning("JS not registered!! Find me, fix me!!");
+        }
+        return jsRegistered;
     }
     public static JSApi.SC_FINALIZE mjsFinalizer = new JSApi.SC_FINALIZE(JSObjectFinalizer);
 

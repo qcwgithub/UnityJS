@@ -367,4 +367,7 @@ public class JSApi
 
     [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern bool JSh_AddNamedScriptRoot(IntPtr cx, ref IntPtr rp, string name);
+
+    [DllImport(JSDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void JSh_SetNativeStackQuota(IntPtr rt, UInt32 systemCodeStackSize, UInt32 trustedScriptStackSize, UInt32 untrustedScriptStackSize);
 }
