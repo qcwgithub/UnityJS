@@ -20,11 +20,9 @@ answerwinner@gmail.com
 This package is currently focused on exporting C# interfaces to javascript.
 It can export 99% C# interfaces to javascript.
 
-BUT many js engine stuff are not well handled.
-Such as JIT, garbarge collection, mutli-threading, coroutines, loading scripts only when needs.
-They will be handled in future version.
+This is an initial version and may contain bug. It will be updated very soon.
 
-Any advice, bugs, please let me know, I will handle them as soon as possible.
+So, any advice, bugs, please let me know, I will improve it as soon as possible.
 
 Generally, it is highly-efficient. P/Invokes and boxing/unboxing are reduced to minimal count.
 It doesn't use C# reflection.
@@ -32,9 +30,30 @@ It doesn't use C# reflection.
 It exports classes on both C# side and js side, that is, if one class is configured to be exported,
 one C# file and one js file will be generated.
 
+===============================================
+        How to use / run demo
+===============================================
+1 Import this plugin to your project
+2 In the Project window, open example scene 'UnityJSTestScene'
+3 Click Menu [JS for Unity] -> [Generate JS Bindings]
+4 Click Menu [JS for Unity] -> [Generate CS Bindings]
+5 Switch to another program, and go back to Unity. Wait for importing scripts
+6 ! Open JSMgr.cs, uncomment 2 lines (around line 104, 105)
+7 Click Play button
+
+If everything goes right, you should see a rotating cube.
+every click on big cube, a smaller cube will be generated!
+
+In windows editor, one error might occur: "DllNotFoundException", try:
+Copy "Assets/Plugins/x86/mozjs-28.dll" -> Unity Install Directory/Editor (e.g. "D:\Program Files\Unity\Editor")
+If problem still exists, make sure you have "msvcr110.dll" in "C:\windows\system32". 
+(the dll was built in visual studio 2012)
+
+You must do 3,4,5 steps every time when you switch platforms !!!
+
 
 ===============================================
-     -1 How to build js engine by yourself
+     How to build js engine by yourself
 ===============================================
 
 This package uses Mozilla SpiderMonkey js engine, version 28.
@@ -86,22 +105,6 @@ Use 'Type2' for (struct, class)
 2 calling C# functions from js script
 3 calling js functions from C#
 
-
-
-===============================================
-        How to use / run demo
-===============================================
-1 Import this plugin to your project
-2 In the Project window, open example scene 'UnityJSTestScene'
-3 Click Menu [JS for Unity] -> [Generate JS Bindings]
-4 Click Menu [JS for Unity] -> [Generate CS Bindings]
-5 Switch to another program, and go back to Unity. Wait for importing scripts
-6 Click Play button
-
-If everything goes right, you should see a rotating cube.
-
-
-You must do 3,4,5 steps every time when you switch platforms !!!
 
 
 ==================================================================
